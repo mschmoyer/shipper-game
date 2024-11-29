@@ -34,6 +34,19 @@ const dbGet = (query, params = [], errorMessage = 'Database error') => {
   });
 };
 
+const dbAll = (query, params = [], errorMessage = 'Database error') => {
+  return new Promise((resolve, reject) => {
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        console.error(`${errorMessage}:`, err.message);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+};
+
 const initDatabase = () => {
   db.run(`
     CREATE TABLE IF NOT EXISTS player (
@@ -77,36 +90,50 @@ const initDatabase = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
       description TEXT,
-      techLevelRequired INTEGER
+      techLevelRequired INTEGER,
+      cost INTEGER
     )
   `, (err) => {
     if (err) {
       console.error('Failed to create technologies table:', err.message);
     } else {
       const techs = [
-        { name: 'Tech 1-1', description: 'Description for Tech 1-1', techLevelRequired: 1 },
-        { name: 'Tech 1-2', description: 'Description for Tech 1-2', techLevelRequired: 1 },
-        { name: 'Tech 1-3', description: 'Description for Tech 1-3', techLevelRequired: 1 },
-        { name: 'Tech 1-4', description: 'Description for Tech 1-4', techLevelRequired: 1 },
-        { name: 'Tech 1-5', description: 'Description for Tech 1-5', techLevelRequired: 1 },
-        { name: 'Tech 2-1', description: 'Description for Tech 2-1', techLevelRequired: 2 },
-        { name: 'Tech 2-2', description: 'Description for Tech 2-2', techLevelRequired: 2 },
-        { name: 'Tech 2-3', description: 'Description for Tech 2-3', techLevelRequired: 2 },
-        { name: 'Tech 2-4', description: 'Description for Tech 2-4', techLevelRequired: 2 },
-        { name: 'Tech 2-5', description: 'Description for Tech 2-5', techLevelRequired: 2 },
-        { name: 'Tech 3-1', description: 'Description for Tech 3-1', techLevelRequired: 3 },
-        { name: 'Tech 3-2', description: 'Description for Tech 3-2', techLevelRequired: 3 },
-        { name: 'Tech 3-3', description: 'Description for Tech 3-3', techLevelRequired: 3 },
-        { name: 'Tech 3-4', description: 'Description for Tech 3-4', techLevelRequired: 3 },
-        { name: 'Tech 3-5', description: 'Description for Tech 3-5', techLevelRequired: 3 }
+        { name: 'ShipTo Automation', description: 'Automate the process of entering shipping addresses, reducing errors and saving time.', techLevelRequired: 1, cost: 100 },
+        { name: 'Automatic Rate Shopping', description: 'Automatically compare shipping rates from different carriers to find the best price.', techLevelRequired: 1, cost: 150 },
+        { name: 'Auto Routing', description: 'Automatically route shipments to the most efficient carrier based on destination and delivery time.', techLevelRequired: 1, cost: 200 },
+        { name: 'Inventory Management', description: 'Keep track of inventory levels in real-time to avoid stockouts and overstocking.', techLevelRequired: 1, cost: 250 },
+        { name: 'Order Tracking', description: 'Provide customers with real-time tracking information for their orders.', techLevelRequired: 1, cost: 300 },
+        { name: 'Warehouse Automation', description: 'Automate warehouse operations to increase efficiency and reduce labor costs.', techLevelRequired: 2, cost: 400 },
+        { name: 'Predictive Analytics', description: 'Use data analytics to predict demand and optimize inventory levels.', techLevelRequired: 2, cost: 450 },
+        { name: 'Customer Relationship Management', description: 'Manage customer interactions and improve customer satisfaction.', techLevelRequired: 2, cost: 500 },
+        { name: 'Shipping Label Printing', description: 'Automatically print shipping labels for orders, saving time and reducing errors.', techLevelRequired: 2, cost: 550 },
+        { name: 'Returns Management', description: 'Streamline the process of handling returns and exchanges.', techLevelRequired: 2, cost: 600 },
+        { name: 'Advanced Analytics', description: 'Gain deeper insights into business performance with advanced analytics tools.', techLevelRequired: 3, cost: 700 },
+        { name: 'Multi-Channel Integration', description: 'Integrate with multiple sales channels to manage orders from different platforms.', techLevelRequired: 3, cost: 750 },
+        { name: 'Dynamic Pricing', description: 'Adjust prices in real-time based on demand and competition.', techLevelRequired: 3, cost: 800 },
+        { name: 'Supply Chain Optimization', description: 'Optimize the supply chain to reduce costs and improve efficiency.', techLevelRequired: 3, cost: 850 },
+        { name: 'AI-Powered Customer Support', description: 'Use AI to provide instant customer support and resolve issues quickly.', techLevelRequired: 3, cost: 900 }
       ];
-      const stmt = db.prepare('INSERT INTO technologies (name, description, techLevelRequired) VALUES (?, ?, ?)');
+      const stmt = db.prepare('INSERT INTO technologies (name, description, techLevelRequired, cost) VALUES (?, ?, ?, ?)');
       techs.forEach(tech => {
-        stmt.run(tech.name, tech.description, tech.techLevelRequired);
+        stmt.run(tech.name, tech.description, tech.techLevelRequired, tech.cost);
       });
       stmt.finalize();
     }
   });
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS available_technologies (
+      playerId INTEGER,
+      techId INTEGER,
+      FOREIGN KEY (playerId) REFERENCES player(id),
+      FOREIGN KEY (techId) REFERENCES technologies(id)
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Failed to create available_technologies table:', err.message);
+    }
+  });
 };
 
-module.exports = { db, initDatabase, dbRun, dbGet };
+module.exports = { db, initDatabase, dbRun, dbGet, dbAll };

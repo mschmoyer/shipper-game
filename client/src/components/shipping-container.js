@@ -29,7 +29,14 @@ const ShippingContainer = ({ gameInfo }) => {
           setMessage(randomMessage);
           setShippingState(randomMessage);
           setShowMessage(true);
-          setTimeout(() => setShowMessage(false), 3000);
+          setTimeout(() => {
+            setShowMessage(false);
+            gameInfo.progress = 0; // Reset progress to 0 after completion
+            setShippingState(''); // Trigger a render
+            setTimeout(() => {
+              setShippingState(''); // Trigger another render to ensure progress bar resets without animation
+            }, 0);
+          }, 3000);
         })
         .catch(error => console.error('Failed to complete shipping:', error));
     }
@@ -38,20 +45,22 @@ const ShippingContainer = ({ gameInfo }) => {
   const handleShipOrder = () => {
     console.log('Ship Order button clicked');
     setShippingState('Fetching order to ship...');
-    gameInfo.progress = 0; // Reset progress to 0 immediately
-    setShippingState(''); // Trigger a render
-    gameInfo.isShipping = true; // Update isShipping to true after a short delay
+    gameInfo.isShipping = true; // Disable the button instantly
+    gameInfo.progress = 10; // Reset progress to 0 immediately
     setShippingState(''); // Trigger a render
     setTimeout(() => {
-      startShipping()
-        .then(data => {
-          if (data.message === 'Shipping started successfully.') {
-            console.log('Shipping started successfully');
-          } else {
-            console.error('Failed to start shipping');
-          }
-        })
-        .catch(error => console.error('Failed to start shipping:', error));
+      setShippingState(''); // Trigger another render to ensure progress bar resets without animation
+      setTimeout(() => {
+        startShipping()
+          .then(data => {
+            if (data.message === 'Shipping started successfully.') {
+              console.log('Shipping started successfully');
+            } else {
+              console.error('Failed to start shipping');
+            }
+          })
+          .catch(error => console.error('Failed to start shipping:', error));
+      }, 0);
     }, 0);
   };
 
@@ -63,7 +72,7 @@ const ShippingContainer = ({ gameInfo }) => {
         </button>
       </div>
       <div className="progress-bar-container">
-        <div className={`progress-bar ${gameInfo.isShipping ? 'smooth' : ''}`} style={{ width: `${gameInfo.progress}%` }}></div>
+        <div className={`progress-bar ${gameInfo.isShipping ? 'smooth' : ''}`} style={{ width: `${gameInfo.isShipping ? gameInfo.progress : 0}%` }}></div>
       </div>
       <div className="shipping-state">
         {gameInfo.isShipping ? gameInfo.shippingStates[Math.floor(gameInfo.progress / (100 / gameInfo.shippingStates.length))] : shippingState}

@@ -77,6 +77,7 @@
 .progress-bar {
   height: 100%;
   background: linear-gradient(0deg, #006400, #00ff00);
+  transition: none; /* Disable transition for instant reset */
 }
 
 .progress-bar.smooth {

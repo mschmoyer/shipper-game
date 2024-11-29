@@ -3,6 +3,7 @@ import './App.css';
 import InfoPanel from './components/info-panel';
 import ShippingContainer from './components/shipping-container';
 import InitialView from './components/initial-view';
+import Toolbar from './components/toolbar';
 import { checkSession, fetchGameInfo } from './api';
 
 const App = () => {
@@ -56,6 +57,7 @@ const App = () => {
         <>
           <InfoPanel gameInfo={gameInfo} />
           <ShippingContainer gameInfo={gameInfo} />
+          <Toolbar availableTechnologies={gameInfo.availableTechnologies} />
         </>
       )}
     </div>

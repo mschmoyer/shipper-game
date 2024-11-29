@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
-const { db, initDatabase } = require('./database');
+const { db, initDatabase, dbRun, dbGet, dbAll } = require('./database');
 const authRoutes = require('./auth');
 const { getShippingStates } = require('./constants');
 
@@ -34,24 +34,24 @@ db.serialize(() => {
 });
 
 // Function to handle operations when an order is shipped
-const shippedOrder = (playerId, callback) => {
+const shippedOrder = async (playerId, callback) => {
   const productValue = 50; // Default product value
-  db.run('UPDATE player SET money = money + ?, ordersShipped = ordersShipped + 1, totalMoneyEarned = totalMoneyEarned + ? WHERE id = ?', [productValue, productValue, playerId], function (err) {
-    if (err) {
-      console.error('Failed to update money:', err.message);
-      callback(err);
-    } else {
-      db.get('SELECT money FROM player WHERE id = ?', [playerId], (err, row) => {
-        if (err) {
-          console.error('Failed to retrieve updated money:', err.message);
-          callback(err);
-        } else {
-          console.log('Order shipped successfully. Updated money:', row.money);
-          callback(null);
-        }
-      });
-    }
-  });
+  try {
+    await dbRun(
+      'UPDATE player SET money = money + ?, ordersShipped = ordersShipped + 1, totalMoneyEarned = totalMoneyEarned + ? WHERE id = ?',
+      [productValue, productValue, playerId],
+      'Failed to update money'
+    );
+    const row = await dbGet(
+      'SELECT money FROM player WHERE id = ?',
+      [playerId],
+      'Failed to retrieve updated money'
+    );
+    console.log('Order shipped successfully. Updated money:', row.money);
+    callback(null);
+  } catch (err) {
+    callback(err);
+  }
 };
 
 // API routes
@@ -68,45 +68,49 @@ app.get('/api/check-session', (req, res) => {
   }
 });
 
-app.get('/api/game-info', (req, res) => {
+app.get('/api/game-info', async (req, res) => {
   if (!req.session.playerId) {
     console.log('Unauthorized access to game-info');
     return res.status(401).json({ error: 'No player session' });
   }
-  db.get('SELECT businessName, money, techPoints, techLevel, ordersShipped, totalMoneyEarned FROM player WHERE id = ?', [req.session.playerId], (err, row) => {
-    if (err) {
-      console.error('Failed to retrieve game info:', err.message);
-      res.status(500).json({ error: 'Failed to retrieve game info.' });
-    } else {
-      const gameInfo = row;
-      db.get('SELECT * FROM active_orders WHERE playerId = ?', [req.session.playerId], (err, orderRow) => {
-        if (err) {
-          console.error('Failed to retrieve active order:', err.message);
-          res.status(500).json({ error: 'Failed to retrieve active order.' });
-        } else {
-          // console.log('Active Orders:', orderRow);
-          const shippingStates = getShippingStates();
-          const shippingDuration = orderRow ? orderRow.duration : 0;
-          const startTime = orderRow ? new Date(orderRow.startTime) : null;
-          const currentTime = new Date();
-          const elapsedTime = startTime ? (currentTime - startTime) / 1000 : 0;
-          const progress = Math.min((elapsedTime / shippingDuration) * 100, 100);
-          const isShipping = progress < 100;
+  try {
+    const gameInfo = await dbGet(
+      'SELECT businessName, money, techPoints, techLevel, ordersShipped, totalMoneyEarned FROM player WHERE id = ?',
+      [req.session.playerId],
+      'Failed to retrieve game info'
+    );
+    const orderRow = await dbGet(
+      'SELECT * FROM active_orders WHERE playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve active order'
+    );
+    const availableTechnologies = await dbAll(
+      'SELECT t.id, t.name, t.description, t.cost FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve available technologies'
+    );
+    const shippingStates = getShippingStates();
+    const shippingDuration = orderRow ? orderRow.duration : 0;
+    const startTime = orderRow ? new Date(orderRow.startTime) : null;
+    const currentTime = new Date();
+    const elapsedTime = startTime ? (currentTime - startTime) / 1000 : 0;
+    const progress = Math.min((elapsedTime / shippingDuration) * 100, 100);
+    const isShipping = progress < 100;
 
-          res.json({
-            ...gameInfo,
-            shippingStates,
-            shippingDuration,
-            progress,
-            isShipping
-          });
-        }
-      });
-    }
-  });
+    res.json({
+      ...gameInfo,
+      shippingStates,
+      shippingDuration,
+      progress,
+      isShipping,
+      availableTechnologies
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/start-shipping', (req, res) => {
+app.post('/api/start-shipping', async (req, res) => {
   if (!req.session.playerId) {
     console.log('Unauthorized access to start-shipping');
     return res.status(401).json({ error: 'No player session' });
@@ -117,67 +121,72 @@ app.post('/api/start-shipping', (req, res) => {
   console.log('Received request to start shipping');
 
   const startTime = new Date().toISOString();
-  db.run('INSERT INTO active_orders (playerId, startTime, duration) VALUES (?, ?, ?)', [req.session.playerId, startTime, shippingDuration], function (err) {
-    if (err) {
-      console.error('Failed to start shipping:', err.message);
-      res.status(500).json({ error: 'Failed to start shipping.' });
-    } else {
-      db.run('UPDATE player SET isShipping = 1, progress = 0 WHERE id = ?', [req.session.playerId], function (err) {
-        if (err) {
-          console.error('Failed to update shipping status:', err.message);
-          res.status(500).json({ error: 'Failed to update shipping status.' });
-        } else {
-          console.log('Shipping started successfully');
-          res.json({ 
-            message: 'Shipping started successfully.',
-            shippingDuration,
-            shippingStates
-          });
-        }
-      });
-    }
-  });
+  try {
+    await dbRun(
+      'INSERT INTO active_orders (playerId, startTime, duration) VALUES (?, ?, ?)',
+      [req.session.playerId, startTime, shippingDuration],
+      'Failed to start shipping'
+    );
+    await dbRun(
+      'UPDATE player SET isShipping = 1, progress = 0 WHERE id = ?',
+      [req.session.playerId],
+      'Failed to update shipping status'
+    );
+    console.log('Shipping started successfully');
+    res.json({ 
+      message: 'Shipping started successfully.',
+      shippingDuration,
+      shippingStates
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/update-progress', (req, res) => {
+app.post('/api/update-progress', async (req, res) => {
   if (!req.session.playerId) {
     console.log('Unauthorized access to update-progress');
     return res.status(401).json({ error: 'No player session' });
   }
   const { progress } = req.body;
-  db.run('UPDATE player SET progress = ? WHERE id = ?', [progress, req.session.playerId], function (err) {
-    if (err) {
-      res.status(500).json({ error: 'Failed to update progress.' });
-    } else {
-      res.json({ message: 'Progress updated successfully.' });
-    }
-  });
+  try {
+    await dbRun(
+      'UPDATE player SET progress = ? WHERE id = ?',
+      [progress, req.session.playerId],
+      'Failed to update progress'
+    );
+    res.json({ message: 'Progress updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/complete-shipping', (req, res) => {
+app.post('/api/complete-shipping', async (req, res) => {
   if (!req.session.playerId) {
     console.log('Unauthorized access to complete-shipping');
     return res.status(401).json({ error: 'No player session' });
   }
-  db.run('UPDATE player SET isShipping = 0, progress = 100 WHERE id = ?', [req.session.playerId], function (err) {
-    if (err) {
-      res.status(500).json({ error: 'Failed to complete shipping.' });
-    } else {
-      db.run('DELETE FROM active_orders WHERE playerId = ?', [req.session.playerId], function (err) {
-        if (err) {
-          res.status(500).json({ error: 'Failed to delete active order.' });
-        } else {
-          shippedOrder(req.session.playerId, (err) => {
-            if (err) {
-              res.status(500).json({ error: 'Failed to update money.' });
-            } else {
-              res.json({ message: 'Shipping completed successfully.' });
-            }
-          });
-        }
-      });
-    }
-  });
+  try {
+    await dbRun(
+      'UPDATE player SET isShipping = 0, progress = 100 WHERE id = ?',
+      [req.session.playerId],
+      'Failed to complete shipping'
+    );
+    await dbRun(
+      'DELETE FROM active_orders WHERE playerId = ?',
+      [req.session.playerId],
+      'Failed to delete active order'
+    );
+    shippedOrder(req.session.playerId, (err) => {
+      if (err) {
+        res.status(500).json({ error: 'Failed to update money.' });
+      } else {
+        res.json({ message: 'Shipping completed successfully.' });
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Serve the React frontend
