@@ -1,4 +1,5 @@
 import React from 'react';
+import './info-panel.css';
 
 const InfoPanel = ({ gameInfo }) => {
   const firstItem = gameInfo.inventory[0];

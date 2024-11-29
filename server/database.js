@@ -104,7 +104,7 @@ const initDatabase = () => {
     if (err) {
       console.error('Failed to create technologies table:', err.message);
     } else {
-      const techs = JSON.parse(fs.readFileSync(path.join(__dirname, 'technologies.json'), 'utf8'));
+      const techs = JSON.parse(fs.readFileSync(path.join(__dirname, 'game_data_files', 'technologies.json'), 'utf8'));
       const stmt = db.prepare('INSERT INTO technologies (name, description, techLevelRequired, cost, techCode, modifierValue, gameEffect) VALUES (?, ?, ?, ?, ?, ?, ?)');
       techs.forEach(tech => {
         stmt.run(tech.name, tech.description, tech.techLevelRequired, tech.cost, tech.techCode, tech.modifierValue, tech.gameEffect);
@@ -171,7 +171,7 @@ const initDatabase = () => {
     if (err) {
       console.error('Failed to create products table:', err.message);
     } else {
-      const products = JSON.parse(fs.readFileSync(path.join(__dirname, 'products.json'), 'utf8'));
+      const products = JSON.parse(fs.readFileSync(path.join(__dirname, 'game_data_files', 'products.json'), 'utf8'));
       const stmt = db.prepare('INSERT INTO products (name, description, weight, costToBuild, salesPrice, imageURL) VALUES (?, ?, ?, ?, ?, ?)');
       products.forEach(product => {
         stmt.run(product.name, product.description, product.weight, product.costToBuild, product.salesPrice, product.imageURL);

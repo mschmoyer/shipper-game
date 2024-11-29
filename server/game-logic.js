@@ -124,7 +124,7 @@ const playerHasTechnology = async (playerId, techCode) => {
 };
 
 const getShippingSteps = async (playerId) => {
-  const stepsPath = path.join(__dirname, 'shipping-steps.json');
+  const stepsPath = path.join(__dirname, 'game_data_files', 'shipping-steps.json');
   let steps = JSON.parse(fs.readFileSync(stepsPath, 'utf8'));
 
   // if user has the product_shipping_presets technology then eliminate the input_weights_dimensions step
