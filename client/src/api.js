@@ -1,4 +1,3 @@
-
 const apiCall = (url, options = {}) => {
   return fetch(url, {
     ...options,
@@ -12,12 +11,6 @@ const apiCall = (url, options = {}) => {
       throw new Error('Network response was not ok');
     }
     return response.json();
-  });
-};
-
-export const completeShipping = () => {
-  return apiCall('http://localhost:5005/api/complete-shipping', {
-    method: 'POST',
   });
 };
 
@@ -40,4 +33,11 @@ export const checkSession = () => {
 
 export const fetchGameInfo = () => {
   return apiCall('http://localhost:5005/api/game-info');
+};
+
+export const purchaseTechnology = (techId, cost) => {
+  return apiCall('http://localhost:5005/api/purchase-technology', {
+    method: 'POST',
+    body: JSON.stringify({ techId, cost }),
+  });
 };

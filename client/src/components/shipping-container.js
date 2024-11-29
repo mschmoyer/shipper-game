@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import './shipping-container.css';
 import { completeShipping, startShipping } from '../api';
 
-const ShippingContainer = ({ gameInfo }) => {
-  const [showMessage, setShowMessage] = useState(false);
-  const [message, setMessage] = useState('');
+const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
   const [shippingState, setShippingState] = useState('');
+  const [shippingCost, setShippingCost] = useState(0);
+  const [buildCost, setBuildCost] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
+  const [distance, setDistance] = useState(0); // Add state for distance
 
   const successMessages = [
     'Order Shipped! 🎉',
@@ -21,26 +23,19 @@ const ShippingContainer = ({ gameInfo }) => {
   ];
 
   useEffect(() => {
-    if (!gameInfo.isShipping && gameInfo.progress === 100) {
-      completeShipping()
-        .then(data => {
-          console.log(data.message);
-          const randomMessage = successMessages[Math.floor(Math.random() * successMessages.length)];
-          setMessage(randomMessage);
-          setShippingState(randomMessage);
-          setShowMessage(true);
-          setTimeout(() => {
-            setShowMessage(false);
-            gameInfo.progress = 0; // Reset progress to 0 after completion
-            setShippingState(''); // Trigger a render
-            setTimeout(() => {
-              setShippingState(''); // Trigger another render to ensure progress bar resets without animation
-            }, 0);
-          }, 3000);
-        })
-        .catch(error => console.error('Failed to complete shipping:', error));
+    if (autoShipEnabled && !gameInfo.isShipping) {
+      console.log('Starting new order automatically on mount');
+      handleShipOrder();
     }
-  }, [gameInfo.isShipping, gameInfo.progress]);
+  }, [autoShipEnabled]); // Add autoShipEnabled as a dependency to ensure it runs on mount when autoShipEnabled is true
+
+  useEffect(() => {
+    if (!gameInfo.isShipping) {
+      if (autoShipEnabled) {
+        setTimeout(handleShipOrder, 10); // Automatically start a new order after 0.5 seconds
+      }
+    }
+  }, [gameInfo.isShipping, gameInfo.progress, autoShipEnabled]);
 
   const handleShipOrder = () => {
     console.log('Ship Order button clicked');
@@ -55,6 +50,10 @@ const ShippingContainer = ({ gameInfo }) => {
           .then(data => {
             if (data.message === 'Shipping started successfully.') {
               console.log('Shipping started successfully');
+              setShippingCost(data.shippingCost);
+              setBuildCost(gameInfo.product.costToBuild);
+              setTotalCost(data.shippingCost + gameInfo.product.costToBuild);
+              setDistance(data.distance); // Set the distance
             } else {
               console.error('Failed to start shipping');
             }
@@ -67,17 +66,35 @@ const ShippingContainer = ({ gameInfo }) => {
   return (
     <div className="shipping-container">
       <div className="ship-button-container">
-        <button className="ship-button" onClick={handleShipOrder} disabled={gameInfo.isShipping}>
-        {gameInfo.isShipping ? 'Working...' : 'Ship Order'}
+        <button
+          className={`ship-button ${autoShipEnabled ? 'auto-ship' : ''}`}
+          onClick={handleShipOrder}
+          disabled={gameInfo.isShipping}
+        >
+          {autoShipEnabled ? 'Working...' : gameInfo.isShipping ? 'Working...' : 'Ship Order'}
         </button>
+        <div className="product-info">
+          <h3> {gameInfo.product.name}</h3>
+          <p>Description: {gameInfo.product.description}</p>
+          <p>Weight: {gameInfo.product.weight} kg</p>
+          <p>Cost: ${gameInfo.product.costToBuild}</p>
+          <p>Price: ${gameInfo.product.salesPrice}</p>
+        </div>
       </div>
       <div className="progress-bar-container">
         <div className={`progress-bar ${gameInfo.isShipping ? 'smooth' : ''}`} style={{ width: `${gameInfo.isShipping ? gameInfo.progress : 0}%` }}></div>
+        <div className="shipping-state">
+          {gameInfo.isShipping ? gameInfo.shippingSteps[Math.floor(gameInfo.progress / (100 / gameInfo.shippingSteps.length))].name : shippingState}
+        </div>
       </div>
-      <div className="shipping-state">
-        {gameInfo.isShipping ? gameInfo.shippingStates[Math.floor(gameInfo.progress / (100 / gameInfo.shippingStates.length))] : shippingState}
+      <div className="cost-info">
+        <p>🔨 Build Cost: ${buildCost}</p>
+        <p>🚚 Shipping Cost: ${shippingCost}</p>
+        <p>💰 Total Cost: ${totalCost}</p>
+        <p>📏 Distance: {distance} miles</p> {/* Add distance display */}
       </div>
-      {showMessage && <div className="order-shipped-message">{message}</div>}
+      
+      
     </div>
   );
 };

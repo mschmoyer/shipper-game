@@ -1,13 +1,15 @@
 .toolbar {
   display: flex;
+  justify-content: center; /* Center the tech cards */
+  flex-wrap: wrap; /* Allow wrapping to new lines if necessary */
   width: 100%;
   padding: 10px;
   background-color: #f0f0f0;
 }
 
 .tech-card {
-  width: 20%;
-  min-height: 200px;
+  width: 24%; /* Increase width by 20% */
+  min-height: 250px;
   position: relative;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -33,4 +35,42 @@
   width: 100%;
   text-align: center;
   font-weight: bold;
+}
+
+.tech-effect {
+  margin-top: 20px;
+  font-style: italic;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.modal-content button {
+  margin: 10px;
+}
+
+.news-message {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  color: green;
+  font-weight: bold;
+  margin-top: 10px;
 }

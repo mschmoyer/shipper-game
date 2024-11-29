@@ -1,11 +1,12 @@
-
 const getShippingStates = () => [
-  'Employee is searching for packing tape...',
-  'Employee is scratching their head...',
-  'Employee is slowly folding the box...',
-  'Employee is looking for the right label...',
-  'Employee is taking a coffee break...',
-  'Employee is carefully placing the item in the box...',
+  'You are writing a love letter to the package...',
+  'You are wrestling with the packing tape like it\'s a wild animal...',
+  'You are folding the box like it\'s an origami masterpiece...',
+  'You are Googling "how to stick a label on a box" for the tenth time...',
+  'You are taking a coffee break and spilling it all over the place...',
+  'You are testing the box by sitting on it... and it\'s not going well...',
 ];
 
-module.exports = { getShippingStates };
+const BASE_SHIPPING_DURATION = 5; // Base shipping duration in seconds
+
+module.exports = { getShippingStates, BASE_SHIPPING_DURATION };

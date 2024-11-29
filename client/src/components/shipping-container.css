@@ -1,28 +1,6 @@
-.order-shipped-message {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #28a745;
-  color: #ffffff;
-  padding: 10px 20px;
-  border-radius: 5px;
-  font-size: 18px;
-  animation: floatUp 3s ease-in-out;
-}
-
-@keyframes floatUp {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -150%);
-  }
-}
-
 .shipping-container {
+  width: 100%;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,7 +8,6 @@
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
-  width: 500px; /* Match the width of the info panel */
 }
 
 .ship-button-container {
@@ -64,6 +41,14 @@
   cursor: not-allowed;
 }
 
+.ship-button.auto-ship {
+  background: linear-gradient(145deg, #ff8c00, #ff4500);
+}
+
+.ship-button.auto-ship:hover {
+  background: linear-gradient(145deg, #ff4500, #ff8c00);
+}
+
 .progress-bar-container {
   position: relative;
   width: 400px;
@@ -85,8 +70,53 @@
 }
 
 .shipping-state {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
   font-size: 14px;
-  color: #333333;
+  color: #ffffff;
   text-align: center;
+  line-height: 30px; /* Align text vertically within the progress bar */
+}
+
+.product-info {
+  margin-left: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  float: left; /* Float product info to the left */
+}
+
+.product-info h3 {
+  margin-top: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.product-info p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.product-info img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
   margin-top: 10px;
+}
+
+.cost-info {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+  float: right; /* Float cost info to the right */
+  width: 200px; /* Set a fixed width for better alignment */
+}
+
+.cost-info p {
+  margin: 5px 0;
 }

@@ -42,7 +42,6 @@ The Shipping Game is a simulation game where players manage a shipping business.
 
 - **POST /api/start-shipping**: Initiates the shipping process.
 - **POST /api/update-progress**: Updates the progress value.
-- **POST /api/complete-shipping**: Marks the shipping as completed.
 - **GET /api/check-session**: Checks if a player session exists.
 - **GET /api/game-info**: Retrieves game information for the logged-in player.
 - **POST /api/create-account**: Creates a new player account.

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Hire Warehouse Worker",
+    "description": "Hire a warehouse worker to help with the daily operations. This increases efficiency and allows for faster processing of orders.",
+    "gameEffect": "Automates order processing.",
+    "techLevelRequired": 1,
+    "modifierValue": 1,
+    "cost": 1500,
+    "techCode": "hire_warehouse_worker"
+  },
+  {
+    "name": "Discounted Shipping Rates",
+    "description": "Negotiate discounted shipping rates with carriers to reduce shipping costs and increase profit margins.",
+    "gameEffect": "Decreases shipping costs by 30%.",
+    "techLevelRequired": 1,
+    "modifierValue": 0.3,
+    "cost": 1000,
+    "techCode": "discounted_shipping_rates"
+  },
+  {
+    "name": "Set Product Shipping Presets",
+    "description": "Set up shipping presets for products to streamline the shipping process and reduce errors.",
+    "gameEffect": "Eliminates a shipping step - inputting weights & dimensions!",
+    "techLevelRequired": 1,
+    "modifierValue": 1,
+    "cost": 500,
+    "techCode": "product_shipping_presets"
+  },
+  {
+    "name": "Bundles: 2-Packs",
+    "description": "Kitting & bundling products together to create new 2-pack products that sell at a higher price.",
+    "gameEffect": "Double the sales price of your products.",
+    "techLevelRequired": 1,
+    "modifierValue": 2,
+    "cost": 1000,
+    "techCode": "bundles"
+  },
+  {
+    "name": "Rate Shopper",
+    "description": "Automatically compare shipping rates from multiple carriers to find the best rate for each shipment.",
+    "gameEffect": "Eliminates a shipping step - shopping for rates!",
+    "techLevelRequired": 1,
+    "modifierValue": 1,
+    "cost": 1000,
+    "techCode": "rate_shopper"
+  }
+]

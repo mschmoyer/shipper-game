@@ -1,0 +1,26 @@
+[
+    {
+      "name": "Gourmet BBQ Spice Blend",
+      "description": "Elevate your grilling game with this premium blend of spices, perfect for any BBQ enthusiast.",
+      "weight": 0.4,
+      "costToBuild": 10,
+      "salesPrice": 300,
+      "imageURL": "http://example.com/gourmet-bbq-spice.jpg"
+    },
+    {
+      "name": "Inspirational Quote T-Shirt",
+      "description": "Wear your motivation with pride. This t-shirt features an inspiring quote to keep you going.",
+      "weight": 0.4,
+      "costToBuild": 10,
+      "salesPrice": 300,
+      "imageURL": "http://example.com/inspirational-tshirt.jpg"
+    },
+    {
+      "name": "Trendy Sticker Pack",
+      "description": "A collection of stylish stickers to personalize your belongings and show off your unique style.",
+      "weight": 0.4,
+      "costToBuild": 10,
+      "salesPrice": 300,
+      "imageURL": "http://example.com/trendy-stickers.jpg"
+    }
+]

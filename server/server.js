@@ -6,7 +6,7 @@ const path = require('path');
 const session = require('express-session');
 const { db, initDatabase, dbRun, dbGet, dbAll } = require('./database');
 const authRoutes = require('./auth');
-const { getShippingStates } = require('./constants');
+const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable } = require('./game-logic');
 
 const app = express();
 const port = 5005;
@@ -33,27 +33,6 @@ db.serialize(() => {
   initDatabase();
 });
 
-// Function to handle operations when an order is shipped
-const shippedOrder = async (playerId, callback) => {
-  const productValue = 50; // Default product value
-  try {
-    await dbRun(
-      'UPDATE player SET money = money + ?, ordersShipped = ordersShipped + 1, totalMoneyEarned = totalMoneyEarned + ? WHERE id = ?',
-      [productValue, productValue, playerId],
-      'Failed to update money'
-    );
-    const row = await dbGet(
-      'SELECT money FROM player WHERE id = ?',
-      [playerId],
-      'Failed to retrieve updated money'
-    );
-    console.log('Order shipped successfully. Updated money:', row.money);
-    callback(null);
-  } catch (err) {
-    callback(err);
-  }
-};
-
 // API routes
 app.use('/api', authRoutes);
 
@@ -79,31 +58,75 @@ app.get('/api/game-info', async (req, res) => {
       [req.session.playerId],
       'Failed to retrieve game info'
     );
-    const orderRow = await dbGet(
-      'SELECT * FROM active_orders WHERE playerId = ?',
+    gameInfo.money = Math.round(gameInfo.money);
+    const currentTimeISO = new Date().toISOString();
+    const activeOrders = await dbAll(
+      `SELECT * FROM orders 
+       WHERE playerId = ? 
+       AND active = 1`,
       [req.session.playerId],
-      'Failed to retrieve active order'
+      'Failed to retrieve active orders'
     );
-    const availableTechnologies = await dbAll(
-      'SELECT t.id, t.name, t.description, t.cost FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
-      [req.session.playerId],
-      'Failed to retrieve available technologies'
-    );
-    const shippingStates = getShippingStates();
-    const shippingDuration = orderRow ? orderRow.duration : 0;
-    const startTime = orderRow ? new Date(orderRow.startTime) : null;
+
+    for (const order of activeOrders) {
+      const startTime = new Date(order.startTime);
+      const currentTime = new Date();
+      const elapsedTime = (currentTime - startTime) / 1000;
+      const progress = Math.min((elapsedTime / order.duration) * 100, 100);
+      const isShipping = progress < 100;
+
+      if (!isShipping) {
+        await OrderCompleted(order.id, req.session.playerId);
+      }
+    }
+
+    const activeOrderRow = activeOrders.find(order => {
+      const startTime = new Date(order.startTime);
+      const currentTime = new Date();
+      const elapsedTime = (currentTime - startTime) / 1000;
+      return elapsedTime < order.duration;
+    });
+
+    const { steps: shippingSteps, totalDuration: shippingDuration } = await getShippingSteps(req.session.playerId);
+    const startTime = activeOrderRow ? new Date(activeOrderRow.startTime) : null;
     const currentTime = new Date();
     const elapsedTime = startTime ? (currentTime - startTime) / 1000 : 0;
     const progress = Math.min((elapsedTime / shippingDuration) * 100, 100);
-    const isShipping = progress < 100;
+    const isShipping = activeOrderRow ? progress < 100 : false;
+
+    const availableTechnologies = await dbAll(
+      'SELECT t.id, t.name, t.description, t.cost, t.gameEffect FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve available technologies'
+    );
+    const acquiredTechnologies = await dbAll(
+      'SELECT at.*, t.techCode FROM acquired_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve acquired technologies'
+    );
+
+    const productRow = await dbGet(
+      'SELECT p.* FROM products p JOIN PlayerProducts pp ON p.id = pp.productId WHERE pp.playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve product info'
+    );
+
+    const inventory = await dbAll(
+      'SELECT * FROM inventory WHERE playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve inventory'
+    );
 
     res.json({
       ...gameInfo,
-      shippingStates,
+      shippingSteps,
       shippingDuration,
       progress,
       isShipping,
-      availableTechnologies
+      availableTechnologies,
+      acquiredTechnologies,
+      product: productRow,
+      inventory
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -115,15 +138,30 @@ app.post('/api/start-shipping', async (req, res) => {
     console.log('Unauthorized access to start-shipping');
     return res.status(401).json({ error: 'No player session' });
   }
-  const shippingStates = getShippingStates();
-  const shippingDuration = 3; // Duration in seconds
 
-  console.log('Received request to start shipping');
-
-  const startTime = new Date().toISOString();
   try {
+    const currentTime = new Date().toISOString();
+    const activeOrder = await dbGet(
+      `SELECT * FROM orders 
+       WHERE playerId = ? 
+       AND datetime(startTime, '+' || duration || ' seconds') > datetime(?)`,
+      [req.session.playerId, currentTime],
+      'Failed to check active orders'
+    );
+
+    if (activeOrder) {
+      console.log('An active order is still in progress');
+      return res.status(400).json({ error: 'An active order is still in progress' });
+    }
+
+    const { steps: shippingSteps, totalDuration: baseShippingDuration } = await getShippingSteps(req.session.playerId);
+    let shippingDuration = baseShippingDuration; // Use baseShippingDuration
+    console.log('Start Shipping - Base Shipping Duration:', baseShippingDuration); // Debugging statement
+
+    const startTime = new Date().toISOString();
+    const { shippingCost, salesPrice, distance } = await calculateShippingAndBuyLabel(req.session.playerId);
     await dbRun(
-      'INSERT INTO active_orders (playerId, startTime, duration) VALUES (?, ?, ?)',
+      'INSERT INTO orders (playerId, startTime, duration) VALUES (?, ?, ?)',
       [req.session.playerId, startTime, shippingDuration],
       'Failed to start shipping'
     );
@@ -136,7 +174,10 @@ app.post('/api/start-shipping', async (req, res) => {
     res.json({ 
       message: 'Shipping started successfully.',
       shippingDuration,
-      shippingStates
+      shippingSteps, // Use shippingSteps instead of shippingStates
+      shippingCost,
+      salesPrice,
+      distance // Add distance to the response
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -161,29 +202,39 @@ app.post('/api/update-progress', async (req, res) => {
   }
 });
 
-app.post('/api/complete-shipping', async (req, res) => {
+app.post('/api/purchase-technology', async (req, res) => {
   if (!req.session.playerId) {
-    console.log('Unauthorized access to complete-shipping');
+    console.log('Unauthorized access to purchase-technology');
     return res.status(401).json({ error: 'No player session' });
   }
+  const { techId, cost } = req.body;
+  const acquiredDate = new Date().toISOString();
   try {
-    await dbRun(
-      'UPDATE player SET isShipping = 0, progress = 100 WHERE id = ?',
+    const player = await dbGet(
+      'SELECT money FROM player WHERE id = ?',
       [req.session.playerId],
-      'Failed to complete shipping'
+      'Failed to retrieve player money'
+    );
+    if (player.money < cost) {
+      return res.json({ success: false, message: 'Not enough money to purchase technology.' });
+    }
+    await dbRun(
+      'INSERT INTO acquired_technologies (playerId, techId, acquiredDate, acquiredCost) VALUES (?, ?, ?, ?)',
+      [req.session.playerId, techId, acquiredDate, cost],
+      'Failed to purchase technology'
     );
     await dbRun(
-      'DELETE FROM active_orders WHERE playerId = ?',
-      [req.session.playerId],
-      'Failed to delete active order'
+      'UPDATE player SET money = money - ? WHERE id = ?',
+      [cost, req.session.playerId],
+      'Failed to update player money'
     );
-    shippedOrder(req.session.playerId, (err) => {
-      if (err) {
-        res.status(500).json({ error: 'Failed to update money.' });
-      } else {
-        res.json({ message: 'Shipping completed successfully.' });
-      }
-    });
+    await dbRun(
+      'DELETE FROM available_technologies WHERE playerId = ? AND techId = ?',
+      [req.session.playerId, techId],
+      'Failed to remove technology from available technologies'
+    );
+    await makeNewTechnologyAvailable(req.session.playerId); // Call the function here
+    res.json({ success: true, message: 'Technology purchased successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

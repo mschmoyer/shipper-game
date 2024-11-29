@@ -9,6 +9,7 @@ import { checkSession, fetchGameInfo } from './api';
 const App = () => {
   const [gameInfo, setGameInfo] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [autoShipEnabled, setAutoShipEnabled] = useState(false);
 
   useEffect(() => {
     checkSession()
@@ -37,6 +38,20 @@ const App = () => {
     }
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (gameInfo) {
+      console.log('Game Info:', gameInfo);
+      const hasAutoShipTech = gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_warehouse_worker');
+      if (hasAutoShipTech) {
+        console.log('AutoShip Enabled');
+        setAutoShipEnabled(true);
+      } else {
+        console.log('AutoShip Disabled');
+        setAutoShipEnabled(false);
+      }
+    }
+  }, [gameInfo]);
+
   const handleAccountCreated = () => {
     checkSession()
       .then(data => {
@@ -56,7 +71,7 @@ const App = () => {
       {gameInfo && (
         <>
           <InfoPanel gameInfo={gameInfo} />
-          <ShippingContainer gameInfo={gameInfo} />
+          <ShippingContainer gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} />
           <Toolbar availableTechnologies={gameInfo.availableTechnologies} />
         </>
       )}
