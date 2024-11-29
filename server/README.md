@@ -2,6 +2,10 @@
 
 This is the backend for the Shipping Game, built with Node.js and Express. It uses SQLite as the database to manage the shipping progress and game state.
 
+## Game Description
+
+The Shipping Game is a simulation game where players manage a shipping business. Players can start shipping orders, track progress, and complete shipments to earn money and upgrade their technologies. The goal is to efficiently manage resources and grow the business by leveraging various technologies.
+
 ## Prerequisites
 
 - Node.js (v14 or higher)
@@ -26,19 +30,22 @@ This is the backend for the Shipping Game, built with Node.js and Express. It us
    ```sh
    npm start
    ```
-   This will start the backend server on `http://localhost:5000`.
+   This will start the backend server on `http://localhost:5005`.
 
 2. **Start the Server in Hot Reload Mode**
    ```sh
    npm run dev
    ```
-   This will start the backend server with hot reload enabled on `http://localhost:5000`.
+   This will start the backend server with hot reload enabled on `http://localhost:5005`.
 
 ## API Endpoints
 
 - **POST /api/start-shipping**: Initiates the shipping process.
 - **POST /api/update-progress**: Updates the progress value.
 - **POST /api/complete-shipping**: Marks the shipping as completed.
+- **GET /api/check-session**: Checks if a player session exists.
+- **GET /api/game-info**: Retrieves game information for the logged-in player.
+- **POST /api/create-account**: Creates a new player account.
 
 ## Folder Structure
 
