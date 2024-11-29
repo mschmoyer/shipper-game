@@ -242,6 +242,32 @@ app.post('/api/purchase-technology', async (req, res) => {
   }
 });
 
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const ordersShipped = await dbAll(
+      'SELECT name, businessName, ordersShipped FROM player ORDER BY ordersShipped DESC LIMIT 10',
+      [],
+      'Failed to retrieve orders shipped leaderboard'
+    );
+
+    const moneyEarned = await dbAll(
+      'SELECT name, businessName, totalMoneyEarned FROM player ORDER BY totalMoneyEarned DESC LIMIT 10',
+      [],
+      'Failed to retrieve money earned leaderboard'
+    );
+
+    const techLevel = await dbAll(
+      'SELECT name, businessName, techLevel FROM player ORDER BY techLevel DESC LIMIT 10',
+      [],
+      'Failed to retrieve tech level leaderboard'
+    );
+
+    res.json({ ordersShipped, moneyEarned, techLevel });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve the React frontend
 app.use(express.static(path.join(__dirname, '../client/build')));
 

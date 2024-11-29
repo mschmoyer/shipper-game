@@ -4,12 +4,15 @@ import InfoPanel from './components/info-panel';
 import ShippingContainer from './components/shipping-container';
 import InitialView from './components/initial-view';
 import Toolbar from './components/toolbar';
-import { checkSession, fetchGameInfo } from './api';
+import Leaderboard from './components/leaderboard';
+import { checkSession, fetchGameInfo, fetchLeaderboard } from './api';
 
 const App = () => {
   const [gameInfo, setGameInfo] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [autoShipEnabled, setAutoShipEnabled] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState({ ordersShipped: [], moneyEarned: [], techLevel: [] });
 
   useEffect(() => {
     checkSession()
@@ -62,6 +65,15 @@ const App = () => {
       .catch(error => console.error('Failed to check session:', error));
   };
 
+  const toggleLeaderboard = () => {
+    if (!isLeaderboardOpen) {
+      fetchLeaderboard()
+        .then(data => setLeaderboardData(data))
+        .catch(error => console.error('Failed to fetch leaderboard:', error));
+    }
+    setIsLeaderboardOpen(!isLeaderboardOpen);
+  };
+
   if (!isLoggedIn) {
     return <InitialView onAccountCreated={handleAccountCreated} />;
   }
@@ -73,6 +85,14 @@ const App = () => {
           <InfoPanel gameInfo={gameInfo} />
           <ShippingContainer gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} />
           <Toolbar availableTechnologies={gameInfo.availableTechnologies} />
+          <button onClick={toggleLeaderboard}>Show Leaderboard</button>
+          <Leaderboard
+            isOpen={isLeaderboardOpen}
+            onClose={toggleLeaderboard}
+            ordersShipped={leaderboardData.ordersShipped}
+            moneyEarned={leaderboardData.moneyEarned}
+            techLevel={leaderboardData.techLevel}
+          />
         </>
       )}
     </div>

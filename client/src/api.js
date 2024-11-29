@@ -41,3 +41,7 @@ export const purchaseTechnology = (techId, cost) => {
     body: JSON.stringify({ techId, cost }),
   });
 };
+
+export const fetchLeaderboard = () => {
+  return apiCall('http://localhost:5005/api/leaderboard');
+};
