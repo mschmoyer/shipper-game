@@ -28,9 +28,14 @@ This is the backend for the Shipping Game, built with Node.js and Express. It us
    ```
    This will start the backend server on `http://localhost:5000`.
 
+2. **Start the Server in Hot Reload Mode**
+   ```sh
+   npm run dev
+   ```
+   This will start the backend server with hot reload enabled on `http://localhost:5000`.
+
 ## API Endpoints
 
-- **GET /api/shipping**: Retrieves the current shipping progress and state.
 - **POST /api/start-shipping**: Initiates the shipping process.
 - **POST /api/update-progress**: Updates the progress value.
 - **POST /api/complete-shipping**: Marks the shipping as completed.

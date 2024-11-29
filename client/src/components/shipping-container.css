@@ -1,37 +1,25 @@
-/* CSS in App.css */
-.App {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  background-color: #f0f0f0;
-  font-family: Arial, sans-serif;
-}
-
-.info-panel {
-  width: 100%;
-  max-width: 800px;
-  background-color: #ffffff;
+.order-shipped-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #28a745;
+  color: #ffffff;
   padding: 10px 20px;
-  border-radius: 10px;
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.info-panel h1 {
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.info-panel .info-values {
-  display: flex;
-  justify-content: space-around;
+  border-radius: 5px;
   font-size: 18px;
+  animation: floatUp 3s ease-in-out;
 }
 
-.info-panel p {
-  margin: 5px 0;
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%);
+  }
 }
 
 .shipping-container {
@@ -42,6 +30,7 @@
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+  width: 500px; /* Match the width of the info panel */
 }
 
 .ship-button-container {
@@ -49,24 +38,25 @@
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
+  margin-right: 20px; /* Add space between button and progress bar */
 }
 
 .ship-button {
   width: 120px;
   height: 120px;
-  border-radius: 50%;
+  border-radius: 15px; /* Rounded corners */
   border: none;
   background: linear-gradient(145deg, #007bff, #0056b3);
   color: #ffffff;
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s, transform 0.3s;
+  transition: background 0.3s, transform 0.1s;
 }
 
 .ship-button:hover {
   background: linear-gradient(145deg, #0056b3, #007bff);
-  transform: scale(1.1);
+  transform: scale(0.95); /* Push-in animation */
 }
 
 .ship-button:disabled {
@@ -78,7 +68,7 @@
   position: relative;
   width: 400px;
   height: 30px;
-  background: linear-gradient(145deg, #d3d3d3, #a9a9a9);
+  background: linear-gradient(90deg, #4d4d4d, #d3d3d3);
   border-radius: 5px;
   overflow: hidden;
   margin-bottom: 20px;
@@ -86,7 +76,7 @@
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(145deg, #28a745, #218838);
+  background: linear-gradient(0deg, #006400, #00ff00);
 }
 
 .progress-bar.smooth {
