@@ -1,0 +1,9 @@
+
+{
+  // ...existing code...
+  "dependencies": {
+    // ...existing code...
+    "connect-sqlite3": "^7.0.0"
+  }
+  // ...existing code...
+}

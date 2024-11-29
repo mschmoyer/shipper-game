@@ -7,6 +7,7 @@ const session = require('express-session');
 const { db, initDatabase, dbRun, dbGet, dbAll } = require('./database');
 const authRoutes = require('./auth');
 const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable } = require('./game-logic');
+const SQLiteStore = require('connect-sqlite3')(session);
 
 const app = express();
 const port = 5005;
@@ -15,6 +16,7 @@ const port = 5005;
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use(session({
+  store: new SQLiteStore({ db: 'sessions.sqlite', dir: './database' }),
   secret: 'AbbaDabbaDoobiePoo',
   resave: false,
   saveUninitialized: false, // Change this to false to avoid creating sessions for unauthenticated users
