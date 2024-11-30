@@ -196,7 +196,6 @@ const gameTick = async (playerId) => {
       }
     }
 
-    // Generate a new order every 15 seconds
     const lastOrder = await dbGet(
       'SELECT * FROM orders WHERE playerId = ? ORDER BY id DESC LIMIT 1',
       [playerId],
@@ -204,9 +203,15 @@ const gameTick = async (playerId) => {
     );
 
     const newOrderInterval = 5; // 15 seconds
-    if (!lastOrder || (currentTime - new Date(lastOrder.startTime)) / 1000 >= newOrderInterval) {
+    const maximumGeneratableOrders = 50;
+    const readyForNewOrder = (!lastOrder || (currentTime - new Date(lastOrder.startTime)) / 1000 >= newOrderInterval);
+
+    if (activeOrders.length < maximumGeneratableOrders && readyForNewOrder) {
       await GenerateOrder(playerId);
     }
+
+    const secondsUntilNextOrder = readyForNewOrder ? 0 : Math.max(0, newOrderInterval - (currentTime - new Date(lastOrder.startTime)) / 1000);
+    return Math.round(secondsUntilNextOrder); // Round the seconds until next order
   } catch (err) {
     throw new Error(err.message);
   }

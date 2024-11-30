@@ -24,19 +24,6 @@ app.use(session({
   cookie: { secure: false, httpOnly: false } // Ensure the cookie is accessible from the client
 }));
 
-// // Debug logging middleware
-// app.use((req, res, next) => {
-//   console.log(`Received ${req.method} request for ${req.url}`);
-//   console.log('Session:', req.session);
-//   next();
-// });
-
-// Database setup
-// db.serialize(() => {
-//   initDatabase();
-// });
-
-// API routes
 app.use('/api', authRoutes);
 
 app.get('/api/game-info', async (req, res) => {
@@ -45,7 +32,7 @@ app.get('/api/game-info', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
   try {
-    await gameTick(req.session.playerId); // Call gameTick
+    const secondsUntilNextOrder = await gameTick(req.session.playerId);
 
     const gameInfo = await dbGet(
       'SELECT businessName, money, techPoints, techLevel, ordersShipped, totalMoneyEarned FROM player WHERE id = ?',
@@ -54,7 +41,7 @@ app.get('/api/game-info', async (req, res) => {
     );
     gameInfo.money = Math.round(gameInfo.money);
 
-    const reputation = await CalculatePlayerReputation(req.session.playerId); // Calculate reputation
+    const reputation = await CalculatePlayerReputation(req.session.playerId);
     gameInfo.reputation = reputation; // Add reputation to gameInfo
 
     const orderListOrders = await dbAll(
@@ -119,7 +106,8 @@ app.get('/api/game-info', async (req, res) => {
       product: productRow,
       inventory,
       activeOrder,
-      orders: orderListOrders // Include active orders in the response
+      orders: orderListOrders,
+      secondsUntilNextOrder
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

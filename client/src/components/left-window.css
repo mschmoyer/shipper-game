@@ -38,3 +38,10 @@
   border-color: #1f7833;
   font-weight: bold;
 }
+
+.order-card.empty {
+  background-color: #e0e0e0;
+  border: 1px dashed #ccc;
+  text-align: center;
+  color: #888;
+}

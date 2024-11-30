@@ -9,6 +9,7 @@ import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer } from './ap
 import LeftWindow from './components/left-window';
 import TitleBar from './components/title-bar';
 import RightWindow from './components/right-window';
+import Cookies from 'js-cookie';
 
 // CONSTANTS
 const gameTitle = "Shipper Game";
@@ -68,6 +69,16 @@ const App = () => {
       console.log('Active Order:', gameInfo.activeOrder);
     }
   }, [gameInfo]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      const hasSeenHowToPlay = Cookies.get('hasSeenHowToPlay');
+      if (!hasSeenHowToPlay) {
+        setIsHowToPlayOpen(true);
+        Cookies.set('hasSeenHowToPlay', 'true', { expires: 365 });
+      }
+    }
+  }, [isLoggedIn]);
 
   const handleAccountCreated = () => {
     checkSession()
@@ -141,7 +152,7 @@ const App = () => {
             onSettings={handleSettings} 
           />
           <div className="content-wrapper">
-            <LeftWindow orders={gameInfo.orders} activeOrder={gameInfo.activeOrder} />
+            <LeftWindow orders={gameInfo.orders} activeOrder={gameInfo.activeOrder} secondsUntilNextOrder={gameInfo.secondsUntilNextOrder} />
             <div className="main-content">
               <ShippingContainer gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} />
               <InfoPanel gameInfo={gameInfo} />
