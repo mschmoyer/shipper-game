@@ -45,3 +45,9 @@ export const purchaseTechnology = (techId, cost) => {
 export const fetchLeaderboard = () => {
   return apiCall('http://localhost:5005/api/leaderboard');
 };
+
+export const resetPlayer = () => {
+  return apiCall('http://localhost:5005/api/reset-player', {
+    method: 'POST',
+  });
+};

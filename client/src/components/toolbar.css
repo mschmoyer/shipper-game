@@ -9,7 +9,9 @@
 
 .tech-card {
   width: 24%; /* Increase width by 20% */
-  min-height: 250px;
+  min-height: 220px;
+  max-width: 250px;
+  margin: 10px;
   position: relative;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -17,6 +19,8 @@
   background-color: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  font-size: 14px;
+  padding: 4px;
 }
 
 .tech-name {
@@ -40,6 +44,31 @@
 .tech-effect {
   margin-top: 20px;
   font-style: italic;
+}
+
+.buy-button {
+  position: absolute;
+  width: 75%;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(45deg, #28a745, #218838);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 0.1s ease-in-out;
+  font-weight: bold;
+}
+
+.buy-button:hover {
+  background: linear-gradient(45deg, #218838, #28a745);
+}
+
+.buy-button:active {
+  transform: translateX(-50%) scale(0.95);
 }
 
 .modal {

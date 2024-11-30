@@ -6,8 +6,9 @@ const path = require('path');
 const session = require('express-session');
 const { db, initDatabase, dbRun, dbGet, dbAll } = require('./database');
 const authRoutes = require('./auth');
-const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable } = require('./game-logic');
+const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable, GenerateOrder } = require('./game-logic');
 const SQLiteStore = require('connect-sqlite3')(session);
+const { OrderStates } = require('./constants');
 
 const app = express();
 const port = 5005;
@@ -31,23 +32,12 @@ app.use(session({
 // });
 
 // Database setup
-db.serialize(() => {
-  initDatabase();
-});
+// db.serialize(() => {
+//   initDatabase();
+// });
 
 // API routes
 app.use('/api', authRoutes);
-
-app.get('/api/check-session', (req, res) => {
-  // console.log('Checking Session. Session=', req.session);
-  if (req.session.playerId) {
-    console.log('Session found for playerId:', req.session.playerId);
-    res.json({ loggedIn: true });
-  } else {
-    console.log('No session found');
-    res.json({ loggedIn: false });
-  }
-});
 
 app.get('/api/game-info', async (req, res) => {
   if (!req.session.playerId) {
@@ -160,13 +150,17 @@ app.post('/api/start-shipping', async (req, res) => {
     let shippingDuration = baseShippingDuration; // Use baseShippingDuration
     console.log('Start Shipping - Base Shipping Duration:', baseShippingDuration); // Debugging statement
 
-    const startTime = new Date().toISOString();
     const { shippingCost, salesPrice, distance } = await calculateShippingAndBuyLabel(req.session.playerId);
+
+    const newOrder = await GenerateOrder(req.session.playerId); // Call GenerateOrder function
+
+    // Update the duration and state of the order
     await dbRun(
-      'INSERT INTO orders (playerId, startTime, duration) VALUES (?, ?, ?)',
-      [req.session.playerId, startTime, shippingDuration],
-      'Failed to start shipping'
+      'UPDATE orders SET duration = ?, state = ? WHERE id = ?',
+      [shippingDuration, OrderStates.InProgress, newOrder.id],
+      'Failed to update order duration and state'
     );
+
     await dbRun(
       'UPDATE player SET isShipping = 1, progress = 0 WHERE id = ?',
       [req.session.playerId],
@@ -179,26 +173,9 @@ app.post('/api/start-shipping', async (req, res) => {
       shippingSteps, // Use shippingSteps instead of shippingStates
       shippingCost,
       salesPrice,
-      distance // Add distance to the response
+      distance, // Add distance to the response
+      order: newOrder // Include the new order data in the response
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/update-progress', async (req, res) => {
-  if (!req.session.playerId) {
-    console.log('Unauthorized access to update-progress');
-    return res.status(401).json({ error: 'No player session' });
-  }
-  const { progress } = req.body;
-  try {
-    await dbRun(
-      'UPDATE player SET progress = ? WHERE id = ?',
-      [progress, req.session.playerId],
-      'Failed to update progress'
-    );
-    res.json({ message: 'Progress updated successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -220,26 +197,49 @@ app.post('/api/purchase-technology', async (req, res) => {
     if (player.money < cost) {
       return res.json({ success: false, message: 'Not enough money to purchase technology.' });
     }
-    await dbRun(
-      'INSERT INTO acquired_technologies (playerId, techId, acquiredDate, acquiredCost) VALUES (?, ?, ?, ?)',
-      [req.session.playerId, techId, acquiredDate, cost],
-      'Failed to purchase technology'
+    const technology = await dbGet(
+      'SELECT techCode, acquirable FROM technologies WHERE id = ?',
+      [techId],
+      'Failed to retrieve technology info'
     );
+    if (technology.acquirable) {
+      await dbRun(
+        'INSERT INTO acquired_technologies (playerId, techId, acquiredDate, acquiredCost) VALUES (?, ?, ?, ?)',
+        [req.session.playerId, techId, acquiredDate, cost],
+        'Failed to purchase technology'
+      );
+    } else {
+      performOneTimeTechnologyEffect(req.session.playerId, technology.techCode);
+    }
     await dbRun(
-      'UPDATE player SET money = money - ? WHERE id = ?',
+      'UPDATE player SET money = money - ?, techLevel = techLevel + 1 WHERE id = ?',
       [cost, req.session.playerId],
-      'Failed to update player money'
+      'Failed to update player money and tech level'
     );
     await dbRun(
       'DELETE FROM available_technologies WHERE playerId = ? AND techId = ?',
       [req.session.playerId, techId],
       'Failed to remove technology from available technologies'
     );
-    await makeNewTechnologyAvailable(req.session.playerId); // Call the function here
+    const newTechAdded = await makeNewTechnologyAvailable(req.session.playerId);
+    if (newTechAdded) {
+      console.log('A new technology was made available for playerId', req.session.playerId);
+    } else {
+      console.log('No new technology available for playerId', req.session.playerId);
+    }
     res.json({ success: true, message: 'Technology purchased successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.post('/api/reset-player', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to reset player session' });
+    }
+    res.json({ success: true });
+  });
 });
 
 app.get('/api/leaderboard', async (req, res) => {

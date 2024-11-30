@@ -41,7 +41,6 @@ The Shipping Game is a simulation game where players manage a shipping business.
 ## API Endpoints
 
 - **POST /api/start-shipping**: Initiates the shipping process.
-- **POST /api/update-progress**: Updates the progress value.
 - **GET /api/check-session**: Checks if a player session exists.
 - **GET /api/game-info**: Retrieves game information for the logged-in player.
 - **POST /api/create-account**: Creates a new player account.

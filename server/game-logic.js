@@ -1,6 +1,7 @@
 const { dbRun, dbGet, dbAll } = require('./database');
 const fs = require('fs');
 const path = require('path');
+const { OrderStates } = require('./constants');
 
 const generateInitialGameState = async (name, businessName, email, apiKey, apiSecret) => {
   const initialProgress = 0;
@@ -18,7 +19,7 @@ const generateInitialGameState = async (name, businessName, email, apiKey, apiSe
       'Failed to create account'
     );
     const playerId = result.lastID;
-    await generateAvailableTechnology(playerId, initialTechLevel);
+    await initializeTechTree(playerId, initialTechLevel);
     await assignRandomProductToPlayer(playerId);
     return playerId;
   } catch (err) {
@@ -26,22 +27,12 @@ const generateInitialGameState = async (name, businessName, email, apiKey, apiSe
   }
 };
 
-const generateAvailableTechnology = async (playerId, techLevel) => {
+const initializeTechTree = async (playerId, techLevel) => {
   try {
-    const technologies = await dbAll(
-      'SELECT id, name FROM technologies WHERE techLevelRequired = ? ORDER BY RANDOM() LIMIT 3',
-      [techLevel],
-      'Failed to retrieve technologies'
-    );
-
-    const techIds = technologies.map(tech => tech.id);
-    await dbRun(
-      'INSERT INTO available_technologies (playerId, techId) VALUES (?, ?), (?, ?), (?, ?)',
-      [playerId, techIds[0], playerId, techIds[1], playerId, techIds[2]],
-      'Failed to insert available technologies'
-    );
-
-    console.log('Available technologies for playerId', playerId, ':', technologies.map(tech => tech.name).join(', '));
+    for (let i = 0; i < 3; i++) {
+      await makeNewTechnologyAvailable(playerId);
+    }
+    console.log('Initialized tech tree for playerId', playerId);
   } catch (err) {
     throw new Error(err.message);
   }
@@ -182,26 +173,28 @@ const OrderCompleted = async (orderId, playerId) => {
 
 const makeNewTechnologyAvailable = async (playerId) => {
   try {
-    const availableTechIds = await dbAll(
-      'SELECT techId FROM available_technologies WHERE playerId = ?',
+    const availableTechCodes = await dbAll(
+      'SELECT t.techCode FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
       [playerId],
       'Failed to retrieve available technologies'
     );
-    const acquiredTechIds = await dbAll(
-      'SELECT techId FROM acquired_technologies WHERE playerId = ?',
+    const acquiredTechCodes = await dbAll(
+      'SELECT t.techCode FROM acquired_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
       [playerId],
       'Failed to retrieve acquired technologies'
     );
 
-    const excludedTechIds = [...availableTechIds, ...acquiredTechIds].map(tech => tech.techId);
+    const excludedTechCodes = [...availableTechCodes, ...acquiredTechCodes].map(tech => tech.techCode);
+    console.log('Excluded Technology Codes for playerId', playerId, ':', excludedTechCodes);
 
     const newTech = await dbGet(
-      `SELECT id FROM technologies 
-       WHERE id NOT IN (${excludedTechIds.join(',')}) 
+      `SELECT id, techCode FROM technologies 
+       WHERE techCode NOT IN (${excludedTechCodes.map(code => `'${code}'`).join(',')}) 
        ORDER BY RANDOM() LIMIT 1`,
       [],
       'Failed to retrieve new technology'
     );
+    console.log('New Technology for playerId', playerId, ':', newTech);
 
     if (newTech) {
       await dbRun(
@@ -210,9 +203,50 @@ const makeNewTechnologyAvailable = async (playerId) => {
         'Failed to insert new available technology'
       );
       console.log('New technology made available for playerId', playerId, ':', newTech.id);
+      return true;
     } else {
       console.log('No new technology available for playerId', playerId);
+      return false;
     }
+  } catch (err) {
+    throw new Error(err.message);
+  }
+};
+
+const performOneTimeTechnologyEffect = async (playerId, techCode) => {
+  switch (techCode) {
+    case 'example_tech_code_1':
+      console.log(`Performing effect for technology: ${techCode}`);
+      break;
+    case 'example_tech_code_2':
+      console.log(`Performing effect for technology: ${techCode}`);
+      break;
+    // Add more cases as needed
+    default:
+      console.log(`No effect defined for technology: ${techCode}`);
+  }
+};
+
+const GenerateOrder = async (playerId) => {
+  const startTime = new Date().toISOString();
+  const dueByTime = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 minutes from now
+  const duration = 120; // 2 minutes in seconds
+  const state = OrderStates.AwaitingShipment; // Use OrderStates enum
+
+  try {
+    await dbRun(
+      'INSERT INTO orders (playerId, startTime, duration, dueByTime, state) VALUES (?, ?, ?, ?, ?)',
+      [playerId, startTime, duration, dueByTime, state],
+      'Failed to generate order'
+    );
+
+    const order = await dbGet(
+      'SELECT * FROM orders WHERE playerId = ? ORDER BY id DESC LIMIT 1',
+      [playerId],
+      'Failed to retrieve generated order'
+    );
+
+    return order;
   } catch (err) {
     throw new Error(err.message);
   }
@@ -220,10 +254,12 @@ const makeNewTechnologyAvailable = async (playerId) => {
 
 module.exports = { 
   generateInitialGameState, 
-  generateAvailableTechnology, 
+  initializeTechTree, 
   calculateShippingAndBuyLabel, 
   playerHasTechnology,
   getShippingSteps,
   OrderCompleted,
-  makeNewTechnologyAvailable // Export makeNewTechnologyAvailable
+  makeNewTechnologyAvailable,
+  performOneTimeTechnologyEffect, // Export performOneTimeTechnologyEffect
+  GenerateOrder
 };

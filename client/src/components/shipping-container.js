@@ -7,7 +7,9 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
   const [shippingCost, setShippingCost] = useState(0);
   const [buildCost, setBuildCost] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
-  const [distance, setDistance] = useState(0); // Add state for distance
+  const [distance, setDistance] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [boxPosition, setBoxPosition] = useState(0);
 
   const successMessages = [
     'Order Shipped! 🎉',
@@ -27,33 +29,40 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
       console.log('Starting new order automatically on mount');
       handleShipOrder();
     }
-  }, [autoShipEnabled]); // Add autoShipEnabled as a dependency to ensure it runs on mount when autoShipEnabled is true
+  }, [autoShipEnabled]);
 
   useEffect(() => {
     if (!gameInfo.isShipping) {
       if (autoShipEnabled) {
-        setTimeout(handleShipOrder, 10); // Automatically start a new order after 0.5 seconds
+        setTimeout(handleShipOrder, 0);
       }
     }
   }, [gameInfo.isShipping, gameInfo.progress, autoShipEnabled]);
 
+  useEffect(() => {
+    if (gameInfo.isShipping) {
+      const interval = setInterval(() => {
+        setBoxPosition(gameInfo.progress);
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [gameInfo.isShipping, gameInfo.progress]);
+
   const handleShipOrder = () => {
-    console.log('Ship Order button clicked');
     setShippingState('Fetching order to ship...');
-    gameInfo.isShipping = true; // Disable the button instantly
-    gameInfo.progress = 10; // Reset progress to 0 immediately
-    setShippingState(''); // Trigger a render
+    gameInfo.isShipping = true;
+    gameInfo.progress = 0;
+    setShippingState('');
     setTimeout(() => {
-      setShippingState(''); // Trigger another render to ensure progress bar resets without animation
+      setShippingState(''); 
       setTimeout(() => {
         startShipping()
           .then(data => {
             if (data.message === 'Shipping started successfully.') {
-              console.log('Shipping started successfully');
               setShippingCost(data.shippingCost);
               setBuildCost(gameInfo.product.costToBuild);
               setTotalCost(data.shippingCost + gameInfo.product.costToBuild);
-              setDistance(data.distance); // Set the distance
+              setDistance(data.distance);
             } else {
               console.error('Failed to start shipping');
             }
@@ -62,6 +71,12 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
       }, 0);
     }, 0);
   };
+
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
+  const firstItem = gameInfo.inventory[0];
 
   return (
     <div className="shipping-container">
@@ -74,11 +89,37 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
           {autoShipEnabled ? 'Working...' : gameInfo.isShipping ? 'Working...' : 'Ship Order'}
         </button>
         <div className="product-info">
-          <h3> {gameInfo.product.name}</h3>
-          <p>Description: {gameInfo.product.description}</p>
-          <p>Weight: {gameInfo.product.weight} kg</p>
-          <p>Cost: ${gameInfo.product.costToBuild}</p>
-          <p>Price: ${gameInfo.product.salesPrice}</p>
+          <h3 onClick={toggleModal}>{gameInfo.product.name}</h3>
+          {isModalOpen && (
+            <div className="modal">
+              <div className="modal-content">
+                <span className="close" onClick={toggleModal}>&times;</span>
+                <p>📝 Description: {gameInfo.product.description}</p>
+                <p>⚖️ Weight: {gameInfo.product.weight} kg</p>
+                <p>💵 Cost: ${gameInfo.product.costToBuild}</p>
+                <p>💲 Price: ${gameInfo.product.salesPrice}</p>
+              </div>
+            </div>
+          )}
+          <div className="cost-info">
+            <div className="shipping-info">
+              <p>📦 Quantity: 1</p>
+              <p>📏 Distance: {distance} miles</p>
+              <p>🚚 Shipping: ${shippingCost}</p>
+            </div>
+            <div className="profit-info">
+              <p>📦 Build Cost: ${totalCost}</p>
+              <p>💰 Sale Price: ${gameInfo.product.salesPrice}</p>
+              <p>💵 Est. profit: ${gameInfo.product.salesPrice - totalCost}</p>
+            </div>
+            {firstItem && (
+              <div className="inventory-info">
+                <p>📦 {firstItem.onHand} on hand</p>
+                <p>💔 {firstItem.damaged} damaged</p>
+                <p>🚚 {firstItem.inTransit} in transit</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="progress-bar-container">
@@ -87,14 +128,6 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
           {gameInfo.isShipping ? gameInfo.shippingSteps[Math.floor(gameInfo.progress / (100 / gameInfo.shippingSteps.length))].name : shippingState}
         </div>
       </div>
-      <div className="cost-info">
-        <p>🔨 Build Cost: ${buildCost}</p>
-        <p>🚚 Shipping Cost: ${shippingCost}</p>
-        <p>💰 Total Cost: ${totalCost}</p>
-        <p>📏 Distance: {distance} miles</p> {/* Add distance display */}
-      </div>
-      
-      
     </div>
   );
 };

@@ -31,24 +31,12 @@ const InitialView = ({ onAccountCreated }) => {
       </p>
       <form className="account-form" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Name:</label>
+          <label>Give yourself a name:</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="form-group">
-          <label>Business Name:</label>
+          <label>Your new enterprise is called (business name):</label>
           <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Email (optional):</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label>ShipStation API Key (optional):</label>
-          <input type="text" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label>ShipStation API Secret (optional):</label>
-          <input type="text" value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} />
         </div>
         <button type="submit" className="create-account-button">Create Account</button>
       </form>

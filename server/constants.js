@@ -9,4 +9,13 @@ const getShippingStates = () => [
 
 const BASE_SHIPPING_DURATION = 5; // Base shipping duration in seconds
 
-module.exports = { getShippingStates, BASE_SHIPPING_DURATION };
+const OrderStates = Object.freeze({
+  AwaitingShipment: 'AwaitingShipment',
+  InProgress: 'InProgress',
+  Shipped: 'Shipped',
+  Canceled: 'Canceled',
+  Lost: 'Lost',
+  Returned: 'Returned'
+});
+
+module.exports = { getShippingStates, BASE_SHIPPING_DURATION, OrderStates };

@@ -5,7 +5,7 @@ import ShippingContainer from './components/shipping-container';
 import InitialView from './components/initial-view';
 import Toolbar from './components/toolbar';
 import Leaderboard from './components/leaderboard';
-import { checkSession, fetchGameInfo, fetchLeaderboard } from './api';
+import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer } from './api';
 
 const App = () => {
   const [gameInfo, setGameInfo] = useState(null);
@@ -35,7 +35,7 @@ const App = () => {
       };
 
       fetchGameInfoInterval();
-      const interval = setInterval(fetchGameInfoInterval, 1000);
+      const interval = setInterval(fetchGameInfoInterval, 400);
 
       return () => clearInterval(interval);
     }
@@ -43,13 +43,13 @@ const App = () => {
 
   useEffect(() => {
     if (gameInfo) {
-      console.log('Game Info:', gameInfo);
+      // console.log('Game Info:', gameInfo);
       const hasAutoShipTech = gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_warehouse_worker');
       if (hasAutoShipTech) {
-        console.log('AutoShip Enabled');
+        // console.log('AutoShip Enabled');
         setAutoShipEnabled(true);
       } else {
-        console.log('AutoShip Disabled');
+        // console.log('AutoShip Disabled');
         setAutoShipEnabled(false);
       }
     }
@@ -74,6 +74,17 @@ const App = () => {
     setIsLeaderboardOpen(!isLeaderboardOpen);
   };
 
+  const handleResetPlayer = () => {
+    resetPlayer()
+      .then(data => {
+        if (data.success) {
+          setIsLoggedIn(false);
+          setGameInfo(null);
+        }
+      })
+      .catch(error => console.error('Failed to reset player:', error));
+  };
+
   if (!isLoggedIn) {
     return <InitialView onAccountCreated={handleAccountCreated} />;
   }
@@ -86,6 +97,7 @@ const App = () => {
           <ShippingContainer gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} />
           <Toolbar availableTechnologies={gameInfo.availableTechnologies} />
           <button onClick={toggleLeaderboard}>Show Leaderboard</button>
+          <button onClick={handleResetPlayer}>Start New Business</button>
           <Leaderboard
             isOpen={isLeaderboardOpen}
             onClose={toggleLeaderboard}

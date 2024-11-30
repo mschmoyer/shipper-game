@@ -35,4 +35,14 @@ router.get('/check-session', (req, res) => {
   }
 });
 
+router.get('/api/check-session', (req, res) => {
+  if (req.session.playerId) {
+    console.log('Session found for playerId:', req.session.playerId);
+    res.json({ loggedIn: true });
+  } else {
+    console.log('No session found');
+    res.json({ loggedIn: false });
+  }
+});
+
 module.exports = router;

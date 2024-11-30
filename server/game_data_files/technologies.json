@@ -5,6 +5,7 @@
     "gameEffect": "Automates order processing.",
     "techLevelRequired": 1,
     "modifierValue": 1,
+    "acquirable": true,
     "cost": 1500,
     "techCode": "hire_warehouse_worker"
   },
@@ -14,6 +15,7 @@
     "gameEffect": "Decreases shipping costs by 30%.",
     "techLevelRequired": 1,
     "modifierValue": 0.3,
+    "acquirable": true,
     "cost": 1000,
     "techCode": "discounted_shipping_rates"
   },
@@ -23,6 +25,7 @@
     "gameEffect": "Eliminates a shipping step - inputting weights & dimensions!",
     "techLevelRequired": 1,
     "modifierValue": 1,
+    "acquirable": true,
     "cost": 500,
     "techCode": "product_shipping_presets"
   },
@@ -32,6 +35,7 @@
     "gameEffect": "Double the sales price of your products.",
     "techLevelRequired": 1,
     "modifierValue": 2,
+    "acquirable": true,
     "cost": 1000,
     "techCode": "bundles"
   },
@@ -41,7 +45,18 @@
     "gameEffect": "Eliminates a shipping step - shopping for rates!",
     "techLevelRequired": 1,
     "modifierValue": 1,
+    "acquirable": true,
     "cost": 1000,
     "techCode": "rate_shopper"
+  },
+  {
+    "name": "Fire Sale",
+    "description": "Run a fire sale to clear out old inventory and make room for new products.",
+    "gameEffect": "Generate more orders for a short period of time but reduce profit by 10%",
+    "techLevelRequired": 1,
+    "modifierValue": 0.1,
+    "acquirable": false,
+    "cost": 1000, 
+    "techCode": "fire_sale"
   }
 ]

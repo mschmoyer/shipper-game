@@ -18,13 +18,13 @@
 .info-panel .info-values {
   display: flex;
   justify-content: space-around;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .info-panel .inventory-values {
   display: flex;
   justify-content: space-around;
-  font-size: 18px;
+  font-size: 14px;
   margin-top: 20px;
   margin-left: 40%;
 }
