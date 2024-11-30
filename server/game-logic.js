@@ -4,6 +4,7 @@ const path = require('path');
 const { OrderStates } = require('./constants');
 
 const generateInitialGameState = async (name, businessName, email, apiKey, apiSecret) => {
+  console.log('generateInitialGameState called with:', { name, businessName, email, apiKey, apiSecret }); // Debugging statement
   const initialProgress = 0;
   const initialIsShipping = 0;
   const initialMoney = 50;
@@ -14,15 +15,17 @@ const generateInitialGameState = async (name, businessName, email, apiKey, apiSe
 
   try {
     const result = await dbRun(
-      'INSERT INTO player (name, businessName, email, apiKey, apiSecret, progress, isShipping, money, techPoints, techLevel, ordersShipped, totalMoneyEarned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, businessName, email, apiKey, apiSecret, initialProgress, initialIsShipping, initialMoney, initialTechPoints, initialTechLevel, initialOrdersShipped, initialTotalMoneyEarned],
+      'INSERT INTO player (name, businessName, progress, isShipping, money, techPoints, techLevel, ordersShipped, totalMoneyEarned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, businessName, initialProgress, initialIsShipping, initialMoney, initialTechPoints, initialTechLevel, initialOrdersShipped, initialTotalMoneyEarned],
       'Failed to create account'
     );
     const playerId = result.lastID;
+    console.log('Generated playerId in generateInitialGameState:', playerId); // Debugging statement
     await initializeTechTree(playerId, initialTechLevel);
     await assignRandomProductToPlayer(playerId);
     return playerId;
   } catch (err) {
+    console.error('Error in generateInitialGameState:', err); // Debugging statement
     throw new Error(err.message);
   }
 };
@@ -61,7 +64,7 @@ const assignRandomProductToPlayer = async (playerId) => {
   }
 };
 
-const calculateShippingAndBuyLabel = async (playerId) => {
+const calculateShippingAndBuyLabel = async (playerId, distance) => {
   try {
     const product = await dbGet(
       'SELECT p.weight, p.costToBuild, p.salesPrice FROM products p JOIN PlayerProducts pp ON p.id = pp.productId WHERE pp.playerId = ?',
@@ -69,7 +72,6 @@ const calculateShippingAndBuyLabel = async (playerId) => {
       'Failed to retrieve product info'
     );
 
-    const distance = Math.random() * 1000; // Random distance in miles
     const shippingCostPerMile = 0.05; // Cost per mile
     let shippingCost = distance * shippingCostPerMile;
 
@@ -80,22 +82,13 @@ const calculateShippingAndBuyLabel = async (playerId) => {
 
     const totalCost = Math.round(shippingCost + product.costToBuild);
 
-    // const player = await dbGet(
-    //   'SELECT money FROM player WHERE id = ?',
-    //   [playerId],
-    //   'Failed to retrieve player money'
-    // );
-    // if (player.money < totalCost) {
-    //   throw new Error('Not enough money to cover shipping and production costs');
-    // }
-
     await dbRun(
       'UPDATE player SET money = money - ? WHERE id = ?',
       [Math.round(totalCost), playerId],
       'Failed to deduct shipping and production costs'
     );
 
-    return { shippingCost: Math.round(shippingCost), salesPrice: Math.round(product.salesPrice), distance: Math.round(distance) }; // Add distance to the return object
+    return { shippingCost: Math.round(shippingCost), salesPrice: Math.round(product.salesPrice) };
   } catch (err) {
     throw new Error(err.message);
   }
@@ -153,8 +146,8 @@ const OrderCompleted = async (orderId, playerId) => {
       'Failed to update money'
     );
     await dbRun(
-      'UPDATE orders SET active = 0 WHERE id = ?',
-      [orderId],
+      'UPDATE orders SET state = ?, active = 0 WHERE id = ?',
+      [OrderStates.Shipped, orderId],
       'Failed to update order status'
     );
 
@@ -166,6 +159,54 @@ const OrderCompleted = async (orderId, playerId) => {
     );
 
     console.log('Order completed successfully. Updated money:', productValue);
+  } catch (err) {
+    throw new Error(err.message);
+  }
+};
+
+const OrderCanceled = async (orderId, playerId) => {
+  // Currently does nothing
+  console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
+
+  await dbRun(
+    'UPDATE orders SET active=0, state = ? WHERE id = ?',
+    [OrderStates.Canceled, orderId],
+    'Failed to update order state to canceled'
+  );
+};
+
+const gameTick = async (playerId) => {
+  try {
+    const currentTime = new Date();
+    const activeOrders = await dbAll(
+      'SELECT * FROM orders WHERE playerId = ? AND active = 1',
+      [playerId],
+      'Failed to retrieve active orders'
+    );
+
+    for (const order of activeOrders) {
+      const startTime = new Date(order.startTime);
+      const dueByTime = new Date(order.dueByTime);
+      const elapsedTime = (currentTime - startTime) / 1000;
+
+      if (order.state === OrderStates.InProgress && elapsedTime >= order.duration) {
+        await OrderCompleted(order.id, playerId);
+      } else if (currentTime > dueByTime) {
+        await OrderCanceled(order.id, playerId);
+      }
+    }
+
+    // Generate a new order every 15 seconds
+    const lastOrder = await dbGet(
+      'SELECT * FROM orders WHERE playerId = ? ORDER BY id DESC LIMIT 1',
+      [playerId],
+      'Failed to retrieve last order'
+    );
+
+    const newOrderInterval = 5; // 15 seconds
+    if (!lastOrder || (currentTime - new Date(lastOrder.startTime)) / 1000 >= newOrderInterval) {
+      await GenerateOrder(playerId);
+    }
   } catch (err) {
     throw new Error(err.message);
   }
@@ -232,11 +273,12 @@ const GenerateOrder = async (playerId) => {
   const dueByTime = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 minutes from now
   const duration = 120; // 2 minutes in seconds
   const state = OrderStates.AwaitingShipment; // Use OrderStates enum
+  const distance = Math.round(Math.random() * 1000); // Random distance in miles
 
   try {
     await dbRun(
-      'INSERT INTO orders (playerId, startTime, duration, dueByTime, state) VALUES (?, ?, ?, ?, ?)',
-      [playerId, startTime, duration, dueByTime, state],
+      'INSERT INTO orders (playerId, startTime, duration, dueByTime, state, distance) VALUES (?, ?, ?, ?, ?, ?)',
+      [playerId, startTime, duration, dueByTime, state, distance],
       'Failed to generate order'
     );
 
@@ -252,6 +294,51 @@ const GenerateOrder = async (playerId) => {
   }
 };
 
+let reputationCache = {};
+const CACHE_EXPIRATION_TIME = 60 * 1000; // 1 minute in milliseconds
+
+const CalculatePlayerReputation = async (playerId) => {
+  const currentTime = Date.now();
+
+  if (reputationCache[playerId] && (currentTime - reputationCache[playerId].timestamp < CACHE_EXPIRATION_TIME)) {
+    return reputationCache[playerId].score;
+  }
+
+  try {
+    const orders = await dbAll(
+      'SELECT state, dueByTime, startTime, duration FROM orders WHERE playerId = ?',
+      [playerId],
+      'Failed to retrieve orders'
+    );
+
+    let positiveCount = 0;
+    let negativeCount = 0;
+
+    for (const order of orders) {
+      const dueByTime = new Date(order.dueByTime);
+      const endTime = new Date(new Date(order.startTime).getTime() + order.duration * 1000);
+
+      if (order.state === OrderStates.Canceled) {
+        negativeCount++;
+      } else if (order.state === OrderStates.Shipped && endTime <= dueByTime) {
+        positiveCount++;
+      }
+    }
+
+    const totalOrders = positiveCount + negativeCount;
+    const reputationScore = totalOrders > 0 ? (positiveCount / totalOrders) * 100 : 100;
+
+    reputationCache[playerId] = {
+      score: Math.round(reputationScore),
+      timestamp: currentTime
+    };
+
+    return reputationCache[playerId].score;
+  } catch (err) {
+    throw new Error(err.message);
+  }
+};
+
 module.exports = { 
   generateInitialGameState, 
   initializeTechTree, 
@@ -260,6 +347,9 @@ module.exports = {
   getShippingSteps,
   OrderCompleted,
   makeNewTechnologyAvailable,
-  performOneTimeTechnologyEffect, // Export performOneTimeTechnologyEffect
-  GenerateOrder
+  performOneTimeTechnologyEffect,
+  GenerateOrder,
+  gameTick, // Export gameTick
+  OrderCanceled, // Export OrderCanceled
+  CalculatePlayerReputation // Export CalculatePlayerReputation
 };

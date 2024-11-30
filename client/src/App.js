@@ -6,6 +6,7 @@ import InitialView from './components/initial-view';
 import Toolbar from './components/toolbar';
 import Leaderboard from './components/leaderboard';
 import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer } from './api';
+import LeftWindow from './components/left-window';
 
 const App = () => {
   const [gameInfo, setGameInfo] = useState(null);
@@ -14,6 +15,7 @@ const App = () => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ ordersShipped: [], moneyEarned: [], techLevel: [] });
 
+  // Check if the player is logged in
   useEffect(() => {
     checkSession()
       .then(data => {
@@ -24,6 +26,7 @@ const App = () => {
       .catch(error => console.error('Failed to check session:', error));
   }, []);
 
+  // Fetch game info every 400ms if the player is logged in
   useEffect(() => {
     if (isLoggedIn) {
       const fetchGameInfoInterval = () => {
@@ -35,21 +38,19 @@ const App = () => {
       };
 
       fetchGameInfoInterval();
-      const interval = setInterval(fetchGameInfoInterval, 400);
+      const interval = setInterval(fetchGameInfoInterval, 1000);
 
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
 
+  // Check if the player has the AutoShip technology
   useEffect(() => {
     if (gameInfo) {
-      // console.log('Game Info:', gameInfo);
       const hasAutoShipTech = gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_warehouse_worker');
       if (hasAutoShipTech) {
-        // console.log('AutoShip Enabled');
         setAutoShipEnabled(true);
       } else {
-        // console.log('AutoShip Disabled');
         setAutoShipEnabled(false);
       }
     }
@@ -93,18 +94,21 @@ const App = () => {
     <div className="App">
       {gameInfo && (
         <>
-          <InfoPanel gameInfo={gameInfo} />
-          <ShippingContainer gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} />
-          <Toolbar availableTechnologies={gameInfo.availableTechnologies} />
-          <button onClick={toggleLeaderboard}>Show Leaderboard</button>
-          <button onClick={handleResetPlayer}>Start New Business</button>
-          <Leaderboard
-            isOpen={isLeaderboardOpen}
-            onClose={toggleLeaderboard}
-            ordersShipped={leaderboardData.ordersShipped}
-            moneyEarned={leaderboardData.moneyEarned}
-            techLevel={leaderboardData.techLevel}
-          />
+          <LeftWindow orders={gameInfo.orders} />
+          <div className="main-content">
+            <InfoPanel gameInfo={gameInfo} />
+            <ShippingContainer gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} />
+            <Toolbar availableTechnologies={gameInfo.availableTechnologies} />
+            <button onClick={toggleLeaderboard}>Show Leaderboard</button>
+            <button onClick={handleResetPlayer}>Start New Business</button>
+            <Leaderboard
+              isOpen={isLeaderboardOpen}
+              onClose={toggleLeaderboard}
+              ordersShipped={leaderboardData.ordersShipped}
+              moneyEarned={leaderboardData.moneyEarned}
+              techLevel={leaderboardData.techLevel}
+            />
+          </div>
         </>
       )}
     </div>

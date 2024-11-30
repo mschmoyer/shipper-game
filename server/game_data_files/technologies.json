@@ -58,5 +58,15 @@
     "acquirable": false,
     "cost": 1000, 
     "techCode": "fire_sale"
+  },
+  {
+    "name": "Order Grid Filters",
+    "description": "Add filters to the order grid to quickly find and prioritize orders based on specific criteria.",
+    "gameEffect": "Ships orders who are expiring soon first.",
+    "techLevelRequired": 1,
+    "modifierValue": 1,
+    "acquirable": true,
+    "cost": 750,
+    "techCode": "order_grid_filters"
   }
 ]

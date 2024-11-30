@@ -49,6 +49,10 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
   }, [gameInfo.isShipping, gameInfo.progress]);
 
   const handleShipOrder = () => {
+    if (gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
+      setShippingState('No orders to ship!');
+      return;
+    }
     setShippingState('Fetching order to ship...');
     gameInfo.isShipping = true;
     gameInfo.progress = 0;
@@ -104,7 +108,7 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
           <div className="cost-info">
             <div className="shipping-info">
               <p>📦 Quantity: 1</p>
-              <p>📏 Distance: {distance} miles</p>
+              <p>📏 Distance: {gameInfo.orders.length > 0 ? gameInfo.orders[0].distance : '--'} miles</p>
               <p>🚚 Shipping: ${shippingCost}</p>
             </div>
             <div className="profit-info">

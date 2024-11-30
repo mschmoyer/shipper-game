@@ -9,6 +9,7 @@ const InfoPanel = ({ gameInfo }) => {
         <p>🌐 {gameInfo.businessName}</p>
         <p>💰 ${gameInfo.money}</p>
         <p>📦 Shipped: {gameInfo.ordersShipped}</p>
+        <p>❤️ Reputation: {gameInfo.reputation}</p> {/* Add reputation */}
       </div>
     </div>
   );

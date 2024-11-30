@@ -6,7 +6,7 @@ const path = require('path');
 const session = require('express-session');
 const { db, initDatabase, dbRun, dbGet, dbAll } = require('./database');
 const authRoutes = require('./auth');
-const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable, GenerateOrder } = require('./game-logic');
+const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable, GenerateOrder, gameTick, CalculatePlayerReputation } = require('./game-logic');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { OrderStates } = require('./constants');
 
@@ -45,46 +45,45 @@ app.get('/api/game-info', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
   try {
+    await gameTick(req.session.playerId); // Call gameTick
+
     const gameInfo = await dbGet(
       'SELECT businessName, money, techPoints, techLevel, ordersShipped, totalMoneyEarned FROM player WHERE id = ?',
       [req.session.playerId],
       'Failed to retrieve game info'
     );
     gameInfo.money = Math.round(gameInfo.money);
-    const currentTimeISO = new Date().toISOString();
-    const activeOrders = await dbAll(
+
+    const reputation = await CalculatePlayerReputation(req.session.playerId); // Calculate reputation
+    gameInfo.reputation = reputation; // Add reputation to gameInfo
+
+    const orderListOrders = await dbAll(
       `SELECT * FROM orders 
        WHERE playerId = ? 
-       AND active = 1`,
-      [req.session.playerId],
+       AND active = 1 
+       AND state != ? 
+       AND (state != ? OR (strftime('%s', 'now') - strftime('%s', dueByTime)) <= 60)
+       LIMIT 100`,
+      [req.session.playerId, OrderStates.Canceled, OrderStates.Shipped],
       'Failed to retrieve active orders'
     );
 
-    for (const order of activeOrders) {
-      const startTime = new Date(order.startTime);
-      const currentTime = new Date();
-      const elapsedTime = (currentTime - startTime) / 1000;
-      const progress = Math.min((elapsedTime / order.duration) * 100, 100);
-      const isShipping = progress < 100;
-
-      if (!isShipping) {
-        await OrderCompleted(order.id, req.session.playerId);
-      }
-    }
-
-    const activeOrderRow = activeOrders.find(order => {
-      const startTime = new Date(order.startTime);
-      const currentTime = new Date();
-      const elapsedTime = (currentTime - startTime) / 1000;
-      return elapsedTime < order.duration;
-    });
+    const activeOrder = await dbGet(
+      `SELECT * FROM orders 
+       WHERE playerId = ? 
+       AND active = 1 
+       AND state = ? 
+       LIMIT 1`,
+      [req.session.playerId, OrderStates.InProgress],
+      'Failed to retrieve active orders'
+    );
 
     const { steps: shippingSteps, totalDuration: shippingDuration } = await getShippingSteps(req.session.playerId);
-    const startTime = activeOrderRow ? new Date(activeOrderRow.startTime) : null;
+    const startTime = activeOrder ? new Date(activeOrder.startTime) : null;
     const currentTime = new Date();
     const elapsedTime = startTime ? (currentTime - startTime) / 1000 : 0;
-    const progress = Math.min((elapsedTime / shippingDuration) * 100, 100);
-    const isShipping = activeOrderRow ? progress < 100 : false;
+    const progress = activeOrder ? Math.min((elapsedTime / activeOrder.duration) * 100, 100) : 100;
+    const isShipping = activeOrder ? progress < 100 : false;
 
     const availableTechnologies = await dbAll(
       'SELECT t.id, t.name, t.description, t.cost, t.gameEffect FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
@@ -118,7 +117,9 @@ app.get('/api/game-info', async (req, res) => {
       availableTechnologies,
       acquiredTechnologies,
       product: productRow,
-      inventory
+      inventory,
+      activeOrder,
+      orders: orderListOrders // Include active orders in the response
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -132,33 +133,56 @@ app.post('/api/start-shipping', async (req, res) => {
   }
 
   try {
-    const currentTime = new Date().toISOString();
-    const activeOrder = await dbGet(
+    let activeOrder = await dbGet(
       `SELECT * FROM orders 
-       WHERE playerId = ? 
-       AND datetime(startTime, '+' || duration || ' seconds') > datetime(?)`,
-      [req.session.playerId, currentTime],
+       WHERE active=true and playerId = ? 
+       AND state = ?`,
+      [req.session.playerId, OrderStates.InProgress],
       'Failed to check active orders'
     );
 
     if (activeOrder) {
       console.log('An active order is still in progress');
       return res.status(400).json({ error: 'An active order is still in progress' });
+    } else {
+      const hasOrderGridFilters = await playerHasTechnology(req.session.playerId, 'order_grid_filters');
+      if (hasOrderGridFilters) {
+        activeOrder = await dbGet(
+        `SELECT * FROM orders 
+        WHERE active=true and playerId = ? 
+        AND state = ?
+        ORDER BY dueByTime ASC
+        LIMIT 1`,
+        [req.session.playerId, OrderStates.AwaitingShipment],
+        'Failed to check active orders'
+        );
+      } else {
+        // The poor player is suffering without proper order prioritization...
+        activeOrder = await dbGet(
+        `SELECT * FROM orders 
+        WHERE active=true and playerId = ? 
+        AND state = ?
+        ORDER BY RANDOM()
+        LIMIT 1`,
+        [req.session.playerId, OrderStates.AwaitingShipment],
+        'Failed to check active orders'
+        );
+      }
     }
 
+    console.log('activeOrder:', activeOrder); // Debugging statement
+
     const { steps: shippingSteps, totalDuration: baseShippingDuration } = await getShippingSteps(req.session.playerId);
-    let shippingDuration = baseShippingDuration; // Use baseShippingDuration
+    let shippingDuration = baseShippingDuration;
     console.log('Start Shipping - Base Shipping Duration:', baseShippingDuration); // Debugging statement
 
-    const { shippingCost, salesPrice, distance } = await calculateShippingAndBuyLabel(req.session.playerId);
-
-    const newOrder = await GenerateOrder(req.session.playerId); // Call GenerateOrder function
+    const { shippingCost, salesPrice } = await calculateShippingAndBuyLabel(req.session.playerId, activeOrder.distance);
 
     // Update the duration and state of the order
     await dbRun(
-      'UPDATE orders SET duration = ?, state = ? WHERE id = ?',
-      [shippingDuration, OrderStates.InProgress, newOrder.id],
-      'Failed to update order duration and state'
+      'UPDATE orders SET duration = ?, state = ?, startTime = ? WHERE id = ?',
+      [shippingDuration, OrderStates.InProgress, new Date().toISOString(), activeOrder.id],
+      'Failed to update order duration, state, and start time'
     );
 
     await dbRun(
@@ -173,8 +197,7 @@ app.post('/api/start-shipping', async (req, res) => {
       shippingSteps, // Use shippingSteps instead of shippingStates
       shippingCost,
       salesPrice,
-      distance, // Add distance to the response
-      order: newOrder // Include the new order data in the response
+      order: activeOrder // Include the active order data in the response
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

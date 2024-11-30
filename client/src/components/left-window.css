@@ -1,0 +1,33 @@
+.left-window {
+  width: 200px;
+  background-color: #f0f0f0; /* Example background color */
+  border-right: 1px solid #ccc; /* Example border */
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.order-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.order-card h3 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.order-card p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.order-card.urgent {
+  background-color: #fffacd; /* Light yellow background for urgent orders */
+  border-color: #ffd700; /* Yellow border for urgent orders */
+  font-weight: bold; /* Bold text for urgent orders */
+}

@@ -8,6 +8,7 @@ router.post('/create-account', async (req, res) => {
   console.log('Creating account with:', { name, businessName, email, apiKey, apiSecret });
   try {
     const playerId = await generateInitialGameState(name, businessName, email, apiKey, apiSecret);
+    console.log('Generated playerId:', playerId); // Debugging statement
     req.session.playerId = playerId;
     req.session.save((err) => {
       if (err) {
@@ -20,6 +21,7 @@ router.post('/create-account', async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('Error in /create-account:', err); // Debugging statement
     res.status(500).json({ error: err.message });
   }
 });
