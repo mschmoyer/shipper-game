@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './shipping-container.css';
 import { completeShipping, startShipping } from '../api';
+import TechnologyView from './technology-view';
 
 const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
   const [shippingState, setShippingState] = useState('');
@@ -10,6 +11,7 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
   const [distance, setDistance] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [boxPosition, setBoxPosition] = useState(0);
+  const [isTechViewVisible, setIsTechViewVisible] = useState(false);
 
   const successMessages = [
     'Order Shipped! 🎉',
@@ -80,6 +82,10 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
     setIsModalOpen(!isModalOpen);
   };
 
+  const toggleTechView = () => {
+    setIsTechViewVisible(!isTechViewVisible);
+  };
+
   const firstItem = gameInfo.inventory[0];
 
   return (
@@ -132,6 +138,15 @@ const ShippingContainer = ({ gameInfo, autoShipEnabled }) => {
           {gameInfo.isShipping ? gameInfo.shippingSteps[Math.floor(gameInfo.progress / (100 / gameInfo.shippingSteps.length))].name : shippingState}
         </div>
       </div>
+      <button className="tech-button" onClick={toggleTechView}>
+        🛠️
+        <div className="tech-label">Technology</div>
+      </button>
+      {isTechViewVisible && (
+        <div className="technology-view-container">
+          <TechnologyView availableTechnologies={gameInfo.availableTechnologies} playerTechLevel={gameInfo.techLevel} />
+        </div>
+      )}
     </div>
   );
 };

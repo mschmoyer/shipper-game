@@ -1,26 +1,48 @@
 .toolbar {
   display: flex;
-  justify-content: center; /* Center the tech cards */
-  flex-wrap: wrap; /* Allow wrapping to new lines if necessary */
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  background-color: #f1f2f3;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.toolbar-header {
+  display: flex;
+  justify-content: space-between;
   width: 100%;
   padding: 10px;
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #ccc;
+  border-radius: 10px 10px 0 0;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.tech-level {
+  font-weight: bold;
+  font-size: 16px;
 }
 
 .tech-card {
-  width: 24%; /* Increase width by 20% */
-  min-height: 220px;
+  width: 24%;
+  min-height: 240px;
   max-width: 250px;
   margin: 10px;
   position: relative;
   border: 1px solid #ccc;
   border-radius: 10px;
   text-align: center;
-  background-color: #fff;
+  background-color: #ffffff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   font-size: 14px;
   padding: 4px;
+  color: #000000;
 }
 
 .tech-name {
@@ -52,7 +74,7 @@
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(45deg, #28a745, #218838);
+  background: #0d6e3f;
   color: white;
   border: none;
   border-radius: 5px;
@@ -64,7 +86,7 @@
 }
 
 .buy-button:hover {
-  background: linear-gradient(45deg, #218838, #28a745);
+  background: #0b5a34;
 }
 
 .buy-button:active {
@@ -84,10 +106,11 @@
 }
 
 .modal-content {
-  background-color: #fff;
+  background-color: #ffffff;
   padding: 20px;
   border-radius: 10px;
   text-align: center;
+  color: #000000;
 }
 
 .modal-content button {

@@ -1,0 +1,23 @@
+
+.right-window {
+  width: 200px;
+  background-color: #f1f2f3;
+  border-left: 1px solid #ccc;
+  padding: 10px;
+  box-sizing: border-box;
+  color: #000000;
+}
+
+.game-button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.game-button:hover {
+  background-color: #e0e0e0;
+}

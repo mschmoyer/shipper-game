@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { purchaseTechnology } from '../api'; // Import the API function
-import './toolbar.css';
+import { purchaseTechnology } from '../api';
+import './technology-view.css';
 
-const Toolbar = ({ availableTechnologies }) => {
+const TechnologyView = ({ availableTechnologies, playerTechLevel }) => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [newsMessage, setNewsMessage] = useState('');
 
@@ -24,6 +24,10 @@ const Toolbar = ({ availableTechnologies }) => {
 
   return (
     <div className="toolbar">
+      <div className="toolbar-header">
+        <div className="title">Available Technologies:</div>
+        <div className="tech-level">Tech Level: {playerTechLevel}</div>
+      </div>
       {availableTechnologies.map(tech => (
         <div key={tech.id} className="tech-card">
           <div className="tech-name">{tech.name}</div>
@@ -51,4 +55,4 @@ const Toolbar = ({ availableTechnologies }) => {
   );
 };
 
-export default Toolbar;
+export default TechnologyView;

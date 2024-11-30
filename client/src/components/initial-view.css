@@ -1,4 +1,3 @@
-
 .initial-view {
   text-align: center;
   padding: 20px;
@@ -9,12 +8,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.game-title {
-  font-size: 2.5em;
-  color: #333;
-  margin-bottom: 10px;
-}
-
+/* Remove .game-title styles */
 .game-description {
   font-size: 1.2em;
   color: #666;

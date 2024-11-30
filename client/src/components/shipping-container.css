@@ -1,13 +1,11 @@
 .shipping-container {
   width: 100%;
-  max-width: 800px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+  background-color: #f1f2f3;
+  color: #000000;
+  flex-grow: 1;
 }
 
 .ship-button-container {
@@ -23,7 +21,7 @@
   height: 120px;
   border-radius: 15px; /* Rounded corners */
   border: none;
-  background: linear-gradient(145deg, #007bff, #0056b3);
+  background: #0d6e3f;
   color: #ffffff;
   font-size: 18px;
   font-weight: bold;
@@ -32,7 +30,7 @@
 }
 
 .ship-button:hover {
-  background: linear-gradient(145deg, #0056b3, #007bff);
+  background: #0b5a34;
   transform: scale(0.95); /* Push-in animation */
 }
 
@@ -84,22 +82,22 @@
   min-width: 500px;
   margin-left: 20px;
   padding: 10px;
-  background-color: #f8f9fa;
+  background-color: #ffffff;
   border-radius: 5px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   cursor: pointer; /* Add cursor pointer for clickable product name */
 }
 
 .product-info h3 {
   margin-top: 0;
   font-size: 16px;
-  color: #333;
+  color: #000000;
 }
 
 .product-info p {
   margin: 5px 0;
   font-size: 14px;
-  color: #555;
+  color: #555555;
 }
 
 .product-info img {
@@ -112,7 +110,7 @@
 .cost-info {
   margin-top: 10px;
   font-size: 14px;
-  color: #333;
+  color: #000000;
   text-align: left; /* Left-align text */
   display: flex; /* Add flex display */
   justify-content: space-between; /* Space between the three sections */
@@ -153,7 +151,7 @@
 }
 
 .modal-content {
-  background-color: #fefefe;
+  background-color: #ffffff;
   margin: 15% auto;
   padding: 20px;
   border: 1px solid #888;
@@ -161,6 +159,7 @@
   max-width: 500px;
   border-radius: 10px;
   position: absolute; /* Position absolute for cursor positioning */
+  color: #000000;
 }
 
 .close {
@@ -175,4 +174,47 @@
   color: black;
   text-decoration: none;
   cursor: pointer;
+}
+
+.tech-button {
+  margin-top: auto;
+  margin-bottom: 20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px; /* Rounded square corners */
+  background: #0d6e3f;
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s, transform 0.1s;
+  flex-direction: column; /* Ensure label is below the emoji */
+}
+
+.tech-button:hover {
+  background: #0b5a34;
+}
+
+.tech-button:active {
+  transform: scale(0.95);
+}
+
+.tech-label {
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
+  color: white;
+}
+
+.toolbar {
+  width: 100%;
+  background-color: #f1f2f3;
+  border-top: 1px solid #ccc;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px 10px 0 0;
+  /* ...existing code... */
 }

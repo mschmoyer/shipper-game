@@ -1,13 +1,10 @@
-
 .info-panel {
   width: 100%;
-  max-width: 800px;
-  background-color: #ffffff;
-  padding: 10px 20px;
+  background-color: #00331c;
   border-radius: 10px;
-  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   text-align: center;
+  color: #ffffff;
 }
 
 .info-panel h1 {
@@ -18,15 +15,7 @@
 .info-panel .info-values {
   display: flex;
   justify-content: space-around;
-  font-size: 14px;
-}
-
-.info-panel .inventory-values {
-  display: flex;
-  justify-content: space-around;
-  font-size: 14px;
-  margin-top: 20px;
-  margin-left: 40%;
+  font-size: 20px;
 }
 
 .info-panel p {

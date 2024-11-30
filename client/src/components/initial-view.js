@@ -25,7 +25,6 @@ const InitialView = ({ onAccountCreated }) => {
 
   return (
     <div className="initial-view">
-      <h1 className="game-title">Shipper Game</h1>
       <p className="game-description">
         Welcome to Shipper Game! Manage your shipping business, upgrade your technology, and become the best in the industry.
       </p>

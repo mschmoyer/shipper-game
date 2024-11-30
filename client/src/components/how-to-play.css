@@ -1,0 +1,46 @@
+
+.how-to-play-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.how-to-play-drawer {
+  width: 80%;
+  background: white;
+  padding: 20px;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  height: 80%;
+  max-height: 80%;
+  position: relative;
+}
+
+.how-to-play-content {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(45deg, #ff0000, #ff7f00);
+  border: none;
+  color: white;
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.close-button:hover {
+  background: linear-gradient(45deg, #ff7f00, #ff0000);
+}
