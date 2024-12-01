@@ -1,17 +1,14 @@
-.shipping-container {
-  width: 100%;
+.ship-order-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f1f2f3;
-  color: #000000;
-  flex-grow: 1;
 }
 
 .ship-button-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start; /* Align button to the left */
+  align-items: flex-start; /* Align items to the top */
+  width: 100%;
   margin-bottom: 20px;
   margin-right: 20px; /* Add space between button and progress bar */
 }
@@ -49,12 +46,13 @@
 
 .progress-bar-container {
   position: relative;
-  width: 400px;
+  width: calc(100% - 140px); /* Adjust width to account for button width and margin */
   height: 30px;
   background: linear-gradient(180deg, #4d4d4d, #d3d3d3);
   border-radius: 5px;
   overflow: hidden;
   margin-bottom: 20px;
+  margin-left: 140px; /* Align progress bar with the right edge of the button */
 }
 
 .progress-bar {
@@ -80,7 +78,7 @@
 
 .product-info {
   min-width: 500px;
-  margin-left: 20px;
+  margin-left: 20px; /* Add space between button and product info */
   padding: 10px;
   background-color: #ffffff;
   border-radius: 5px;
@@ -174,46 +172,4 @@
   color: black;
   text-decoration: none;
   cursor: pointer;
-}
-
-.tech-button {
-  margin-top: auto;
-  width: 250px; /* Increase width to fit the text */
-  height: 40px; /* Decrease height to make it narrow */
-  border-radius: 10px 10px 0 0; /* Remove bottom left and bottom right corners */
-  background: #0d6e3f;
-  color: white;
-  border: none;
-  font-size: 16px; /* Adjust font size */
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  transition: background 0.3s, transform 0.1s;
-  flex-direction: row; /* Change to row to place emoji left of the text */
-}
-
-.tech-button:hover {
-  background: #0b5a34;
-}
-
-.tech-button:active {
-  transform: scale(0.95);
-}
-
-.tech-label {
-  font-size: 14px; /* Adjust font size */
-  margin-top: 5px;
-  text-align: center;
-  color: white;
-  margin-left: 5px; /* Add margin to separate emoji from text */
-}
-
-.toolbar {
-  width: 100%;
-  background-color: #f1f2f3;
-  border-top: 1px solid #ccc;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 10px 10px 0 0;
 }

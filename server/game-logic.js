@@ -165,8 +165,7 @@ const OrderCompleted = async (orderId, playerId) => {
 };
 
 const OrderCanceled = async (orderId, playerId) => {
-  // Currently does nothing
-  console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
+  //console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
 
   await dbRun(
     'UPDATE orders SET active=0, state = ? WHERE id = ?',

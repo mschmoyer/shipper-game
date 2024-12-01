@@ -166,6 +166,7 @@ const App = () => {
               <HowToPlay
                 isOpen={isHowToPlayOpen}
                 onClose={toggleHowToPlay}
+                gameTitle={gameTitle}
               />
             </div>
             <RightWindow />

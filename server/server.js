@@ -1,5 +1,3 @@
-// Filename: server/server.js
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -32,14 +30,19 @@ app.get('/api/game-info', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
   try {
+    console.log('Fetching game info for playerId:', req.session.playerId); // Debugging statement
     const secondsUntilNextOrder = await gameTick(req.session.playerId);
 
     const gameInfo = await dbGet(
-      'SELECT businessName, money, techPoints, techLevel, ordersShipped, totalMoneyEarned FROM player WHERE id = ?',
+      `SELECT businessName, ROUND(money) as money, techPoints, techLevel, 
+      ordersShipped, totalMoneyEarned 
+      FROM player 
+      WHERE id = ?`,
       [req.session.playerId],
       'Failed to retrieve game info'
     );
-    gameInfo.money = Math.round(gameInfo.money);
+
+    console.log('Game info retrieved:', gameInfo); // Debugging statement
 
     const reputation = await CalculatePlayerReputation(req.session.playerId);
     gameInfo.reputation = reputation; // Add reputation to gameInfo
@@ -55,6 +58,8 @@ app.get('/api/game-info', async (req, res) => {
       'Failed to retrieve active orders'
     );
 
+    console.log('Active orders retrieved:', orderListOrders); // Debugging statement
+
     const activeOrder = await dbGet(
       `SELECT * FROM orders 
        WHERE playerId = ? 
@@ -64,6 +69,8 @@ app.get('/api/game-info', async (req, res) => {
       [req.session.playerId, OrderStates.InProgress],
       'Failed to retrieve active orders'
     );
+
+    console.log('Active order retrieved:', activeOrder); // Debugging statement
 
     const { steps: shippingSteps, totalDuration: shippingDuration } = await getShippingSteps(req.session.playerId);
     const startTime = activeOrder ? new Date(activeOrder.startTime) : null;
@@ -77,11 +84,16 @@ app.get('/api/game-info', async (req, res) => {
       [req.session.playerId],
       'Failed to retrieve available technologies'
     );
+
+    console.log('Available technologies retrieved:', availableTechnologies); // Debugging statement
+
     const acquiredTechnologies = await dbAll(
       'SELECT at.*, t.techCode FROM acquired_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
       [req.session.playerId],
       'Failed to retrieve acquired technologies'
     );
+
+    console.log('Acquired technologies retrieved:', acquiredTechnologies); // Debugging statement
 
     const productRow = await dbGet(
       'SELECT p.* FROM products p JOIN PlayerProducts pp ON p.id = pp.productId WHERE pp.playerId = ?',
@@ -89,11 +101,15 @@ app.get('/api/game-info', async (req, res) => {
       'Failed to retrieve product info'
     );
 
+    console.log('Product info retrieved:', productRow); // Debugging statement
+
     const inventory = await dbAll(
       'SELECT * FROM inventory WHERE playerId = ?',
       [req.session.playerId],
       'Failed to retrieve inventory'
     );
+
+    console.log('Inventory retrieved:', inventory); // Debugging statement
 
     res.json({
       ...gameInfo,
@@ -110,6 +126,7 @@ app.get('/api/game-info', async (req, res) => {
       secondsUntilNextOrder
     });
   } catch (err) {
+    console.error('Error in /api/game-info:', err); // Debugging statement
     res.status(500).json({ error: err.message });
   }
 });

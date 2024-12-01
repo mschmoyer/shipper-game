@@ -45,6 +45,11 @@
   color: #000000;
 }
 
+.technology-view-container {
+  width: 100%;
+  /* Remove margin-top */
+}
+
 .tech-name {
   font-weight: bold;
   margin-top: 10px;
