@@ -4,29 +4,72 @@ import { startProductBuild } from '../api';
 import ProgressBar from './progress-bar';
 import GameWorkButton from './game-work-button';
 
-const BuildProductView = ({ gameInfo, autoBuildEnabled }) => {
+const BuildProductView = ({ 
+  gameInfo, 
+  autoBuildEnabled 
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [buildError, setBuildError] = useState('');
+  const [isAutoBuildEnabled, setIsAutoBuildEnabled] = useState(autoBuildEnabled);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
 
   const handleBuildProduct = async () => {
-    try {
-      const result = await startProductBuild();
-      if (result.error) {
-        console.error(result.error);
-        setBuildError(result.error); // Set the error message
-      } else {
-        console.log(result.message);
-        setBuildError(''); // Clear any previous error message
-      }
-    } catch (err) {
-      console.error('Error building product:', err);
-      setBuildError('Error building product'); // Set a generic error message
+    if (isRetrying || gameInfo.product.isBuilding) {
+      return;
     }
+    gameInfo.product.isBuilding = true;
+    gameInfo.product.progress = 0;
+    setBuildError('');
+
+    setIsRetrying(false);
+    const result = await startProductBuild()
+      .then(data => {
+        if (data.message === 'Product build started successfully.') {
+          console.log('Product build started successfully:', data);
+        } else {
+          console.error('Failed to start product build:', data);
+          setBuildError(result.error);
+          gameInfo.product.isBuilding = false;
+          if (isAutoBuildEnabled) {
+            setIsRetrying(true);
+            console.log('isRetrying:', isRetrying);
+            setTimeout(handleBuildProduct, 10000); // Add a one-second delay before retrying
+          }
+        }
+      })
+      .catch(error => console.error('Failed to start product build:', error));
   };
+
+  // Check if the player has the AutoBuild technology
+  useEffect(() => {
+    if (gameInfo) {
+      const hasAutoBuildTech = gameInfo.acquiredTechnologies && 
+        gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_fabricator');
+      console.log('AutoBuild tech:', hasAutoBuildTech);
+      if (hasAutoBuildTech) {
+        setIsAutoBuildEnabled(true);
+      } else {
+        setIsAutoBuildEnabled(false);
+      }
+    }
+  }, [gameInfo]);
+
+  useEffect(() => {
+    if (isAutoBuildEnabled && !gameInfo.product.isBuilding && !isRetrying) {
+      console.log('Starting new build automatically, autoBuildEnabled:', isAutoBuildEnabled);
+      handleBuildProduct();
+    }
+  }, [isAutoBuildEnabled, gameInfo.product.isBuilding, isRetrying]);
+
+  useEffect(() => {
+    if (!gameInfo.product.isBuilding && isAutoBuildEnabled && !isRetrying) {
+      setTimeout(handleBuildProduct, 10); // Add a one-second delay before retrying
+    }
+  }, [gameInfo.product.isBuilding, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -47,7 +90,7 @@ const BuildProductView = ({ gameInfo, autoBuildEnabled }) => {
     <div className="build-product-container">
       <div className="build-button-container">
         <GameWorkButton
-          autoShip={autoBuildEnabled}
+          autoShip={isAutoBuildEnabled}
           onClick={handleBuildProduct}
           isWorkBeingDone={product.isBuilding}
           titleDefault="Start Build"
@@ -63,7 +106,7 @@ const BuildProductView = ({ gameInfo, autoBuildEnabled }) => {
                 <p>📝 Description: {product.description}</p>
                 <p>⚖️ Weight: {product.weight} kg</p>
                 <p>💵 Cost: ${product.costToBuild}</p>
-                <p>���� Price: ${product.salesPrice}</p>
+                <p>💲 Price: ${product.salesPrice}</p>
               </div>
             </div>
           )}

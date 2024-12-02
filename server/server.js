@@ -2,9 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
-const { db, initDatabase, dbRun, dbGet, dbAll } = require('./database');
+const { db, dbRun, dbGet, dbAll } = require('./database');
 const authRoutes = require('./auth');
-const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable, GenerateOrder, gameTick, CalculatePlayerReputation } = require('./game-logic');
+const { calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable, gameTick, CalculatePlayerReputation, expirePlayer } = require('./game-logic');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { OrderStates } = require('./constants');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./product-logic'); // Import from product-logic.js
@@ -13,37 +13,73 @@ const app = express();
 const port = 5005;
 
 // Middleware
-app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
+app.use(cors({ 
+  credentials: true, 
+  origin: (origin, callback) => {
+    if (origin && (origin.includes('localhost:3000') || origin.endsWith('.ngrok.app'))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 app.use(express.json());
 app.use(session({
   store: new SQLiteStore({ db: 'sessions.sqlite', dir: './database' }),
   secret: 'AbbaDabbaDoobiePoo',
   resave: false,
-  saveUninitialized: false, // Change this to false to avoid creating sessions for unauthenticated users
-  cookie: { secure: false, httpOnly: false } // Ensure the cookie is accessible from the client
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Only secure in production
+    httpOnly: true,
+    sameSite: 'none',
+  }
 }));
+
+app.use((req, res, next) => {
+  console.log('Cookies:', req.cookies); // Debugging statement
+  console.log('Session in middleware:', req.session); // Debugging statement
+  next();
+});
 
 app.use('/api', authRoutes);
 
 app.get('/api/game-info', async (req, res) => {
+  console.log('Checking Session in /api/game-info. Session=', req.session); // Debugging statement
   if (!req.session.playerId) {
     console.log('Unauthorized access to game-info');
     return res.status(401).json({ error: 'No player session' });
   }
   try {
-    const secondsUntilNextOrder = await gameTick(req.session.playerId);
-
-    const gameInfo = await dbGet(
-      `SELECT businessName, ROUND(money) as money, techPoints, techLevel, 
-      ordersShipped, totalMoneyEarned 
-      FROM player 
-      WHERE id = ?`,
+    const player = await dbGet(
+      `SELECT *, 
+      (strftime('%s', 'now') - strftime('%s', createdAt)) AS elapsedTime
+       FROM player 
+       WHERE id = ?`,
       [req.session.playerId],
       'Failed to retrieve game info'
     );
 
+    const availableTechnologies = await dbAll(
+      'SELECT * FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve available technologies'
+    );
+
+    const acquiredTechnologies = await dbAll(
+      'SELECT * FROM acquired_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
+      [req.session.playerId],
+      'Failed to retrieve acquired technologies'
+    );
+
+    if (!player.active) {
+      return res.json({ gameActive: false, player, orders: [], acquiredTechnologies});
+    }
+
+    const { secondsUntilNextOrder, timeRemainingSeconds } = await gameTick(req.session.playerId, player);
+
     const reputation = await CalculatePlayerReputation(req.session.playerId);
-    gameInfo.reputation = reputation;
+    player.reputation = reputation;
 
     const orderListOrders = await dbAll(
       `SELECT * FROM orders 
@@ -73,23 +109,12 @@ app.get('/api/game-info', async (req, res) => {
     const progress = activeOrder ? Math.min((elapsedTime / activeOrder.duration) * 100, 100) : 100;
     const isShipping = activeOrder ? progress < 100 : false;
 
-    const availableTechnologies = await dbAll(
-      'SELECT t.id, t.name, t.description, t.cost, t.gameEffect FROM available_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
-      [req.session.playerId],
-      'Failed to retrieve available technologies'
-    );
-
-    const acquiredTechnologies = await dbAll(
-      'SELECT at.*, t.techCode FROM acquired_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
-      [req.session.playerId],
-      'Failed to retrieve acquired technologies'
-    );
-
     const product = await getActiveProduct(req.session.playerId);
     const inventory = await getInventoryInfo(req.session.playerId);
 
     res.json({
-      ...gameInfo,
+      gameActive: true,
+      ...player,
       shippingSteps,
       shippingDuration,
       progress,
@@ -100,7 +125,8 @@ app.get('/api/game-info', async (req, res) => {
       inventory,
       activeOrder,
       orders: orderListOrders,
-      secondsUntilNextOrder
+      secondsUntilNextOrder,
+      timeRemaining: Math.round(timeRemainingSeconds) // Round to nearest whole number
     });
   } catch (err) {
     console.error('Error in /api/game-info:', err); // Debugging statement
@@ -114,6 +140,7 @@ app.get('/api/game-info', async (req, res) => {
 });
 
 app.post('/api/start-shipping', async (req, res) => {
+  console.log('Checking Session in /api/start-shipping. Session=', req.session); // Debugging statement
   if (!req.session.playerId) {
     console.log('Unauthorized access to start-shipping');
     return res.status(401).json({ error: 'No player session' });
@@ -201,6 +228,7 @@ app.post('/api/start-shipping', async (req, res) => {
 });
 
 app.post('/api/purchase-technology', async (req, res) => {
+  console.log('Checking Session in /api/purchase-technology. Session=', req.session); // Debugging statement
   if (!req.session.playerId) {
     console.log('Unauthorized access to purchase-technology');
     return res.status(401).json({ error: 'No player session' });
@@ -252,16 +280,27 @@ app.post('/api/purchase-technology', async (req, res) => {
   }
 });
 
-app.post('/api/reset-player', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to reset player session' });
-    }
-    res.json({ success: true });
-  });
+app.post('/api/reset-player', async (req, res) => {
+  console.log('Checking Session in /api/reset-player. Session=', req.session); // Debugging statement
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+
+  try {
+    await expirePlayer(req.session.playerId);
+    req.session.destroy(err => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to reset player session' });
+      }
+      res.json({ success: true });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/build-product', async (req, res) => {
+  console.log('Checking Session in /api/build-product. Session=', req.session); // Debugging statement
   if (!req.session.playerId) {
     console.log('Unauthorized access to build-product');
     return res.status(401).json({ error: 'No player session' });

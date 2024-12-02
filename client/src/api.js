@@ -14,46 +14,50 @@ const apiCall = (url, options = {}) => {
   });
 };
 
+//const baseUrl = 'https://a1ecf404e6bf.ngrok.app/api'; // Local server URL
+const baseUrl = 'http://localhost:5005/api'; // Local server URL
+// const baseUrl = 'https://1d6b5eb01f5c.ngrok.app/api'; // Local server URL
+
 export const startShipping = () => {
-  return apiCall('http://localhost:5005/api/start-shipping', {
+  return apiCall(`${baseUrl}/start-shipping`, {
     method: 'POST',
   });
 };
 
 export const createAccount = (accountData) => {
-  return apiCall('http://localhost:5005/api/create-account', {
+  return apiCall(`${baseUrl}/create-account`, {
     method: 'POST',
     body: JSON.stringify(accountData),
   });
 };
 
 export const checkSession = () => {
-  return apiCall('http://localhost:5005/api/check-session');
+  return apiCall(`${baseUrl}/check-session`);
 };
 
 export const fetchGameInfo = () => {
-  return apiCall('http://localhost:5005/api/game-info');
+  return apiCall(`${baseUrl}/game-info`);
 };
 
 export const purchaseTechnology = (techId, cost) => {
-  return apiCall('http://localhost:5005/api/purchase-technology', {
+  return apiCall(`${baseUrl}/purchase-technology`, {
     method: 'POST',
     body: JSON.stringify({ techId, cost }),
   });
 };
 
 export const fetchLeaderboard = () => {
-  return apiCall('http://localhost:5005/api/leaderboard');
+  return apiCall(`${baseUrl}/leaderboard`);
 };
 
 export const resetPlayer = () => {
-  return apiCall('http://localhost:5005/api/reset-player', {
+  return apiCall(`${baseUrl}/reset-player`, {
     method: 'POST',
   });
 };
 
 export const startProductBuild = () => {
-  return apiCall('http://localhost:5005/api/build-product', {
+  return apiCall(`${baseUrl}/build-product`, {
     method: 'POST',
   });
 };

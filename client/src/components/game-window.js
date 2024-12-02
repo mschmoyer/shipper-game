@@ -4,7 +4,7 @@ import TechnologyView from './technology-view';
 import ShipOrderView from './ship-order-view';
 import BuildProductView from './build-product-view';
 
-const GameWindow = ({ gameInfo, autoShipEnabled, autoBuildEnabled }) => {
+const GameWindow = ({ gameInfo }) => {
   const [isTechViewVisible, setIsTechViewVisible] = useState(false);
 
   const openTechView = () => {
@@ -13,11 +13,8 @@ const GameWindow = ({ gameInfo, autoShipEnabled, autoBuildEnabled }) => {
 
   return (
     <div className="game-window">
-      <BuildProductView gameInfo={gameInfo} autoBuildEnabled={autoBuildEnabled} />
-      <ShipOrderView
-        gameInfo={gameInfo}
-        autoShipEnabled={autoShipEnabled}
-      />
+      <BuildProductView gameInfo={gameInfo} />
+      <ShipOrderView gameInfo={gameInfo} />
       <button className="tech-button" onClick={openTechView}>
         🛠️
         <div className="tech-label">Show Technology Upgrades</div>

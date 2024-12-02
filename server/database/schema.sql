@@ -12,7 +12,13 @@ CREATE TABLE IF NOT EXISTS player (
   name TEXT,
   email TEXT,
   apiKey TEXT,
-  apiSecret TEXT
+  apiSecret TEXT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  active BOOLEAN DEFAULT TRUE,
+  finalMoney INTEGER DEFAULT 0,
+  finalTechLevel INTEGER DEFAULT 0,
+  finalOrdersShipped INTEGER DEFAULT 0,
+  finalReputation INTEGER DEFAULT 0
 );
 
 -- Defines the global set of products that can be built
@@ -65,6 +71,7 @@ CREATE TABLE IF NOT EXISTS technologies (
   techCode TEXT,
   modifierValue REAL,
   gameEffect TEXT,
+  shipstation_kb_link TEXT,
   acquirable BOOLEAN DEFAULT TRUE
 );
 

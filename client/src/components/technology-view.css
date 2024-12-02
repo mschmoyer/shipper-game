@@ -131,3 +131,14 @@
   --rotate-angle: 2; /* Tilt right */
   top: 8px;
 }
+
+.tech-kb-link {
+  display: block;
+  margin-top: 10px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.tech-kb-link:hover {
+  text-decoration: underline;
+}

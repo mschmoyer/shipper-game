@@ -5,12 +5,12 @@ import GameWindow from './components/game-window';
 import InitialView from './components/initial-view';
 import Leaderboard from './components/leaderboard';
 import HowToPlay from './components/how-to-play';
+import EndGameView from './components/end-game-view';
 import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer } from './api';
 import LeftWindow from './components/left-window';
 import TitleBar from './components/title-bar';
 import RightWindow from './components/right-window';
 import Cookies from 'js-cookie';
-import ManufacturingContainer from './components/build-product-view';
 
 // CONSTANTS
 const gameTitle = "Shipper Game";
@@ -19,8 +19,6 @@ const gameSubTitle = "The game of efficient shipping! ™";
 const App = () => {
   const [gameInfo, setGameInfo] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [autoShipEnabled, setAutoShipEnabled] = useState(false);
-  const [autoBuildEnabled, setAutoBuildEnabled] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ ordersShipped: [], moneyEarned: [], techLevel: [] });
@@ -53,30 +51,6 @@ const App = () => {
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
-
-  // Check if the player has the AutoShip technology
-  useEffect(() => {
-    if (gameInfo) {
-      const hasAutoShipTech = gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_warehouse_worker');
-      if (hasAutoShipTech) {
-        setAutoShipEnabled(true);
-      } else {
-        setAutoShipEnabled(false);
-      }
-    }
-  }, [gameInfo]);
-
-  // Check if the player has the AutoBuild technology
-  useEffect(() => {
-    if (gameInfo) {
-      const hasAutoBuildTech = gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'auto_build');
-      if (hasAutoBuildTech) {
-        setAutoBuildEnabled(true);
-      } else {
-        setAutoBuildEnabled(false);
-      }
-    }
-  }, [gameInfo]);
 
   useEffect(() => {
     if (gameInfo && gameInfo.activeOrder) {
@@ -166,9 +140,22 @@ const App = () => {
             onSettings={handleSettings} 
           />
           <div className="content-wrapper">
-            <LeftWindow orders={gameInfo.orders} activeOrder={gameInfo.activeOrder} secondsUntilNextOrder={gameInfo.secondsUntilNextOrder} />
+            <LeftWindow
+              orders={gameInfo.orders} 
+              activeOrder={gameInfo.activeOrder} 
+              secondsUntilNextOrder={gameInfo.secondsUntilNextOrder}
+            />
             <div className="main-content">
-              <GameWindow gameInfo={gameInfo} autoShipEnabled={autoShipEnabled} autoBuildEnabled={autoBuildEnabled} />
+              {gameInfo.gameActive ? (
+                <GameWindow 
+                  gameInfo={gameInfo} 
+                />
+              ) : (
+                <EndGameView 
+                  gameInfo={gameInfo} 
+                  onNewGame={handleNewGame} 
+                />
+              )}
               <Leaderboard
                 isOpen={isLeaderboardOpen}
                 onClose={toggleLeaderboard}
@@ -184,7 +171,9 @@ const App = () => {
             </div>
             <RightWindow />
           </div>
-          <InfoPanel gameInfo={gameInfo} />
+          {gameInfo.gameActive &&
+            <InfoPanel gameInfo={gameInfo} />
+          }
         </>
       )}
     </div>

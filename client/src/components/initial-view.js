@@ -5,22 +5,23 @@ import { createAccount } from '../api';
 const InitialView = ({ onAccountCreated }) => {
   const [name, setName] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [email, setEmail] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
+  const [errorMessage, setErrorMessage] = useState(''); // Add state for error message
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createAccount({ name, businessName, email, apiKey, apiSecret })
+    createAccount({ name, businessName }) 
       .then(data => {
         if (data.success) {
           document.cookie = `playerId=${data.playerId}; path=/`;
           onAccountCreated();
         } else {
-          alert('Failed to create account');
+          setErrorMessage(data.error); // Set the error message
         }
       })
-      .catch(error => console.error('Failed to create account:', error));
+      .catch(error => {
+        console.error('Failed to create account:', error);
+        setErrorMessage('Failed to create account. Please try again.'); // Set a generic error message
+      });
   };
 
   return (
@@ -37,8 +38,9 @@ const InitialView = ({ onAccountCreated }) => {
           <label>Your new enterprise is called (business name):</label>
           <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required />
         </div>
-        <button type="submit" className="create-account-button">Create Account</button>
+        <button type="submit" className="create-account-button" style={{ backgroundColor: 'green' }}>Create Account</button>
       </form>
+      {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Display the error message */}
     </div>
   );
 };

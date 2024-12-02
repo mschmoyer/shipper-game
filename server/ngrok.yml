@@ -1,0 +1,9 @@
+version: "2"
+authtoken: 52yM5wZkhosU3K9wDnBgX_6MqMo3PubbC8ETjvGZP8z
+tunnels:
+  client:
+    addr: 3000
+    proto: http
+  server:
+    addr: 5005
+    proto: http

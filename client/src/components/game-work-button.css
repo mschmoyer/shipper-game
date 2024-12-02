@@ -66,12 +66,8 @@
 }
 
 .game-work-button:disabled {
-  background: #cccccc;
+  background: grey;
   cursor: not-allowed;
-}
-
-.game-work-button:disabled {
-  cursor: auto;
 }
 
 .game-work-button:active {

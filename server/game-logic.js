@@ -1,7 +1,7 @@
 const { dbRun, dbGet, dbAll } = require('./database');
 const fs = require('fs');
 const path = require('path');
-const { OrderStates, BASE_INITIAL_MONEY, BASE_ORDER_ARRIVAL_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE } = require('./constants');
+const { OrderStates, BASE_INITIAL_MONEY, BASE_ORDER_ARRIVAL_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, GAME_TIME_LIMIT_SECONDS } = require('./constants');
 const { assignRandomProductToPlayer, ProductCompleted, productTick } = require('./product-logic'); // Import from product-logic.js
 
 const generateInitialGameState = async (name, businessName, email, apiKey, apiSecret) => {
@@ -22,7 +22,7 @@ const generateInitialGameState = async (name, businessName, email, apiKey, apiSe
     );
     const playerId = result.lastID;
     console.log('Generated playerId in generateInitialGameState:', playerId); // Debugging statement
-    await initializeTechTree(playerId, initialTechLevel);
+    await initializeTechTree(playerId);
     await assignRandomProductToPlayer(playerId);
     return playerId;
   } catch (err) {
@@ -95,8 +95,8 @@ const getShippingSteps = async (playerId) => {
   const stepsPath = path.join(__dirname, 'game_data_files', 'shipping-steps.json');
   let steps = JSON.parse(fs.readFileSync(stepsPath, 'utf8'));
 
-  // if user has the product_shipping_presets technology then eliminate the input_weights_dimensions step
-  const hasPresetTech = await playerHasTechnology(playerId, 'product_shipping_presets');
+  // if user has the smartFill technology then eliminate the input_weights_dimensions step
+  const hasPresetTech = await playerHasTechnology(playerId, 'smartfill');
   if (hasPresetTech) {
     steps = steps.filter(step => step.stepCode !== 'input_weights_dimensions');
   }
@@ -158,48 +158,83 @@ const OrderCanceled = async (orderId, playerId) => {
   );
 };
 
-const gameTick = async (playerId) => {
-  try {
-    const currentTime = new Date();
-    const activeOrders = await dbAll(
-      'SELECT * FROM orders WHERE playerId = ? AND active = 1',
-      [playerId],
-      'Failed to retrieve active orders'
-    );
+async function expirePlayer(playerId) {
+  const player = await dbGet('SELECT * FROM player WHERE id = ?', [playerId], 'Failed to retrieve player');
+  
+  // Calculate final fields
+  const finalMoney = player.money;
+  const finalTechLevel = player.techLevel;
+  const finalOrdersShipped = player.ordersShipped;
+  const finalReputation = await CalculatePlayerReputation(playerId); // Assume this function exists
 
-    for (const order of activeOrders) {
-      const startTime = new Date(order.startTime);
-      const dueByTime = new Date(order.dueByTime);
-      const elapsedTime = (currentTime - startTime) / 1000;
+  // Set player to inactive and update final fields
+  await dbRun(
+    'UPDATE player SET active = 0, finalMoney = ?, finalTechLevel = ?, finalOrdersShipped = ?, finalReputation = ? WHERE id = ?',
+    [finalMoney, finalTechLevel, finalOrdersShipped, finalReputation, playerId],
+    'Failed to expire player'
+  );
+}
 
-      if (order.state === OrderStates.InProgress && elapsedTime >= order.duration) {
-        await OrderCompleted(order.id, playerId);
-      } else if (currentTime > dueByTime) {
-        await OrderCanceled(order.id, playerId);
-      }
-    }
+const gameTick = async (playerId, player) => {
 
-    await productTick(playerId); 
+  // const currentTime = new Date();
+  // const elapsedTime = (currentTime - new Date(player.createdAt)) / 1000; // Convert to seconds
+  const playerTimeRemaining = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsedTime, 0);
 
-    const lastOrder = await dbGet(
-      'SELECT * FROM orders WHERE playerId = ? ORDER BY id DESC LIMIT 1',
-      [playerId],
-      'Failed to retrieve last order'
-    );
+  console.log('player.createdAt:', new Date(player.createdAt));
+  console.log('elapsedTime:', player.elapsedTime);
+  console.log('Player time remaining:', playerTimeRemaining);
 
-    const newOrderInterval = BASE_ORDER_ARRIVAL_SECONDS;
-    const maximumGeneratableOrders = MAXIMUM_ORDER_QUEUE_SIZE;
-    const readyForNewOrder = (!lastOrder || (currentTime - new Date(lastOrder.startTime)) / 1000 >= newOrderInterval);
 
-    if (activeOrders.length < maximumGeneratableOrders && readyForNewOrder) {
-      await GenerateOrder(playerId);
-    }
-
-    const secondsUntilNextOrder = readyForNewOrder ? 0 : Math.max(0, newOrderInterval - (currentTime - new Date(lastOrder.startTime)) / 1000);
-    return Math.round(secondsUntilNextOrder);
-  } catch (err) {
-    throw new Error(err.message);
+  if (playerTimeRemaining <= 0) {
+    await expirePlayer(playerId);
+    return { secondsUntilNextOrder: 0, playerTimeRemaining };
   }
+
+  const activeOrders = await dbAll(
+    `SELECT *,
+      (strftime('%s', 'now') - strftime('%s', startTime)) AS elapsedTime,
+      (strftime('%s', 'now') > strftime('%s', dueByTime)) AS isOverdue
+      FROM orders 
+      WHERE playerId = ? AND active = 1`,
+    [playerId],
+    'Failed to retrieve active orders'
+  );
+
+  for (const order of activeOrders) {
+    // const startTime = new Date(order.startTime);
+    // const dueByTime = new Date(order.dueByTime);
+    // const elapsedTime = (currentTime - startTime) / 1000;
+
+    if (order.state === OrderStates.InProgress && order.elapsedTime >= order.duration) {
+      await OrderCompleted(order.id, playerId);
+    } else if (order.isOverdue) {
+      await OrderCanceled(order.id, playerId);
+    }
+  }
+
+  await productTick(playerId); 
+
+  const lastOrder = await dbGet(
+    `SELECT *,
+      (strftime('%s', 'now') - strftime('%s', startTime)) AS elapsedTime,
+      strftime('%s', 'now') AS currentTime
+      FROM orders 
+      WHERE playerId = ? ORDER BY id DESC LIMIT 1`,
+    [playerId],
+    'Failed to retrieve last order'
+  );
+
+  const newOrderInterval = BASE_ORDER_ARRIVAL_SECONDS;
+  const maximumGeneratableOrders = MAXIMUM_ORDER_QUEUE_SIZE;
+  const readyForNewOrder = (!lastOrder || lastOrder.elapsedTime >= newOrderInterval);
+
+  if (activeOrders.length < maximumGeneratableOrders && readyForNewOrder) {
+    await GenerateOrder(playerId);
+  }
+
+  const secondsUntilNextOrder = readyForNewOrder ? 0 : Math.max(0, newOrderInterval - lastOrder.elapsedTime);
+  return { secondsUntilNextOrder: Math.round(secondsUntilNextOrder), timeRemainingSeconds: playerTimeRemaining };
 };
 
 const makeNewTechnologyAvailable = async (playerId) => {
@@ -219,7 +254,7 @@ const makeNewTechnologyAvailable = async (playerId) => {
     console.log('Excluded Technology Codes for playerId', playerId, ':', excludedTechCodes);
 
     const newTech = await dbGet(
-      `SELECT id, techCode FROM technologies 
+      `SELECT id, techCode, shipstation_kb_link FROM technologies 
        WHERE techCode NOT IN (${excludedTechCodes.map(code => `'${code}'`).join(',')}) 
        ORDER BY RANDOM() LIMIT 1`,
       [],
@@ -341,9 +376,10 @@ module.exports = {
   makeNewTechnologyAvailable,
   performOneTimeTechnologyEffect,
   GenerateOrder,
-  gameTick, // Export gameTick
-  OrderCanceled, // Export OrderCanceled
+  gameTick,
+  OrderCanceled,
   CalculatePlayerReputation,
-  productTick, // Export productTick
-  ProductCompleted // Export ProductCompleted
+  productTick,
+  ProductCompleted,
+  expirePlayer
 };

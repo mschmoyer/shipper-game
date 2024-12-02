@@ -9,7 +9,7 @@ const GameWorkButton = ({ autoShip, onClick, isWorkBeingDone, titleDefault, titl
       disabled={isWorkBeingDone}
     >
       {autoShip ? 'Working...' : isWorkBeingDone ? titleWhenWorking : titleDefault}
-      {hotkey && <div className="hotkey-info">Hotkey: {hotkey}</div>}
+      {!isWorkBeingDone && hotkey && <div className="hotkey-info">Hotkey: {hotkey}</div>}
     </button>
   );
 };

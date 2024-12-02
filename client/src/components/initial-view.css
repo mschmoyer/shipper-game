@@ -1,7 +1,7 @@
 .initial-view {
   text-align: center;
   padding: 20px;
-  background-color: #f0f8ff;
+  background-color: #e0f2e9; /* light green background */
   border-radius: 10px;
   max-width: 500px;
   margin: 50px auto;
@@ -34,7 +34,7 @@
 }
 
 .form-group input {
-  width: 100%;
+  width: 90%;
   padding: 10px;
   font-size: 1em;
   border: 1px solid #ccc;
@@ -45,12 +45,17 @@
   padding: 10px 20px;
   font-size: 1em;
   color: #fff;
-  background-color: #007bff;
+  background-color: #28a745; /* green button */
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
 .create-account-button:hover {
-  background-color: #0056b3;
+  background-color: #218838; /* darker green on hover */
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
 }

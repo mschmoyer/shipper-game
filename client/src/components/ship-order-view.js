@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './ship-order-view.css';
 import { startShipping } from '../api';
 import ProgressBar from './progress-bar';
@@ -10,46 +10,57 @@ const ShipOrderView = ({
 }) => {
   const [shippingCost, setShippingCost] = useState(0);
   const [shippingError, setShippingError] = useState('');
+  const [isAutoShipEnabled, setIsAutoShipEnabled] = useState(autoShipEnabled);
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  const handleShipOrder = () => {
-    if (gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
+  const handleShipOrder = useCallback(() => {
+    if (isRetrying || gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
       return;
     }
     gameInfo.isShipping = true;
     gameInfo.progress = 0;
     setShippingError('');
     setTimeout(() => {
+      setIsRetrying(false);
       setTimeout(() => {
         startShipping()
           .then(data => {
             if (data.message === 'Shipping started successfully.') {
               setShippingCost(data.shippingCost);
-            } else if (data.error === 'Not enough inventory to fulfill the order') {
+            } else {
               setShippingError('❗ Not enough inventory to fulfill order!');
               gameInfo.isShipping = false;
-            } else {
-              console.error('Failed to start shipping');
+              if (isAutoShipEnabled) {
+                setIsRetrying(true);
+                console.log('isRetrying:', isRetrying);
+                setTimeout(handleShipOrder, 10000); // Add a one-second delay before retrying
+              }
             }
           })
           .catch(error => console.error('Failed to start shipping:', error));
       }, 0);
     }, 0);
-  };
+  }, [gameInfo, isAutoShipEnabled]);
 
   useEffect(() => {
-    if (autoShipEnabled && !gameInfo.isShipping) {
-      console.log('Starting new order automatically on mount');
+    if (gameInfo) {
+      const hasAutoShipTech = gameInfo.acquiredTechnologies && gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_warehouse_worker');
+      setIsAutoShipEnabled(hasAutoShipTech);
+    }
+  }, [gameInfo]);
+
+  useEffect(() => {
+    if (isAutoShipEnabled && !gameInfo.isShipping && !isRetrying) {
+      console.log('Starting new order automatically on mount, autoShipEnabled:', isAutoShipEnabled);
       handleShipOrder();
     }
-  }, [autoShipEnabled]);
+  }, [isAutoShipEnabled, gameInfo.isShipping, handleShipOrder, isRetrying]);
 
   useEffect(() => {
-    if (!gameInfo.isShipping) {
-      if (autoShipEnabled) {
-        setTimeout(handleShipOrder, 0);
-      }
+    if (!gameInfo.isShipping && isAutoShipEnabled && !isRetrying) {
+      setTimeout(handleShipOrder, 10); // Add a one-second delay before
     }
-  }, [gameInfo.isShipping, gameInfo.progress, autoShipEnabled]);
+  }, [gameInfo.isShipping, gameInfo.progress, isAutoShipEnabled, handleShipOrder, isRetrying]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -62,16 +73,16 @@ const ShipOrderView = ({
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, []);
+  }, [handleShipOrder]);
 
   const firstItem = gameInfo.inventory[0];
-  const totalProfit = gameInfo.product.salesPrice - gameInfo.product.costToBuild;
+  const totalProfit = gameInfo.product.salesPrice - gameInfo.product.costToBuild - shippingCost;
 
   return (
     <div className="ship-order-container">
       <div className="ship-button-container">
         <GameWorkButton
-          autoShip={autoShipEnabled}
+          autoShip={isAutoShipEnabled}
           onClick={handleShipOrder}
           isWorkBeingDone={gameInfo.isShipping}
           titleDefault="Ship Order"

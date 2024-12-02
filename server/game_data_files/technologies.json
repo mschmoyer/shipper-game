@@ -1,13 +1,25 @@
 [
   {
-    "name": "Hire Warehouse Worker",
-    "description": "Hire a warehouse worker to help with the daily operations. This increases efficiency and allows for faster processing of orders.",
-    "gameEffect": "Automates order processing.",
+    "name": "Hire Fulfillment Specialist",
+    "description": "Hire a fulfillment specialist to manage order processing and shipping.",
+    "gameEffect": "Automates order shipping.",
     "techLevelRequired": 1,
     "modifierValue": 1,
     "acquirable": true,
     "cost": 1500,
-    "techCode": "hire_warehouse_worker"
+    "techCode": "hire_warehouse_worker",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-User-Management"
+  },
+  {
+    "name": "Hire Fabricator",
+    "description": "Hire a fabricator to create custom products.",
+    "gameEffect": "Automates product creation.",
+    "techLevelRequired": 1,
+    "modifierValue": 1,
+    "acquirable": true,
+    "cost": 1500,
+    "techCode": "hire_fabricator",
+    "shipstation_kb_link": ""
   },
   {
     "name": "Discounted Shipping Rates",
@@ -17,17 +29,19 @@
     "modifierValue": 0.3,
     "acquirable": true,
     "cost": 1000,
-    "techCode": "discounted_shipping_rates"
+    "techCode": "discounted_shipping_rates",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Discounted-Rates"
   },
   {
-    "name": "Set Product Shipping Presets",
-    "description": "Set up shipping presets for products to streamline the shipping process and reduce errors.",
+    "name": "SmartFill",
+    "description": "Automatically fill in shipping fields based on previous orders.",
     "gameEffect": "Eliminates a shipping step - inputting weights & dimensions!",
     "techLevelRequired": 1,
     "modifierValue": 1,
     "acquirable": true,
-    "cost": 500,
-    "techCode": "product_shipping_presets"
+    "cost": 1000,
+    "techCode": "smartfill",
+    "shipstation_kb_link": "https://support.shipworks.com/hc/en-us/articles/4407059024795-ShipSense-Overview"
   },
   {
     "name": "Bundles: 2-Packs",
@@ -37,7 +51,8 @@
     "modifierValue": 2,
     "acquirable": true,
     "cost": 1000,
-    "techCode": "bundles"
+    "techCode": "bundles",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Product-Bundles"
   },
   {
     "name": "Rate Shopper",
@@ -47,7 +62,8 @@
     "modifierValue": 1,
     "acquirable": true,
     "cost": 1000,
-    "techCode": "rate_shopper"
+    "techCode": "rate_shopper",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Rate-Shopping"
   },
   {
     "name": "Fire Sale",
@@ -57,7 +73,8 @@
     "modifierValue": 0.1,
     "acquirable": false,
     "cost": 1000, 
-    "techCode": "fire_sale"
+    "techCode": "fire_sale",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Clearance-Sales"
   },
   {
     "name": "Order Grid Filters",
@@ -67,6 +84,7 @@
     "modifierValue": 1,
     "acquirable": true,
     "cost": 750,
-    "techCode": "order_grid_filters"
+    "techCode": "order_grid_filters",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Order-Filters"
   }
 ]

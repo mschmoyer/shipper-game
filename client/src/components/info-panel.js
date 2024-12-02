@@ -19,6 +19,10 @@ const formatCurrency = (amount) => {
   return amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
 };
 
+const formatTimeRemaining = (timeRemaining) => {
+  return timeRemaining > 60 ? `${Math.floor(timeRemaining / 60)} mins` : `${timeRemaining}s`;
+};
+
 const InfoPanel = ({ gameInfo }) => {
   return (
     <div className="info-panel">
@@ -27,7 +31,7 @@ const InfoPanel = ({ gameInfo }) => {
         <p>💰 ${formatCurrency(gameInfo.money)}</p>
         <p>📦 Shipped: {gameInfo.ordersShipped}</p>
         <p>{getReputationEmoji(gameInfo.reputation)} Reputation: {gameInfo.reputation}</p>
-        <p>⏳ Time Remaining: {gameInfo.timeRemaining}</p>
+        <p>⏳ Time Remaining: {formatTimeRemaining(gameInfo.timeRemaining)}</p>
       </div>
     </div>
   );

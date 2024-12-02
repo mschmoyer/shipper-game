@@ -6,6 +6,7 @@
   background-color: #f1f2f3;
   color: #000000;
   flex-grow: 1;
+  margin-top: 20px;
 }
 
 .modal {
