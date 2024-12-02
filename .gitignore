@@ -1,3 +1,6 @@
 
 /server/node_modules
-/server/database
+/database/*.db
+*.db
+server/database/game.db
+server/database/sessions.sqlite

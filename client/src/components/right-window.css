@@ -1,4 +1,3 @@
-
 .right-window {
   width: 200px;
   background-color: #f1f2f3;
@@ -20,4 +19,40 @@
 
 .game-button:hover {
   background-color: #e0e0e0;
+}
+
+.game-task {
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: #000000;
+  cursor: pointer;
+}
+
+.game-task::after {
+  content: attr(data-points) " Victory Points";
+  display: block;
+  font-size: 0.9em;
+  color: #888;
+  margin-top: 5px;
+}
+
+.game-task:hover .task-popup {
+  display: block;
+}
+
+.task-popup {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }

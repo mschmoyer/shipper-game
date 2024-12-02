@@ -27,6 +27,7 @@ const InfoPanel = ({ gameInfo }) => {
         <p>💰 ${formatCurrency(gameInfo.money)}</p>
         <p>📦 Shipped: {gameInfo.ordersShipped}</p>
         <p>{getReputationEmoji(gameInfo.reputation)} Reputation: {gameInfo.reputation}</p>
+        <p>⏳ Time Remaining: {gameInfo.timeRemaining}</p>
       </div>
     </div>
   );

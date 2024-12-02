@@ -1,13 +1,14 @@
 const { dbRun, dbGet, dbAll } = require('./database');
 const fs = require('fs');
 const path = require('path');
-const { OrderStates } = require('./constants');
+const { OrderStates, BASE_INITIAL_MONEY, BASE_ORDER_ARRIVAL_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE } = require('./constants');
+const { assignRandomProductToPlayer, ProductCompleted, productTick } = require('./product-logic'); // Import from product-logic.js
 
 const generateInitialGameState = async (name, businessName, email, apiKey, apiSecret) => {
   console.log('generateInitialGameState called with:', { name, businessName, email, apiKey, apiSecret }); // Debugging statement
   const initialProgress = 0;
   const initialIsShipping = 0;
-  const initialMoney = 50;
+  const initialMoney = BASE_INITIAL_MONEY;
   const initialTechPoints = 0;
   const initialTechLevel = 1;
   const initialOrdersShipped = 0;
@@ -41,28 +42,10 @@ const initializeTechTree = async (playerId, techLevel) => {
   }
 };
 
-const assignRandomProductToPlayer = async (playerId) => {
-  try {
-    const products = await dbAll(
-      'SELECT id FROM products ORDER BY RANDOM() LIMIT 1',
-      [],
-      'Failed to retrieve random product'
-    );
-    const productId = products[0].id;
-    await dbRun(
-      'INSERT INTO PlayerProducts (playerId, productId) VALUES (?, ?)',
-      [playerId, productId],
-      'Failed to assign product to player'
-    );
-    await dbRun(
-      'INSERT INTO inventory (playerId, productId, onHand) VALUES (?, ?, ?)',
-      [playerId, productId, 100],
-      'Failed to add initial stock to inventory'
-    );
-  } catch (err) {
-    throw new Error(err.message);
-  }
-};
+// Remove assignRandomProductToPlayer function
+// const assignRandomProductToPlayer = async (playerId) => {
+//   // ...existing code...
+// };
 
 const calculateShippingAndBuyLabel = async (playerId, distance) => {
   try {
@@ -77,6 +60,7 @@ const calculateShippingAndBuyLabel = async (playerId, distance) => {
 
     const discountedShippingModifier = await playerHasTechnology(playerId, 'discounted_shipping_rates');
     if (discountedShippingModifier) {
+      console.log('Applying discounted shipping modifier:', discountedShippingModifier);
       shippingCost *= (1 - discountedShippingModifier); // Reduce shipping cost by the modifier value
     }
 
@@ -195,14 +179,16 @@ const gameTick = async (playerId) => {
       }
     }
 
+    await productTick(playerId); 
+
     const lastOrder = await dbGet(
       'SELECT * FROM orders WHERE playerId = ? ORDER BY id DESC LIMIT 1',
       [playerId],
       'Failed to retrieve last order'
     );
 
-    const newOrderInterval = 5; // 15 seconds
-    const maximumGeneratableOrders = 50;
+    const newOrderInterval = BASE_ORDER_ARRIVAL_SECONDS;
+    const maximumGeneratableOrders = MAXIMUM_ORDER_QUEUE_SIZE;
     const readyForNewOrder = (!lastOrder || (currentTime - new Date(lastOrder.startTime)) / 1000 >= newOrderInterval);
 
     if (activeOrders.length < maximumGeneratableOrders && readyForNewOrder) {
@@ -210,7 +196,7 @@ const gameTick = async (playerId) => {
     }
 
     const secondsUntilNextOrder = readyForNewOrder ? 0 : Math.max(0, newOrderInterval - (currentTime - new Date(lastOrder.startTime)) / 1000);
-    return Math.round(secondsUntilNextOrder); // Round the seconds until next order
+    return Math.round(secondsUntilNextOrder);
   } catch (err) {
     throw new Error(err.message);
   }
@@ -310,7 +296,9 @@ const CalculatePlayerReputation = async (playerId) => {
 
   try {
     const orders = await dbAll(
-      'SELECT state, dueByTime, startTime, duration FROM orders WHERE playerId = ?',
+      `SELECT state, dueByTime, startTime, duration 
+       FROM orders 
+       WHERE playerId = ? and createdAt > datetime('now', '-5 minutes')`,
       [playerId],
       'Failed to retrieve orders'
     );
@@ -355,5 +343,7 @@ module.exports = {
   GenerateOrder,
   gameTick, // Export gameTick
   OrderCanceled, // Export OrderCanceled
-  CalculatePlayerReputation // Export CalculatePlayerReputation
+  CalculatePlayerReputation,
+  productTick, // Export productTick
+  ProductCompleted // Export ProductCompleted
 };

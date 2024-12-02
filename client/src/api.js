@@ -51,3 +51,9 @@ export const resetPlayer = () => {
     method: 'POST',
   });
 };
+
+export const startProductBuild = () => {
+  return apiCall('http://localhost:5005/api/build-product', {
+    method: 'POST',
+  });
+};

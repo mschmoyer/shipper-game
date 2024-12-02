@@ -1,0 +1,37 @@
+.progress-bar-container {
+  position: relative;
+  width: calc(100% - 140px); /* Adjust width to span between GameWorkButton and product-info */
+  height: 37px;
+  background: linear-gradient(180deg, #696969, #afafaf, #696969);
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid #000000;
+}
+
+.progress-bar-container.error {
+  border: 2px solid red;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(0deg, #0b5a34, #82d3ac,  #0b5a34);
+  border-right: 2px solid #000000;
+  transition: none; /* Disable transition for instant reset */
+}
+
+.progress-bar.smooth {
+  transition: width 1s linear;
+}
+
+.progress-label {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  font-size: 18px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 30px; /* Align text vertically within the progress bar */
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  font-weight: bold;
+}

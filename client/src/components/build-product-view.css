@@ -1,22 +1,18 @@
-.shipping-container {
+.build-product-container {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #f1f2f3;
-  color: #000000;
-  flex-grow: 1;
 }
 
-.ship-button-container {
+.build-button-container {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
-  margin-right: 20px; /* Add space between button and progress bar */
 }
 
-.ship-button {
+.build-button {
   width: 120px;
   height: 120px;
   border-radius: 15px; /* Rounded corners */
@@ -29,45 +25,25 @@
   transition: background 0.3s, transform 0.1s;
 }
 
-.ship-button:hover {
+.build-button:hover {
   background: #0b5a34;
   transform: scale(0.95); /* Push-in animation */
 }
 
-.ship-button:disabled {
+.build-button:disabled {
   background: #cccccc;
   cursor: not-allowed;
 }
 
-.ship-button.auto-ship {
+.build-button.auto-build {
   background: linear-gradient(145deg, #ff8c00, #ff4500);
 }
 
-.ship-button.auto-ship:hover {
+.build-button.auto-build:hover {
   background: linear-gradient(145deg, #ff4500, #ff8c00);
 }
 
-.progress-bar-container {
-  position: relative;
-  width: 400px;
-  height: 30px;
-  background: linear-gradient(180deg, #4d4d4d, #d3d3d3);
-  border-radius: 5px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(0deg, #006400, #00ff00);
-  transition: none; /* Disable transition for instant reset */
-}
-
-.progress-bar.smooth {
-  transition: width 1s linear;
-}
-
-.shipping-state {
+.building-state {
   position: absolute;
   width: 100%;
   top: 0;

@@ -7,6 +7,7 @@ const authRoutes = require('./auth');
 const { OrderCompleted, calculateShippingAndBuyLabel, playerHasTechnology, getShippingSteps, makeNewTechnologyAvailable, GenerateOrder, gameTick, CalculatePlayerReputation } = require('./game-logic');
 const SQLiteStore = require('connect-sqlite3')(session);
 const { OrderStates } = require('./constants');
+const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./product-logic'); // Import from product-logic.js
 
 const app = express();
 const port = 5005;
@@ -30,7 +31,6 @@ app.get('/api/game-info', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
   try {
-    console.log('Fetching game info for playerId:', req.session.playerId); // Debugging statement
     const secondsUntilNextOrder = await gameTick(req.session.playerId);
 
     const gameInfo = await dbGet(
@@ -42,10 +42,8 @@ app.get('/api/game-info', async (req, res) => {
       'Failed to retrieve game info'
     );
 
-    console.log('Game info retrieved:', gameInfo); // Debugging statement
-
     const reputation = await CalculatePlayerReputation(req.session.playerId);
-    gameInfo.reputation = reputation; // Add reputation to gameInfo
+    gameInfo.reputation = reputation;
 
     const orderListOrders = await dbAll(
       `SELECT * FROM orders 
@@ -58,8 +56,6 @@ app.get('/api/game-info', async (req, res) => {
       'Failed to retrieve active orders'
     );
 
-    console.log('Active orders retrieved:', orderListOrders); // Debugging statement
-
     const activeOrder = await dbGet(
       `SELECT * FROM orders 
        WHERE playerId = ? 
@@ -69,8 +65,6 @@ app.get('/api/game-info', async (req, res) => {
       [req.session.playerId, OrderStates.InProgress],
       'Failed to retrieve active orders'
     );
-
-    console.log('Active order retrieved:', activeOrder); // Debugging statement
 
     const { steps: shippingSteps, totalDuration: shippingDuration } = await getShippingSteps(req.session.playerId);
     const startTime = activeOrder ? new Date(activeOrder.startTime) : null;
@@ -85,31 +79,14 @@ app.get('/api/game-info', async (req, res) => {
       'Failed to retrieve available technologies'
     );
 
-    console.log('Available technologies retrieved:', availableTechnologies); // Debugging statement
-
     const acquiredTechnologies = await dbAll(
       'SELECT at.*, t.techCode FROM acquired_technologies at JOIN technologies t ON at.techId = t.id WHERE at.playerId = ?',
       [req.session.playerId],
       'Failed to retrieve acquired technologies'
     );
 
-    console.log('Acquired technologies retrieved:', acquiredTechnologies); // Debugging statement
-
-    const productRow = await dbGet(
-      'SELECT p.* FROM products p JOIN PlayerProducts pp ON p.id = pp.productId WHERE pp.playerId = ?',
-      [req.session.playerId],
-      'Failed to retrieve product info'
-    );
-
-    console.log('Product info retrieved:', productRow); // Debugging statement
-
-    const inventory = await dbAll(
-      'SELECT * FROM inventory WHERE playerId = ?',
-      [req.session.playerId],
-      'Failed to retrieve inventory'
-    );
-
-    console.log('Inventory retrieved:', inventory); // Debugging statement
+    const product = await getActiveProduct(req.session.playerId);
+    const inventory = await getInventoryInfo(req.session.playerId);
 
     res.json({
       ...gameInfo,
@@ -119,7 +96,7 @@ app.get('/api/game-info', async (req, res) => {
       isShipping,
       availableTechnologies,
       acquiredTechnologies,
-      product: productRow,
+      product,
       inventory,
       activeOrder,
       orders: orderListOrders,
@@ -127,7 +104,12 @@ app.get('/api/game-info', async (req, res) => {
     });
   } catch (err) {
     console.error('Error in /api/game-info:', err); // Debugging statement
-    res.status(500).json({ error: err.message });
+    req.session.destroy(error => {
+      if (error) {
+        return res.status(500).json({ error: 'Failed to reset player session' });
+      }
+      res.status(500).json({ error: err.message });
+    });
   }
 });
 
@@ -177,17 +159,26 @@ app.post('/api/start-shipping', async (req, res) => {
 
     console.log('activeOrder:', activeOrder); // Debugging statement
 
+    // check inventory
+    const inventory = await getInventoryInfo(req.session.playerId);
+    // if not enough inventory, fail with an error message
+    if (inventory[0].onHand <= 0) {
+      return res.status(200).json({ error: 'Not enough inventory to fulfill the order' });
+    }
+
     const { steps: shippingSteps, totalDuration: baseShippingDuration } = await getShippingSteps(req.session.playerId);
     let shippingDuration = baseShippingDuration;
     console.log('Start Shipping - Base Shipping Duration:', baseShippingDuration); // Debugging statement
 
     const { shippingCost, salesPrice } = await calculateShippingAndBuyLabel(req.session.playerId, activeOrder.distance);
 
+    console.log('Start Shipping - Shipping Cost:', shippingCost); // Debugging statement
+
     // Update the duration and state of the order
     await dbRun(
-      'UPDATE orders SET duration = ?, state = ?, startTime = ? WHERE id = ?',
-      [shippingDuration, OrderStates.InProgress, new Date().toISOString(), activeOrder.id],
-      'Failed to update order duration, state, and start time'
+      'UPDATE orders SET duration = ?, state = ?, startTime = ?, shippingCost = ? WHERE id = ?',
+      [shippingDuration, OrderStates.InProgress, new Date().toISOString(), shippingCost, activeOrder.id],
+      'Failed to update order duration, state, start time, and shipping cost'
     );
 
     await dbRun(
@@ -268,6 +259,24 @@ app.post('/api/reset-player', (req, res) => {
     }
     res.json({ success: true });
   });
+});
+
+app.post('/api/build-product', async (req, res) => {
+  if (!req.session.playerId) {
+    console.log('Unauthorized access to build-product');
+    return res.status(401).json({ error: 'No player session' });
+  }
+
+  try {
+    const result = await startProductBuild(req.session.playerId);
+    if (result.error) {
+      return res.status(200).json({ error: result.error });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Error in /api/build-product:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/leaderboard', async (req, res) => {

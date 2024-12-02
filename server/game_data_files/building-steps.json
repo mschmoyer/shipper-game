@@ -1,0 +1,32 @@
+[
+    {
+      "stepCode": "gathering_components",
+      "name": "Gathering Components",
+      "duration": 2,
+      "errorPercentage": 5
+    },
+    {
+      "stepCode": "assembling",
+      "name": "Assembling",
+      "duration": 2,
+      "errorPercentage": 5
+    },
+    {
+      "stepCode": "creating_purchase_order",
+      "name": "Creating Purchase Order",
+      "duration": 2,
+      "errorPercentage": 5
+    },
+    {
+      "stepCode": "shipping_new_stock",
+      "name": "Shipping New Stock",
+      "duration": 2,
+      "errorPercentage": 5
+    },
+    {
+      "stepCode": "adding_stock_to_shelf",
+      "name": "Adding Stock to Shelf",
+      "duration": 2,
+      "errorPercentage": 5
+    }
+]

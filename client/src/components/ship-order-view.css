@@ -1,4 +1,5 @@
 .ship-order-container {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6,11 +7,9 @@
 
 .ship-button-container {
   display: flex;
-  justify-content: flex-start; /* Align button to the left */
-  align-items: flex-start; /* Align items to the top */
-  width: 100%;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 20px;
-  margin-right: 20px; /* Add space between button and progress bar */
 }
 
 .ship-button {
@@ -42,27 +41,6 @@
 
 .ship-button.auto-ship:hover {
   background: linear-gradient(145deg, #ff4500, #ff8c00);
-}
-
-.progress-bar-container {
-  position: relative;
-  width: calc(100% - 140px); /* Adjust width to account for button width and margin */
-  height: 30px;
-  background: linear-gradient(180deg, #4d4d4d, #d3d3d3);
-  border-radius: 5px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  margin-left: 140px; /* Align progress bar with the right edge of the button */
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(0deg, #006400, #00ff00);
-  transition: none; /* Disable transition for instant reset */
-}
-
-.progress-bar.smooth {
-  transition: width 1s linear;
 }
 
 .shipping-state {

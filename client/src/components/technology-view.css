@@ -1,28 +1,3 @@
-.toolbar {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  width: 100%;
-  background-color: #f1f2f3;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.toolbar-header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px;
-  background-color: #e0e0e0;
-  border-bottom: 1px solid #ccc;
-  border-radius: 10px 10px 0 0;
-}
-
-.title {
-  font-weight: bold;
-  font-size: 16px;
-}
-
 .tech-level {
   font-weight: bold;
   font-size: 16px;
@@ -30,42 +5,45 @@
 
 .tech-card {
   width: 24%;
-  min-height: 240px;
+  min-height: 290px; /* Increased height by 50px */
   max-width: 250px;
   margin: 10px;
   position: relative;
   border: 1px solid #ccc;
   border-radius: 10px;
   text-align: center;
-  background-color: #ffffff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff0ff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add drop shadow */
   overflow: hidden;
   font-size: 14px;
   padding: 4px;
   color: #000000;
+  transform: rotate(calc(var(--rotate-angle, 0) * 1deg)); /* Add rotation */
 }
 
 .technology-view-container {
   width: 100%;
-  /* Remove margin-top */
+}
+
+.tech-name-section {
+  background-color: #7d57a3;
+  border-bottom: 1px solid #ccc;
+  padding: 10px 0 10px 0;
 }
 
 .tech-name {
   font-weight: bold;
-  margin-top: 10px;
+  font-size: 18px; /* Larger text */
+  color: white; /* White text */
+  padding: 5px;
+  border-radius: 5px;
+  display: inline-block;
+  margin: 0;
 }
 
 .tech-description {
   margin-top: 5px;
   padding: 0 10px;
-}
-
-.tech-cost {
-  position: absolute;
-  bottom: 10px;
-  width: 100%;
-  text-align: center;
-  font-weight: bold;
 }
 
 .tech-effect {
@@ -79,7 +57,7 @@
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  background: #0d6e3f;
+  background: #630d6e;
   color: white;
   border: none;
   border-radius: 5px;
@@ -91,7 +69,7 @@
 }
 
 .buy-button:hover {
-  background: #0b5a34;
+  background: #852093;
 }
 
 .buy-button:active {
@@ -130,4 +108,26 @@
   color: green;
   font-weight: bold;
   margin-top: 10px;
+}
+
+.technology-drawer-container {
+  height: 500px;
+}
+
+.tech-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 10px;
+  perspective: 1000px; /* Add perspective for 3D effect */
+}
+
+.tech-card:nth-child(1) {
+  --rotate-angle: -2; /* Tilt left */
+  top: 8px;
+}
+
+.tech-card:nth-child(3) {
+  --rotate-angle: 2; /* Tilt right */
+  top: 8px;
 }

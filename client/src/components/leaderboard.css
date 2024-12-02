@@ -21,7 +21,7 @@
   position: relative;
 }
 
-.leaderboard-sections {
+.leaderboard-container {
   display: flex;
   justify-content: space-between;
 }
@@ -47,24 +47,6 @@
 
 .leaderboard-section li {
   margin-bottom: 5px;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: linear-gradient(45deg, #ff0000, #ff7f00);
-  border: none;
-  color: white;
-  font-size: 1.5em;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-}
-
-.close-button:hover {
-  background: linear-gradient(45deg, #ff7f00, #ff0000);
 }
 
 .leaderboard-section table {

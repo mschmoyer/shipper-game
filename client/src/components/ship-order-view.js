@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import './ship-order-view.css';
-import { startShipping } from '../api'; // Import startShipping API
+import { startShipping } from '../api';
+import ProgressBar from './progress-bar';
+import GameWorkButton from './game-work-button';
 
 const ShipOrderView = ({
   gameInfo,
   autoShipEnabled,
-  setShippingCost,
-  setTotalCost,
-  isModalOpen,
-  toggleModal
 }) => {
-  const [boxPosition, setBoxPosition] = useState(0);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [shippingError, setShippingError] = useState('');
 
   const handleShipOrder = () => {
     if (gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
@@ -18,13 +17,16 @@ const ShipOrderView = ({
     }
     gameInfo.isShipping = true;
     gameInfo.progress = 0;
+    setShippingError('');
     setTimeout(() => {
       setTimeout(() => {
         startShipping()
           .then(data => {
             if (data.message === 'Shipping started successfully.') {
               setShippingCost(data.shippingCost);
-              setTotalCost(data.shippingCost + gameInfo.product.costToBuild);
+            } else if (data.error === 'Not enough inventory to fulfill the order') {
+              setShippingError('❗ Not enough inventory to fulfill order!');
+              gameInfo.isShipping = false;
             } else {
               console.error('Failed to start shipping');
             }
@@ -50,66 +52,57 @@ const ShipOrderView = ({
   }, [gameInfo.isShipping, gameInfo.progress, autoShipEnabled]);
 
   useEffect(() => {
-    if (gameInfo.isShipping) {
-      const interval = setInterval(() => {
-        setBoxPosition(gameInfo.progress);
-      }, 100);
-      return () => clearInterval(interval);
-    }
-  }, [gameInfo.isShipping, gameInfo.progress]);
+    const handleKeyPress = (event) => {
+      if (event.key === 'S' || event.key === 's') {
+        handleShipOrder();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []);
 
   const firstItem = gameInfo.inventory[0];
+  const totalProfit = gameInfo.product.salesPrice - gameInfo.product.costToBuild;
 
   return (
     <div className="ship-order-container">
       <div className="ship-button-container">
-        <button
-          className={`ship-button ${autoShipEnabled ? 'auto-ship' : ''}`}
+        <GameWorkButton
+          autoShip={autoShipEnabled}
           onClick={handleShipOrder}
-          disabled={gameInfo.isShipping}
-        >
-          {autoShipEnabled ? 'Working...' : gameInfo.isShipping ? 'Working...' : 'Ship Order'}
-        </button>
+          isWorkBeingDone={gameInfo.isShipping}
+          titleDefault="Ship Order"
+          titleWhenWorking="Working..."
+          hotkey="S"
+        />
         <div className="product-info">
-          <h3 onClick={toggleModal}>{gameInfo.product.name}</h3>
-          {isModalOpen && (
-            <div className="modal">
-              <div className="modal-content">
-                <span className="close" onClick={toggleModal}>&times;</span>
-                <p>📝 Description: {gameInfo.product.description}</p>
-                <p>⚖️ Weight: {gameInfo.product.weight} kg</p>
-                <p>💵 Cost: ${gameInfo.product.costToBuild}</p>
-                <p>💲 Price: ${gameInfo.product.salesPrice}</p>
-              </div>
-            </div>
-          )}
+          <h3>{gameInfo.activeOrder ? `Order #: ${gameInfo.activeOrder.id}` : 'Idle'}</h3>
           <div className="cost-info">
             <div className="shipping-info">
               <p>📦 Quantity: 1</p>
-              <p>📏 Distance: {gameInfo.orders.length > 0 ? gameInfo.orders[0].distance : '--'} miles</p>
-              <p>🚚 Shipping: ${gameInfo.shippingCost}</p>
             </div>
             <div className="profit-info">
-              <p>📦 Build Cost: ${gameInfo.totalCost}</p>
-              <p>💰 Sale Price: ${gameInfo.product.salesPrice}</p>
-              <p>💵 Est. profit: ${gameInfo.product.salesPrice - gameInfo.totalCost}</p>
+              <p>📏 Distance: {gameInfo.activeOrder ? gameInfo.activeOrder.distance : '--'} miles</p>
+              <p>🚚 Shipping: ${gameInfo.activeOrder ? gameInfo.activeOrder.shippingCost : '--'}</p>
             </div>
             {firstItem && (
               <div className="inventory-info">
-                <p>📦 {firstItem.onHand} on hand</p>
-                <p>💔 {firstItem.damaged} damaged</p>
-                <p>🚚 {firstItem.inTransit} in transit</p>
+                <p>💰 Sale Price: ${gameInfo.product.salesPrice}</p>
+                <p>💵 Est. profit: ${totalProfit}</p>
               </div>
             )}
           </div>
         </div>
       </div>
-      <div className="progress-bar-container">
-        <div className={`progress-bar ${gameInfo.isShipping ? 'smooth' : ''}`} style={{ width: `${gameInfo.isShipping ? gameInfo.progress : 0}%` }}></div>
-        <div className="shipping-state">
-          {gameInfo.isShipping ? gameInfo.shippingSteps[Math.floor(gameInfo.progress / (100 / gameInfo.shippingSteps.length))].name : ''}
-        </div>
-      </div>
+      <ProgressBar
+        isError={!!shippingError}
+        isActive={gameInfo.isShipping}
+        labelText={shippingError || (gameInfo.isShipping ? gameInfo.shippingSteps[Math.floor(gameInfo.progress / (100 / gameInfo.shippingSteps.length))].name : 'Waiting for an order to ship...')}
+        progress={gameInfo.progress}
+      />
     </div>
   );
 };

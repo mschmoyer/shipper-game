@@ -4,10 +4,7 @@ import './how-to-play.css';
 
 const HowToPlay = ({ isOpen, onClose, gameTitle }) => {
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
-      <div className="how-to-play-header">
-        <h2>How To Play</h2>
-      </div>
+    <Drawer isOpen={isOpen} onClose={onClose} title="How To Play">
       <div className="how-to-play-content">
         <p>Welcome to {gameTitle}! 🚢</p>
         <p>Your goal is to become the most efficient shipping company in the world. 🌍</p>

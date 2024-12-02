@@ -3,37 +3,37 @@
   {
     "stepCode": "fill_ship_to",
     "name": "Filling Out Ship To Fields",
-    "duration": 1,
+    "duration": 2,
     "errorPercentage": 5
   },
   {
     "stepCode": "input_weights_dimensions",
     "name": "Inputting Product Weights & Dimension",
-    "duration": 1,
+    "duration": 2,
     "errorPercentage": 5
   },
   {
     "stepCode": "select_carrier",
     "name": "Selecting a Carrier",
-    "duration": 1,
+    "duration": 2,
     "errorPercentage": 5
   },
   {
     "stepCode": "rate_shopping",
     "name": "Rate Shopping Services",
-    "duration": 1,
+    "duration": 2,
     "errorPercentage": 5
   },
   {
     "stepCode": "adjust_insurance_confirmation",
     "name": "Adjusting Insurance and Confirmation",
-    "duration": 1,
+    "duration": 2,
     "errorPercentage": 5
   },
   {
     "stepCode": "print_label",
     "name": "Printing a Label",
-    "duration": 1,
+    "duration": 2,
     "errorPercentage": 5
   }
 ]

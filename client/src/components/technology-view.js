@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { purchaseTechnology } from '../api';
+import Drawer from './drawer';
 import './technology-view.css';
 
-const TechnologyView = ({ availableTechnologies, playerTechLevel }) => {
+const TechnologyView = ({ availableTechnologies, playerTechLevel, isOpen, onClose }) => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [newsMessage, setNewsMessage] = useState('');
 
@@ -23,19 +24,20 @@ const TechnologyView = ({ availableTechnologies, playerTechLevel }) => {
   };
 
   return (
-    <div className="toolbar">
-      <div className="toolbar-header">
-        <div className="title">Available Technologies:</div>
-        <div className="tech-level">Tech Level: {playerTechLevel}</div>
+    <Drawer isOpen={isOpen} onClose={onClose} title="Available Technologies" className="technology-drawer-container">
+      <div className="tech-level">Tech Level: {playerTechLevel}</div>
+      <div className="tech-cards-container">
+        {availableTechnologies.map(tech => (
+          <div key={tech.id} className="tech-card">
+            <div className="tech-name-section">
+              <div className="tech-name">{tech.name}</div>
+            </div>
+            <div className="tech-description">{tech.description}</div>
+            <div className="tech-effect">{tech.gameEffect}</div>
+            <button className="buy-button" onClick={() => setSelectedTech(tech)}>Buy - 💰 {tech.cost}</button>
+          </div>
+        ))}
       </div>
-      {availableTechnologies.map(tech => (
-        <div key={tech.id} className="tech-card">
-          <div className="tech-name">{tech.name}</div>
-          <div className="tech-description">{tech.description}</div>
-          <div className="tech-effect">{tech.gameEffect}</div>
-          <button className="buy-button" onClick={() => setSelectedTech(tech)}>Buy - 💰 {tech.cost}</button>
-        </div>
-      ))}
       {selectedTech && (
         <div className="modal">
           <div className="modal-content">
@@ -51,7 +53,7 @@ const TechnologyView = ({ availableTechnologies, playerTechLevel }) => {
           {newsMessage}
         </div>
       )}
-    </div>
+    </Drawer>
   );
 };
 

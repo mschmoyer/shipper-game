@@ -3,7 +3,6 @@ const path = require('path');
 const { db, initDatabase } = require('../database');
 
 const dbPath = path.join(__dirname, '../database/game.db');
-const sessionDbPath = path.join(__dirname, '../database/sessions.sqlite');
 
 const deleteDatabase = (dbFilePath) => {
   if (fs.existsSync(dbFilePath)) {
@@ -14,7 +13,6 @@ const deleteDatabase = (dbFilePath) => {
 
 const resetDatabase = async () => {
   deleteDatabase(dbPath);
-  deleteDatabase(sessionDbPath);
 
   try {
     await initDatabase();
