@@ -28,7 +28,7 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
 
   return (
     <div className="end-game-view">
-      <h1>Congratulations, {player.businessName}!</h1>
+      <h1>Congratulations, {player.business_name}!</h1>
       <p>You have successfully completed the game. Here are your final stats:</p>
       <div className="stats-grid">
         <div><strong>Money:</strong> 💰 ${formatMoney(player.final_money)}</div>

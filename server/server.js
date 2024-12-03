@@ -21,11 +21,7 @@ const port = 5005;
 app.use(cors({ 
   credentials: true, 
   origin: (origin, callback) => {
-    if (origin && (origin.includes('localhost:3000') || origin.endsWith('.ngrok.app'))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    callback(null, true); // Allow all origins
   }
 }));
 app.use(express.json());

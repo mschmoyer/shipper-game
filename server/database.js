@@ -1,26 +1,26 @@
-const { Client } = require('pg');
+const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
 const dbConfig = {
-  user: 'shipper_user',
-  host: 'localhost',
-  database: 'shipper_game', // This is your database name
-  password: 'superHardPasswordToGuess',
-  port: 5432,
+    user: process.env.POSTGRES_USER,
+    host: 'db',
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    port: 5432,
 };
 
 const schemaPath = path.join(__dirname, 'database', 'schema_postgres.sql');
 const productsPath = path.join(__dirname, 'game_data_files', 'products.json');
 const technologiesPath = path.join(__dirname, 'game_data_files', 'technologies.json');
 
-const client = new Client(dbConfig);
+const client = new Pool(dbConfig);
 
 client.connect(err => {
   if (err) {
     console.error('Failed to connect to the database:', err.message);
   } else {
-    console.log('Connected to the PostgreSQL database.');
+    console.log('Connected to the database.');
     // if (process.env.NODE_ENV !== 'test') {
     //   initDatabase();
     // }
@@ -80,6 +80,7 @@ const insertData = async (table, data) => {
 };
 
 const initDatabase = () => {
+  console.log('initializing database...');
   return new Promise((resolve, reject) => {
     const schema = fs.readFileSync(schemaPath, 'utf8');
     client.query(schema, async (err) => {

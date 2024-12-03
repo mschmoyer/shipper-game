@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    environment:
+      NODE_ENV: production
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shipper_game
+    depends_on:
+      - db
+    entrypoint: ["/app/init-db.sh", "db", "node server.js"]
+    volumes:
+      - ./init-db.sh:/app/init-db.sh
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shipper_game
+    ports:
+      - "5432:5432"
+
+volumes:
+  db_data:
