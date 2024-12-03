@@ -40,6 +40,7 @@ const App = () => {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
+            console.log('Game Info:', data);
             setGameInfo(data);
           })
           .catch(error => console.error('Failed to load game info:', error));

@@ -1,39 +1,26 @@
-
 [
   {
     "stepCode": "fill_ship_to",
-    "name": "Filling Out Ship To Fields",
-    "duration": 2,
-    "errorPercentage": 5
+    "name": "Filling Out Ship To Fields"
   },
   {
     "stepCode": "input_weights_dimensions",
-    "name": "Inputting Product Weights & Dimension",
-    "duration": 2,
-    "errorPercentage": 5
+    "name": "Inputting Product Weights & Dimension"
   },
   {
     "stepCode": "select_carrier",
-    "name": "Selecting a Carrier",
-    "duration": 2,
-    "errorPercentage": 5
+    "name": "Selecting a Carrier"
   },
   {
     "stepCode": "rate_shopping",
-    "name": "Rate Shopping Services",
-    "duration": 2,
-    "errorPercentage": 5
+    "name": "Rate Shopping Services"
   },
   {
     "stepCode": "adjust_insurance_confirmation",
-    "name": "Adjusting Insurance and Confirmation",
-    "duration": 2,
-    "errorPercentage": 5
+    "name": "Adjusting Insurance and Confirmation"
   },
   {
     "stepCode": "print_label",
-    "name": "Printing a Label",
-    "duration": 2,
-    "errorPercentage": 5
+    "name": "Printing a Label"
   }
 ]

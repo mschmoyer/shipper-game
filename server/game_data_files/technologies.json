@@ -44,12 +44,12 @@
     "shipstation_kb_link": "https://support.shipworks.com/hc/en-us/articles/4407059024795-ShipSense-Overview"
   },
   {
-    "name": "Bundles: 2-Packs",
-    "description": "Kitting & bundling products together to create new 2-pack products that sell at a higher price.",
-    "gameEffect": "Double the sales price of your products.",
+    "name": "Bigger Bundles",
+    "description": "Bundle multiple products together to create a new product.",
+    "gameEffect": "Ship an additional product with each order.",
     "techLevelRequired": 1,
-    "modifierValue": 2,
-    "acquirable": true,
+    "modifierValue": 1,
+    "acquirable": false,
     "cost": 1000,
     "techCode": "bundles",
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Product-Bundles"
@@ -66,20 +66,9 @@
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Rate-Shopping"
   },
   {
-    "name": "Fire Sale",
-    "description": "Run a fire sale to clear out old inventory and make room for new products.",
-    "gameEffect": "Generate more orders for a short period of time but reduce profit by 10%",
-    "techLevelRequired": 1,
-    "modifierValue": 0.1,
-    "acquirable": false,
-    "cost": 1000, 
-    "techCode": "fire_sale",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Clearance-Sales"
-  },
-  {
     "name": "Order Grid Filters",
     "description": "Add filters to the order grid to quickly find and prioritize orders based on specific criteria.",
-    "gameEffect": "Ships orders who are expiring soon first.",
+    "gameEffect": "Ships orders who are expiring soon first, instead of picking by random.",
     "techLevelRequired": 1,
     "modifierValue": 1,
     "acquirable": true,

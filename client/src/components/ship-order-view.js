@@ -93,7 +93,7 @@ const ShipOrderView = ({
           <h3>{gameInfo.activeOrder ? `Order #: ${gameInfo.activeOrder.id}` : 'Idle'}</h3>
           <div className="cost-info">
             <div className="shipping-info">
-              <p>📦 Quantity: 1</p>
+              <p>📦 Quantity: {gameInfo.player.productsPerOrder}</p>
             </div>
             <div className="profit-info">
               <p>📏 Distance: {gameInfo.activeOrder ? gameInfo.activeOrder.distance : '--'} miles</p>

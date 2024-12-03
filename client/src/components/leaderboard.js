@@ -46,7 +46,7 @@ const Leaderboard = ({ isOpen, onClose, ordersShipped, moneyEarned, techLevel })
                 <tr key={index}>
                   <td>{truncate(player.name, 18)}</td>
                   <td>{truncate(player.businessName, 18)}</td>
-                  <td>{formatCurrency(player.totalMoneyEarned)}</td>
+                  <td>{formatCurrency(player.totalMoneyEarned || 0)}</td>
                 </tr>
               ))}
             </tbody>

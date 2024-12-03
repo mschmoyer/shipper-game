@@ -112,7 +112,7 @@ const BuildProductView = ({
           )}
           <div className="cost-info">
             <div className="shipping-info">
-              <p>🔢 Quantity: {product.quantityToBuild}</p>
+              <p>🔢 Quantity: {gameInfo.player.productsPerBuild}</p>
             </div>
             <div className="profit-info">
               <p>💰 Build Cost: ${product.costToBuild}</p>

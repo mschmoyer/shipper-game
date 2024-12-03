@@ -1,7 +1,7 @@
-const { dbRun, dbGet, dbAll } = require('./database');
+const { dbRun, dbGet, dbAll } = require('../database');
 const fs = require('fs');
 const path = require('path');
-const { BASE_QUANTITY_TO_BUILD } = require('./constants');
+const { BASE_PRODUCTS_PER_BUILD } = require('../constants');
 
 const assignRandomProductToPlayer = async (playerId) => {
   try {
@@ -33,7 +33,7 @@ const getActiveProduct = async (playerId) => {
     'Failed to retrieve product info'
   );
 
-  const { steps: buildingSteps, totalDuration: buildingDuration } = await getBuildingSteps();
+  const { steps: buildingSteps, totalDuration: buildingDuration } = await getBuildingSteps(playerId);
   product.buildingSteps = buildingSteps;
   product.buildingDuration = buildingDuration;
 
@@ -51,7 +51,7 @@ const getActiveProduct = async (playerId) => {
   const progress = startTime ? Math.min((elapsedTime / purchaseOrder.duration) * 100, 100) : 100;
   const isBuilding = startTime ? progress < 100 : false;
 
-  product.quantityToBuild = BASE_QUANTITY_TO_BUILD;
+  product.quantityToBuild = BASE_PRODUCTS_PER_BUILD;
   product.purchaseOrderId = purchaseOrder ? purchaseOrder.id : null;
   product.progress = progress;
   product.isBuilding = isBuilding;
@@ -69,9 +69,20 @@ const getInventoryInfo = async (playerId) => {
   );
 };
 
-const getBuildingSteps = async () => {
-  const stepsPath = path.join(__dirname, 'game_data_files', 'building-steps.json');
-  const steps = JSON.parse(fs.readFileSync(stepsPath, 'utf8'));
+const getBuildingSteps = async (playerId) => {
+  const stepsPath = path.join(__dirname, '../game_data_files/building-steps.json');
+  let steps = JSON.parse(fs.readFileSync(stepsPath, 'utf8'));
+
+  const player = await dbGet(
+    'SELECT buildingSpeed FROM player WHERE id = ?',
+    [playerId],
+    'Failed to retrieve player building speed'
+  );
+
+  const buildingSpeed = player.buildingSpeed;
+
+  steps = steps.map(step => ({ ...step, duration: buildingSpeed }));
+
   const totalDuration = steps.reduce((sum, step) => sum + step.duration, 0);
   return { steps, totalDuration };
 };
@@ -91,10 +102,10 @@ const startProductBuild = async (playerId) => {
       return { error: 'An active purchase order is still in progress' };
     }
 
-    const { steps: buildingSteps, totalDuration: buildingDuration } = await getBuildingSteps();
+    const { steps: buildingSteps, totalDuration: buildingDuration } = await getBuildingSteps(playerId);
 
     const activeProduct = await getActiveProduct(playerId);
-    const quantity = BASE_QUANTITY_TO_BUILD;
+    const quantity = BASE_PRODUCTS_PER_BUILD;
 
     // Check if the player has enough money to build the product. costToBuild * quantity
     const player = await dbGet(
@@ -108,10 +119,12 @@ const startProductBuild = async (playerId) => {
       return { error: 'You do not have enough money to build the product' };
     }
 
+    const totalBuildCost = activeProduct.costToBuild * quantity;
+
     // Deduct the money. 
     await dbRun(
       'UPDATE player SET money = money - ? WHERE id = ?',
-      [activeProduct.costToBuild * quantity, playerId],
+      [totalBuildCost, playerId],
       'Failed to deduct money from player'
     );
 

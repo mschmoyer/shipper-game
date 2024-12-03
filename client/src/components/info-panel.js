@@ -16,6 +16,7 @@ const getReputationEmoji = (reputation) => {
 };
 
 const formatCurrency = (amount) => {
+  if (amount === null) return 'N/A';
   return amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
 };
 
@@ -24,13 +25,14 @@ const formatTimeRemaining = (timeRemaining) => {
 };
 
 const InfoPanel = ({ gameInfo }) => {
+  const player = gameInfo.player;
   return (
     <div className="info-panel">
       <div className="info-values">
-        <p>🌐 {gameInfo.businessName}</p>
-        <p>💰 ${formatCurrency(gameInfo.money)}</p>
-        <p>📦 Shipped: {gameInfo.ordersShipped}</p>
-        <p>{getReputationEmoji(gameInfo.reputation)} Reputation: {gameInfo.reputation}</p>
+        <p>🌐 {player.businessName}</p>
+        <p>💰 ${formatCurrency(player.money)}</p>
+        <p>📦 Shipped: {player.ordersShipped}</p>
+        <p>{getReputationEmoji(player.reputation)} Reputation: {player.reputation}</p>
         <p>⏳ Time Remaining: {formatTimeRemaining(gameInfo.timeRemaining)}</p>
       </div>
     </div>

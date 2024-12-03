@@ -19,7 +19,7 @@ const baseUrl = 'http://localhost:5005/api'; // Local server URL
 // const baseUrl = 'https://1d6b5eb01f5c.ngrok.app/api'; // Local server URL
 
 export const startShipping = () => {
-  return apiCall(`${baseUrl}/start-shipping`, {
+  return apiCall(`${baseUrl}/ship-order`, {
     method: 'POST',
   });
 };
@@ -39,10 +39,10 @@ export const fetchGameInfo = () => {
   return apiCall(`${baseUrl}/game-info`);
 };
 
-export const purchaseTechnology = (techId, cost) => {
+export const purchaseTechnology = (techId) => {
   return apiCall(`${baseUrl}/purchase-technology`, {
     method: 'POST',
-    body: JSON.stringify({ techId, cost }),
+    body: JSON.stringify({ techId }),
   });
 };
 

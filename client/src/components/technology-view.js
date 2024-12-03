@@ -9,7 +9,7 @@ const TechnologyView = ({ availableTechnologies, playerTechLevel, isOpen, onClos
 
   const handlePurchase = async (tech) => {
     try {
-      const result = await purchaseTechnology(tech.id, tech.cost);
+      const result = await purchaseTechnology(tech.id);
       setNewsMessage(result.message);
     } catch (error) {
       if (error.message === 'Insufficient funds') {

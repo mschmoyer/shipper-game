@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { dbGet } = require('./database');
-const { generateInitialGameState } = require('./game-logic');
+const { generateInitialGameState } = require('./game_logic_files/game-logic');
 
 router.post('/create-account', async (req, res) => {
-  const { name, businessName, email, apiKey, apiSecret } = req.body;
+  const { name, businessName } = req.body;
   const existingPlayer = await dbGet(
     'SELECT * FROM player WHERE businessName = ?',
     [businessName],
@@ -14,8 +14,8 @@ router.post('/create-account', async (req, res) => {
     console.log('Business name already exists:', existingPlayer);
     return res.status(200).json({ success: false, error: 'Business name already exists. Please try another.' });
   }
-  console.log('Creating account with:', { name, businessName, email, apiKey, apiSecret });
-  const playerId = await generateInitialGameState(name, businessName, email, apiKey, apiSecret);
+  console.log('Creating account with:', { name, businessName });
+  const playerId = await generateInitialGameState(name, businessName);
   
   console.log('Generated playerId:', playerId); // Debugging statement
   req.session.playerId = playerId;
@@ -35,7 +35,7 @@ router.post('/create-account', async (req, res) => {
 });
 
 router.get('/check-session', (req, res) => {
-  console.log('Checking Session. Session=', req.session);
+  console.log('Checking session:', req.session);
   if (req.session.playerId) {
     console.log('Session found for playerId:', req.session.playerId);
     res.json({ loggedIn: true });
