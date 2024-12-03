@@ -61,3 +61,18 @@
 .close-button:hover {
   color: red;
 }
+
+@media (max-width: 600px) {
+  .drawer-container {
+    width: 100%;
+    height: 80%;
+  }
+
+  .drawer-title {
+    font-size: 1.2em;
+  }
+
+  .close-button {
+    font-size: 1.5em;
+  }
+}

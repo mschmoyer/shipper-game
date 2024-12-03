@@ -89,3 +89,15 @@
   margin-top: 5px;
   color: #ffffff;
 }
+
+@media (max-width: 600px) {
+  .game-work-button {
+    width: 80px;
+    height: 80px;
+    font-size: 14px;
+  }
+
+  .hotkey-info {
+    font-size: 10px;
+  }
+}

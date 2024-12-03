@@ -12,6 +12,9 @@ const BuildProductView = ({
   const [buildError, setBuildError] = useState('');
   const [isAutoBuildEnabled, setIsAutoBuildEnabled] = useState(autoBuildEnabled);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [hasInventoryTech, setHasInventoryTech] = useState(false);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  const [inventoryProgress, setInventoryProgress] = useState(0);
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -43,6 +46,24 @@ const BuildProductView = ({
       .catch(error => console.error('Failed to start product build:', error));
   };
 
+  const handleCheckInventory = () => {
+    setIsInventoryModalOpen(true);
+    setInventoryProgress(0);
+    const interval = setInterval(() => {
+      setInventoryProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 100);
+  };
+
+  const closeInventoryModal = () => {
+    setIsInventoryModalOpen(false);
+  };
+
   // Check if the player has the AutoBuild technology
   useEffect(() => {
     if (gameInfo) {
@@ -54,6 +75,10 @@ const BuildProductView = ({
       } else {
         setIsAutoBuildEnabled(false);
       }
+
+      const hasInventoryTech = gameInfo.acquired_technologies && 
+        gameInfo.acquired_technologies.some(tech => tech.tech_code === 'inventory_management');
+      setHasInventoryTech(hasInventoryTech);
     }
   }, [gameInfo]);
 
@@ -118,13 +143,28 @@ const BuildProductView = ({
             </div>
             {gameInfo.inventory[0] && (
               <div className="inventory-info">
-                <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+                {hasInventoryTech ? (
+                  <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+                ) : (
+                  <button onClick={handleCheckInventory}>Check Inventory</button>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
-      
+      {isInventoryModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={closeInventoryModal}>&times;</span>
+            {inventoryProgress < 100 ? (
+              <ProgressBar isActive={true} progress={inventoryProgress} labelText="Checking inventory..." />
+            ) : (
+              <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+            )}
+          </div>
+        </div>
+      )}
       <ProgressBar
         isError={!!buildError}
         isActive={product.is_building}

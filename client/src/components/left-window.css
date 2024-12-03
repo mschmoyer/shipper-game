@@ -52,3 +52,13 @@
   border-color: #ff0000;
   font-weight: bold;
 }
+
+@media (max-width: 600px) {
+  .left-window {
+    width: 100%;
+    padding: 0px;
+    min-height: 0px;
+    /* allow scrolling */
+    overflow-y: auto;
+  }
+}

@@ -26,15 +26,3 @@
   border-radius: 15px;
   color: #000000;
 }
-
-.left-window {
-  width: 200px;
-  background-color: #f1f2f3;
-  border-right: 1px solid #ccc;
-  color: #000000;
-}
-
-.technology-view-container {
-  width: 100%;
-  margin-top: auto;
-}

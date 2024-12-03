@@ -169,7 +169,9 @@ const App = () => {
                 gameTitle={gameTitle}
               />
             </div>
-            <RightWindow />
+            {false && 
+              <RightWindow />
+            }
           </div>
           {gameInfo.game_active &&
             <InfoPanel gameInfo={gameInfo} />

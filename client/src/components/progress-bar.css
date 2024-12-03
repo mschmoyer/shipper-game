@@ -35,3 +35,9 @@
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
   font-weight: bold;
 }
+
+@media (max-width: 600px) {
+  .progress-bar-container {
+    width: 100%;
+  }
+}
