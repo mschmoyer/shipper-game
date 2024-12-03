@@ -2,78 +2,78 @@
   {
     "name": "Hire Fulfillment Specialist",
     "description": "Hire a fulfillment specialist to manage order processing and shipping.",
-    "gameEffect": "Automates order shipping.",
-    "techLevelRequired": 1,
-    "modifierValue": 1,
-    "acquirable": true,
+    "tech_level_required": 1,
     "cost": 1500,
-    "techCode": "hire_warehouse_worker",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-User-Management"
+    "tech_code": "hire_warehouse_worker",
+    "modifier_value": 1,
+    "game_effect": "Automates order shipping.",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-User-Management",
+    "acquirable": true
   },
   {
     "name": "Hire Fabricator",
     "description": "Hire a fabricator to create custom products.",
-    "gameEffect": "Automates product creation.",
-    "techLevelRequired": 1,
-    "modifierValue": 1,
-    "acquirable": true,
+    "tech_level_required": 1,
     "cost": 1500,
-    "techCode": "hire_fabricator",
-    "shipstation_kb_link": ""
+    "tech_code": "hire_fabricator",
+    "modifier_value": 1,
+    "game_effect": "Automates product creation.",
+    "shipstation_kb_link": "",
+    "acquirable": true
   },
   {
     "name": "Discounted Shipping Rates",
     "description": "Negotiate discounted shipping rates with carriers to reduce shipping costs and increase profit margins.",
-    "gameEffect": "Decreases shipping costs by 30%.",
-    "techLevelRequired": 1,
-    "modifierValue": 0.3,
-    "acquirable": true,
+    "tech_level_required": 1,
     "cost": 1000,
-    "techCode": "discounted_shipping_rates",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Discounted-Rates"
+    "tech_code": "discounted_shipping_rates",
+    "modifier_value": 0.3,
+    "game_effect": "Decreases shipping costs by 30%.",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Discounted-Rates",
+    "acquirable": true
   },
   {
     "name": "SmartFill",
     "description": "Automatically fill in shipping fields based on previous orders.",
-    "gameEffect": "Eliminates a shipping step - inputting weights & dimensions!",
-    "techLevelRequired": 1,
-    "modifierValue": 1,
-    "acquirable": true,
+    "tech_level_required": 1,
     "cost": 1000,
-    "techCode": "smartfill",
-    "shipstation_kb_link": "https://support.shipworks.com/hc/en-us/articles/4407059024795-ShipSense-Overview"
+    "tech_code": "smartfill",
+    "modifier_value": 1,
+    "game_effect": "Eliminates a shipping step - inputting weights & dimensions!",
+    "shipstation_kb_link": "https://support.shipworks.com/hc/en-us/articles/4407059024795-ShipSense-Overview",
+    "acquirable": true
   },
   {
     "name": "Bigger Bundles",
     "description": "Bundle multiple products together to create a new product.",
-    "gameEffect": "Ship an additional product with each order.",
-    "techLevelRequired": 1,
-    "modifierValue": 1,
-    "acquirable": false,
+    "tech_level_required": 1,
     "cost": 1000,
-    "techCode": "bundles",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Product-Bundles"
+    "tech_code": "bundles",
+    "modifier_value": 1,
+    "game_effect": "Ship an additional product with each order.",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Product-Bundles",
+    "acquirable": false
   },
   {
     "name": "Rate Shopper",
     "description": "Automatically compare shipping rates from multiple carriers to find the best rate for each shipment.",
-    "gameEffect": "Eliminates a shipping step - shopping for rates!",
-    "techLevelRequired": 1,
-    "modifierValue": 1,
-    "acquirable": true,
+    "tech_level_required": 1,
     "cost": 1000,
-    "techCode": "rate_shopper",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Rate-Shopping"
+    "tech_code": "rate_shopper",
+    "modifier_value": 1,
+    "game_effect": "Eliminates a shipping step - shopping for rates!",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Rate-Shopping",
+    "acquirable": true
   },
   {
     "name": "Order Grid Filters",
     "description": "Add filters to the order grid to quickly find and prioritize orders based on specific criteria.",
-    "gameEffect": "Ships orders who are expiring soon first, instead of picking by random.",
-    "techLevelRequired": 1,
-    "modifierValue": 1,
-    "acquirable": true,
+    "tech_level_required": 1,
     "cost": 750,
-    "techCode": "order_grid_filters",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Order-Filters"
+    "tech_code": "order_grid_filters",
+    "modifier_value": 1,
+    "game_effect": "Ships orders who are expiring soon first, instead of picking by random.",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Order-Filters",
+    "acquirable": true
   }
 ]

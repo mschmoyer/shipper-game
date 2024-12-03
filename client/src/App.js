@@ -54,8 +54,8 @@ const App = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (gameInfo && gameInfo.activeOrder) {
-      console.log('Active Order:', gameInfo.activeOrder);
+    if (gameInfo && gameInfo.active_order) {
+      console.log('Active Order:', gameInfo.active_order);
     }
   }, [gameInfo]);
 
@@ -143,11 +143,11 @@ const App = () => {
           <div className="content-wrapper">
             <LeftWindow
               orders={gameInfo.orders} 
-              activeOrder={gameInfo.activeOrder} 
+              active_order={gameInfo.active_order} 
               secondsUntilNextOrder={gameInfo.secondsUntilNextOrder}
             />
             <div className="main-content">
-              {gameInfo.gameActive ? (
+              {gameInfo.game_active ? (
                 <GameWindow 
                   gameInfo={gameInfo} 
                 />
@@ -172,7 +172,7 @@ const App = () => {
             </div>
             <RightWindow />
           </div>
-          {gameInfo.gameActive &&
+          {gameInfo.game_active &&
             <InfoPanel gameInfo={gameInfo} />
           }
         </>

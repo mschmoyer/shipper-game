@@ -20,8 +20,8 @@ const GameWindow = ({ gameInfo }) => {
         <div className="tech-label">Show Technology Upgrades</div>
       </button>
       <TechnologyView
-        availableTechnologies={gameInfo.availableTechnologies}
-        playerTechLevel={gameInfo.player.techLevel}
+        availableTechnologies={gameInfo.available_technologies}
+        playerTechLevel={gameInfo.player.tech_level}
         isOpen={isTechViewVisible}
         onClose={() => setIsTechViewVisible(false)}
       />

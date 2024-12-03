@@ -24,8 +24,8 @@ const Leaderboard = ({ isOpen, onClose, ordersShipped, moneyEarned, techLevel })
               {ordersShipped.map((player, index) => (
                 <tr key={index}>
                   <td>{truncate(player.name, 18)}</td>
-                  <td>{truncate(player.businessName, 18)}</td>
-                  <td>{player.ordersShipped}</td>
+                  <td>{truncate(player.business_name, 18)}</td>
+                  <td>{player.orders_shipped}</td>
                 </tr>
               ))}
             </tbody>
@@ -45,8 +45,8 @@ const Leaderboard = ({ isOpen, onClose, ordersShipped, moneyEarned, techLevel })
               {moneyEarned.map((player, index) => (
                 <tr key={index}>
                   <td>{truncate(player.name, 18)}</td>
-                  <td>{truncate(player.businessName, 18)}</td>
-                  <td>{formatCurrency(player.totalMoneyEarned || 0)}</td>
+                  <td>{truncate(player.business_name, 18)}</td>
+                  <td>{formatCurrency(player.total_money_earned || 0)}</td>
                 </tr>
               ))}
             </tbody>
@@ -66,8 +66,8 @@ const Leaderboard = ({ isOpen, onClose, ordersShipped, moneyEarned, techLevel })
               {techLevel.map((player, index) => (
                 <tr key={index}>
                   <td>{truncate(player.name, 18)}</td>
-                  <td>{truncate(player.businessName, 18)}</td>
-                  <td>{player.techLevel}</td>
+                  <td>{truncate(player.business_name, 18)}</td>
+                  <td>{player.tech_level}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,5 +1,4 @@
-
-const { db, dbAll } = require('../database');
+const { client, dbAll } = require('../database');
 
 const dumpTable = async (tableName) => {
   try {
@@ -16,9 +15,9 @@ const dumpTables = async () => {
   await dumpTable('technologies');
   await dumpTable('products');
   await dumpTable('inventory');
-  db.close((err) => {
+  client.end(err => {
     if (err) {
-      console.error('Failed to close the database:', err.message);
+      console.error('Failed to close the database connection:', err.message);
     } else {
       console.log('Database connection closed.');
     }

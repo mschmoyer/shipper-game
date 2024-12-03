@@ -6,7 +6,7 @@ const { generateInitialGameState } = require('./game_logic_files/game-logic');
 router.post('/create-account', async (req, res) => {
   const { name, businessName } = req.body;
   const existingPlayer = await dbGet(
-    'SELECT * FROM player WHERE businessName = ?',
+    'SELECT * FROM player WHERE business_name = $1',
     [businessName],
     'Failed to check existing player'
   );
@@ -17,25 +17,20 @@ router.post('/create-account', async (req, res) => {
   console.log('Creating account with:', { name, businessName });
   const playerId = await generateInitialGameState(name, businessName);
   
-  console.log('Generated playerId:', playerId); // Debugging statement
   req.session.playerId = playerId;
-  console.log('Session after setting playerId:', req.session); // Debugging statement
-
-  console.log('Session before save:', req.session); // Debugging statement
   req.session.save((err) => {
     if (err) {
       console.error('Failed to save session:', err.message);
       res.status(500).json({ error: 'Failed to save session.' });
     } else {
       console.log('Account created successfully with playerId:', playerId);
-      console.log('Session after save:', req.session);
       res.json({ success: true, playerId });
     }
   });
 });
 
 router.get('/check-session', (req, res) => {
-  console.log('Checking session:', req.session);
+  // console.log('Checking session:', req.session);
   if (req.session.playerId) {
     console.log('Session found for playerId:', req.session.playerId);
     res.json({ loggedIn: true });

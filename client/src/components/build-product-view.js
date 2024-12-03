@@ -18,10 +18,10 @@ const BuildProductView = ({
   };
 
   const handleBuildProduct = async () => {
-    if (isRetrying || gameInfo.product.isBuilding) {
+    if (isRetrying || gameInfo.product.is_building) {
       return;
     }
-    gameInfo.product.isBuilding = true;
+    gameInfo.product.is_building = true;
     gameInfo.product.progress = 0;
     setBuildError('');
 
@@ -33,10 +33,9 @@ const BuildProductView = ({
         } else {
           console.error('Failed to start product build:', data);
           setBuildError(result.error);
-          gameInfo.product.isBuilding = false;
+          gameInfo.product.is_building = false;
           if (isAutoBuildEnabled) {
             setIsRetrying(true);
-            console.log('isRetrying:', isRetrying);
             setTimeout(handleBuildProduct, 10000); // Add a one-second delay before retrying
           }
         }
@@ -47,8 +46,8 @@ const BuildProductView = ({
   // Check if the player has the AutoBuild technology
   useEffect(() => {
     if (gameInfo) {
-      const hasAutoBuildTech = gameInfo.acquiredTechnologies && 
-        gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_fabricator');
+      const hasAutoBuildTech = gameInfo.acquired_technologies && 
+        gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_fabricator');
       console.log('AutoBuild tech:', hasAutoBuildTech);
       if (hasAutoBuildTech) {
         setIsAutoBuildEnabled(true);
@@ -59,17 +58,17 @@ const BuildProductView = ({
   }, [gameInfo]);
 
   useEffect(() => {
-    if (isAutoBuildEnabled && !gameInfo.product.isBuilding && !isRetrying) {
+    if (isAutoBuildEnabled && !gameInfo.product.is_building && !isRetrying) {
       console.log('Starting new build automatically, autoBuildEnabled:', isAutoBuildEnabled);
       handleBuildProduct();
     }
-  }, [isAutoBuildEnabled, gameInfo.product.isBuilding, isRetrying]);
+  }, [isAutoBuildEnabled, gameInfo.product.is_building, isRetrying]);
 
   useEffect(() => {
     if (!gameInfo.product.isBuilding && isAutoBuildEnabled && !isRetrying) {
       setTimeout(handleBuildProduct, 10); // Add a one-second delay before retrying
     }
-  }, [gameInfo.product.isBuilding, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
+  }, [gameInfo.product.is_building, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -92,7 +91,7 @@ const BuildProductView = ({
         <GameWorkButton
           autoShip={isAutoBuildEnabled}
           onClick={handleBuildProduct}
-          isWorkBeingDone={product.isBuilding}
+          isWorkBeingDone={product.is_building}
           titleDefault="Start Build"
           titleWhenWorking="Building..."
           hotkey="B"
@@ -105,21 +104,21 @@ const BuildProductView = ({
                 <span className="close" onClick={toggleModal}>&times;</span>
                 <p>📝 Description: {product.description}</p>
                 <p>⚖️ Weight: {product.weight} kg</p>
-                <p>💵 Cost: ${product.costToBuild}</p>
-                <p>💲 Price: ${product.salesPrice}</p>
+                <p>💵 Cost: ${product.cost_to_build}</p>
+                <p>💲 Price: ${product.sales_price}</p>
               </div>
             </div>
           )}
           <div className="cost-info">
             <div className="shipping-info">
-              <p>🔢 Quantity: {gameInfo.player.productsPerBuild}</p>
+              <p>🔢 Quantity: {gameInfo.player.products_per_build}</p>
             </div>
             <div className="profit-info">
-              <p>💰 Build Cost: ${product.costToBuild}</p>
+              <p>💰 Build Cost: ${product.cost_to_build}</p>
             </div>
             {gameInfo.inventory[0] && (
               <div className="inventory-info">
-                <p>📦 {gameInfo.inventory[0].onHand} on hand</p>
+                <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
               </div>
             )}
           </div>
@@ -128,8 +127,8 @@ const BuildProductView = ({
       
       <ProgressBar
         isError={!!buildError}
-        isActive={product.isBuilding}
-        labelText={buildError || (product.isBuilding ? product.buildingSteps[Math.floor(product.progress / (100 / product.buildingSteps.length))].name : 'Waiting for a build order...')}
+        isActive={product.is_building}
+        labelText={buildError || (product.isBuilding ? product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name : 'Waiting for a build order...')}
         progress={product.progress}
       />
       

@@ -1,10 +1,10 @@
-
 -- Defines the player (or the business) in the game
 CREATE TABLE IF NOT EXISTS player (
   id SERIAL PRIMARY KEY,
   name TEXT,
   business_name TEXT,
   money INTEGER DEFAULT 0,
+  order_spawn_seconds INTEGER DEFAULT 15,
   shipping_speed INTEGER DEFAULT 2,
   building_speed INTEGER DEFAULT 2,
   products_per_order INTEGER DEFAULT 1,
@@ -117,3 +117,13 @@ CREATE TABLE IF NOT EXISTS inventory (
   FOREIGN KEY (player_id) REFERENCES player(id),
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
+
+-- Defines the session table for storing session data
+CREATE TABLE IF NOT EXISTS session (
+  sid VARCHAR NOT NULL COLLATE "default",
+  sess JSON NOT NULL,
+  expire TIMESTAMP(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+
+ALTER TABLE session ADD CONSTRAINT "session_pkey" PRIMARY KEY (sid);

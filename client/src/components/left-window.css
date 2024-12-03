@@ -46,3 +46,9 @@
   text-align: center;
   color: #888;
 }
+
+.order-card.very-urgent {
+  background-color: #ffcccc; /* Light red background */
+  border-color: #ff0000;
+  font-weight: bold;
+}

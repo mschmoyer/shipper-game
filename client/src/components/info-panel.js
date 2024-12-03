@@ -29,9 +29,9 @@ const InfoPanel = ({ gameInfo }) => {
   return (
     <div className="info-panel">
       <div className="info-values">
-        <p>🌐 {player.businessName}</p>
+        <p>🌐 {player.business_name}</p>
         <p>💰 ${formatCurrency(player.money)}</p>
-        <p>📦 Shipped: {player.ordersShipped}</p>
+        <p>📦 Shipped: {player.orders_shipped}</p>
         <p>{getReputationEmoji(player.reputation)} Reputation: {player.reputation}</p>
         <p>⏳ Time Remaining: {formatTimeRemaining(gameInfo.timeRemaining)}</p>
       </div>

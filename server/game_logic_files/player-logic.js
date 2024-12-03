@@ -1,49 +1,94 @@
-const { dbAll, dbRun, dbGet } = require('../database');
-const { BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
+const { dbRun, dbGet, dbAll } = require('../database');
+const { BASE_BUILDING_SPEED_SECONDS, BASE_SHIPPING_SPEED_SECONDS, BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { assignRandomProductToPlayer } = require('./product-logic');
+const { OrderStates } = require('../constants');
 
-const getPlayerInfo = async (playerId) => {
-  const query = `SELECT *, money, (strftime('%s', 'now') - strftime('%s', createdAt)) AS elapsedTime
-                  FROM player 
-                  WHERE id = ?`;
-  try {
-    const row = await dbGet(query, [playerId]);
-    return row; // Assuming playerId is unique and returns a single row
-  } catch (err) {
-    throw new Error(err.message);
-  }
-};
+let reputationCache = {};
+const CACHE_EXPIRATION_TIME = 60 * 1000; // 1 minute in milliseconds
 
 const CreateNewPlayer = async (name, businessName) => {
   const initialProgress = 0;
-  const initialIsShipping = 0;
-  const initialMoney = BASE_INITIAL_MONEY;
+  const initialIsShipping = false;
   const initialTechPoints = 0;
   const initialTechLevel = 1;
   const initialOrdersShipped = 0;
   const initialTotalMoneyEarned = 0;
-  const productsPerOrder = BASE_PRODUCTS_PER_ORDER;
-  const productsPerBuild = BASE_PRODUCTS_PER_BUILD;
 
-  console.log('Setting money to BASE_INITIAL_MONEY:', initialMoney);
+  const result = await dbRun(
+    `INSERT INTO player (name, business_name, progress, is_shipping, money, tech_points, 
+     tech_level, orders_shipped, total_money_earned, products_per_order, products_per_build,
+     shipping_speed, building_speed) 
+     VALUES 
+     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+    [name, businessName, initialProgress, initialIsShipping, BASE_INITIAL_MONEY, initialTechPoints, 
+      initialTechLevel, initialOrdersShipped, initialTotalMoneyEarned, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD,
+      BASE_SHIPPING_SPEED_SECONDS, BASE_BUILDING_SPEED_SECONDS],
+    'Failed to create account'
+  );
+  const playerId = result.rows[0].id;
+  await initializeTechTree(playerId);
+  await assignRandomProductToPlayer(playerId);
+  return playerId;
+};
 
-  try {
-    const result = await dbRun(
-      'INSERT INTO player (name, businessName, progress, isShipping, money, techPoints, techLevel, ordersShipped, totalMoneyEarned, productsPerOrder, productsPerBuild) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, businessName, initialProgress, initialIsShipping, initialMoney, initialTechPoints, initialTechLevel, initialOrdersShipped, initialTotalMoneyEarned, productsPerOrder, productsPerBuild],
-      'Failed to create account'
-    );
-    const playerId = result.lastID;
-    await initializeTechTree(playerId);
-    await assignRandomProductToPlayer(playerId);
-    return playerId;
-  } catch (err) {
-    throw new Error(err.message);
+
+const CalculatePlayerReputation = async (playerId) => {
+  const currentTime = Date.now();
+
+  if (reputationCache[playerId] && (currentTime - reputationCache[playerId].timestamp < CACHE_EXPIRATION_TIME)) {
+    return reputationCache[playerId].score;
   }
+
+  const orders = await dbAll(
+    `SELECT state, due_by_time, 
+            start_time + interval '1 second' * duration AS end_time 
+     FROM orders 
+     WHERE player_id = $1 and created_at > NOW() - INTERVAL '5 minutes'`,
+    [playerId],
+    'Failed to retrieve orders'
+  );
+
+  let positiveCount = 0;
+  let negativeCount = 0;
+
+  for (const order of orders) {
+    const dueByTime = new Date(order.due_by_time);
+    const endTime = new Date(order.end_time);
+
+    if (order.state === OrderStates.Canceled) {
+      negativeCount++;
+    } else if (order.state === OrderStates.Shipped && endTime <= dueByTime) {
+      positiveCount++;
+    }
+  }
+
+  const totalOrders = positiveCount + negativeCount;
+  const reputationScore = totalOrders > 0 ? (positiveCount / totalOrders) * 100 : 100;
+
+  reputationCache[playerId] = {
+    score: Math.round(reputationScore),
+    timestamp: currentTime
+  };
+
+  return reputationCache[playerId].score;
+};
+
+const getPlayerInfo = async (playerId) => {
+  const query = `SELECT *, 
+                  money, 
+                  EXTRACT(EPOCH FROM (NOW() - created_at)) AS elapsed_time
+                  FROM player 
+                  WHERE id = $1`;
+  const row = await dbGet(query, [playerId]);
+  
+  const reputation = await CalculatePlayerReputation(playerId);
+  row.reputation = reputation; 
+  return row;
 };
 
 module.exports = {
   getPlayerInfo,
-  CreateNewPlayer
+  CreateNewPlayer,
+  CalculatePlayerReputation
 };

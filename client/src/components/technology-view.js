@@ -33,7 +33,7 @@ const TechnologyView = ({ availableTechnologies, playerTechLevel, isOpen, onClos
               <div className="tech-name">{tech.name}</div>
             </div>
             <div className="tech-description">{tech.description}</div>
-            <div className="tech-effect">{tech.gameEffect}</div>
+            <div className="tech-effect">{tech.game_effect}</div>
             <a href={tech.shipstation_kb_link} target="_blank" rel="noopener noreferrer" className="tech-kb-link">Learn about this feature!</a>
             <button className="buy-button" onClick={() => setSelectedTech(tech)}>Buy - 💰 {tech.cost}</button>
           </div>

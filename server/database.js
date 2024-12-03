@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const dbConfig = {
-  user: 'your_db_user',
-  host: 'your_db_host',
-  database: 'your_db_name',
-  password: 'your_db_password',
+  user: 'shipper_user',
+  host: 'localhost',
+  database: 'shipper_game', // This is your database name
+  password: 'superHardPasswordToGuess',
   port: 5432,
 };
 
@@ -27,13 +27,16 @@ client.connect(err => {
   }
 });
 
-const dbRun = (query, params = [], errorMessage = 'Database error') => {
-  return client.query(query, params)
-    .then(res => res)
-    .catch(err => {
-      console.error(`${errorMessage}:`, err.message);
-      throw err;
-    });
+const dbRun = async (query, params = [], errorMessage = 'Database error') => {
+  try {
+    const res = await client.query(query, params);
+    await client.query('COMMIT');
+    return res;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(`${errorMessage}:`, err.message);
+    throw err;
+  }
 };
 
 const dbGet = (query, params = [], errorMessage = 'Database error') => {
@@ -55,22 +58,25 @@ const dbAll = (query, params = [], errorMessage = 'Database error') => {
 };
 
 const checkTableEmpty = (table) => {
-  return dbGet(`SELECT COUNT(*) as count FROM ${table}`).then(row => row.count === 0);
+  return dbGet(`SELECT COUNT(*) as count FROM ${table}`).then(row => parseInt(row.count, 10) === 0);
 };
 
-const insertData = (table, data) => {
+const insertData = async (table, data) => {
   const columns = Object.keys(data[0]).join(', ');
   const placeholders = Object.keys(data[0]).map((_, i) => `$${i + 1}`).join(', ');
   const query = `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
 
   console.log(`Inserting data into ${table}...`);
   console.log('Query:', query);
-  data.forEach(item => {
+  for (const item of data) {
     console.log('Data:', item);
-    dbRun(query, Object.values(item)).catch(err => {
+    try {
+      await client.query('BEGIN');
+      await dbRun(query, Object.values(item));
+    } catch (err) {
       console.error(`Failed to insert data into ${table}:`, err.message);
-    });
-  });
+    }
+  }
 };
 
 const initDatabase = () => {
@@ -91,11 +97,11 @@ const initDatabase = () => {
           const isTechnologiesEmpty = await checkTableEmpty('technologies');
 
           if (isProductsEmpty) {
-            insertData('products', products);
+            await insertData('products', products);
           }
 
           if (isTechnologiesEmpty) {
-            insertData('technologies', technologies);
+            await insertData('technologies', technologies);
           }
 
           console.log('Products and technologies data inserted if tables were empty.');
