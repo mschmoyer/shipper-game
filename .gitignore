@@ -4,3 +4,4 @@
 *.db
 server/database/game.db
 server/database/sessions.sqlite
+.env

@@ -5,7 +5,7 @@ host="$1"
 shift
 cmd="$@"
 
-echo "Starting wait-for-db.sh script"
+echo "Starting init-db.sh script"
 
 until pg_isready -h "$host" -p 5432; do
   >&2 echo "Postgres is unavailable - sleeping"

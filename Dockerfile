@@ -22,9 +22,9 @@ RUN cd client && npm run build
 # Copy the server files
 COPY server ./server
 
-# Copy the wait-for-db script
-COPY wait-for-db.sh /app/wait-for-db.sh
-RUN chmod +x /app/wait-for-db.sh
+# Copy the init-db.sh script and make it executable
+COPY server/init-db.sh /app/init-db.sh
+RUN chmod +x /app/init-db.sh
 
 # Set the working directory for the backend
 WORKDIR /app/server

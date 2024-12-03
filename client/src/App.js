@@ -41,7 +41,12 @@ const App = () => {
         fetchGameInfo()
           .then(data => {
             console.log('Game Info:', data);
-            setGameInfo(data);
+            if (data.error === 'No player found') {
+              setIsLoggedIn(false);
+              setGameInfo(null);
+            } else {
+              setGameInfo(data);
+            }
           })
           .catch(error => console.error('Failed to load game info:', error));
       };
@@ -52,12 +57,6 @@ const App = () => {
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
-
-  useEffect(() => {
-    if (gameInfo && gameInfo.active_order) {
-      console.log('Active Order:', gameInfo.active_order);
-    }
-  }, [gameInfo]);
 
   useEffect(() => {
     if (isLoggedIn) {

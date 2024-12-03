@@ -197,9 +197,6 @@ const getShippingSteps = async (playerId) => {
 
   shipping_steps = shipping_steps.map(step => ({ ...step, duration: shippingSpeed }));
 
-  //debug log the steps length and shipping speed in one line 
-  console.log(`Shipping steps length: ${shipping_steps.length}, Shipping speed: ${shippingSpeed}`);
-
   const total_duration = shipping_steps.length * shippingSpeed;
   return { shipping_steps, total_duration }; // Ensure return statement is always executed
 };

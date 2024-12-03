@@ -2,9 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
-const { client } = require('./database');
+const { client, pgSessionStore } = require('./database');
 const authRoutes = require('./auth');
-const pgSession = require('connect-pg-simple')(session);
 const { OrderStates } = require('./constants');
 
 const { gameTick, CalculatePlayerReputation, expirePlayer } = require('./game_logic_files/game-logic');
@@ -15,29 +14,35 @@ const { getPlayerInfo } = require('./game_logic_files/player-logic');
 const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
 
 const app = express();
-const port = 5005;
+const port = process.env.PORT || 5005;
 
 // Middleware
 app.use(cors({ 
   credentials: true, 
   origin: (origin, callback) => {
-    callback(null, true); // Allow all origins
+    callback(null, true);
   }
 }));
 app.use(express.json());
 app.use(session({
-  store: new pgSession({
-    pool: client,
-    tableName: 'session'
-  }),
+  store: pgSessionStore,
   secret: 'AbbaDabbaDoobiePoo',
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: false,
-    httpOnly: false
-  }
 }));
+
+//Middleware to extract playerId from headers and set it in the session
+// app.use((req, res, next) => {
+//   const playerId = req.headers['x-player-id'];
+//   if (playerId && req.headers['x-player-id'] && !req.session.playerId) {
+//     // one out of every 100 requests, console log the playerId
+//     if (Math.random() < 0.01) {
+//       console.log('SESSIONS ARE BROKEN. Hack: Setting playerId in session:', playerId);
+//     }
+//     req.session.playerId = playerId;
+//   }
+//   next();
+// });
 
 app.use('/api', authRoutes);
 
@@ -50,6 +55,7 @@ app.get('/api/game-info', async (req, res) => {
   const player = await getPlayerInfo(req.session.playerId);
   if(!player) {
     // kill the session if the player is not found
+    console.log('No player found for session:', req.session);
     req.session.destroy();
     return res.status(401).json({ error: 'No player found' });
   }
@@ -66,8 +72,6 @@ app.get('/api/game-info', async (req, res) => {
   const { orders, secondsUntilNextOrder, timeRemainingSeconds } = await gameTick(player);
 
   const active_order = await getActiveOrder(req.session.playerId);
-
-  console.log('Active order:', active_order);
 
   const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 100;
   
@@ -132,11 +136,15 @@ app.post('/api/purchase-technology', async (req, res) => {
 });
 
 app.post('/api/reset-player', async (req, res) => {
-  if (!req.session.playerId) {
+  // if session playerid is null, use x-player-id header
+  const playerId = req.session.playerId || req.headers['x-player-id'];
+
+  if (!playerId) {
     return res.status(401).json({ error: 'No player session' });
   }
 
-  await expirePlayer(req.session.playerId);
+  const player = await getPlayerInfo(playerId);
+  await expirePlayer(player);
   req.session.destroy(err => {
     if (err) {
       return res.status(500).json({ error: 'Failed to reset player session' });
@@ -163,7 +171,7 @@ app.get('*', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
 
 // Close the database on exit

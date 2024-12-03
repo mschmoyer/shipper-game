@@ -75,16 +75,25 @@ const CalculatePlayerReputation = async (playerId) => {
 };
 
 const getPlayerInfo = async (playerId) => {
+  if (!playerId || playerId === 'null') {
+    console.error('No playerId passed to getPlayerInfo');
+    return null;
+  }
   const query = `SELECT *, 
                   money, 
                   EXTRACT(EPOCH FROM (NOW() - created_at)) AS elapsed_time
                   FROM player 
                   WHERE id = $1`;
-  const row = await dbGet(query, [playerId]);
+  let row = await dbGet(query, [playerId]);
   
-  const reputation = await CalculatePlayerReputation(playerId);
-  row.reputation = reputation; 
-  return row;
+  if(row) {
+    const reputation = await CalculatePlayerReputation(playerId);
+    row.reputation = reputation; 
+    return row;
+  } else {
+    console.error('Failed to retrieve player info');
+    return null;
+  }
 };
 
 module.exports = {
