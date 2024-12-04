@@ -175,32 +175,6 @@
   cursor: pointer;
 }
 
-.tech-button {
-  margin-top: auto;
-  width: 250px; /* Increase width to fit the text */
-  height: 40px; /* Decrease height to make it narrow */
-  border-radius: 10px 10px 0 0; /* Remove bottom left and bottom right corners */
-  background: #0d6e3f;
-  color: white;
-  border: none;
-  font-size: 16px; /* Adjust font size */
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  transition: background 0.3s, transform 0.1s;
-  flex-direction: row; /* Change to row to place emoji left of the text */
-}
-
-.tech-button:hover {
-  background: #0b5a34;
-}
-
-.tech-button:active {
-  transform: scale(0.95);
-}
-
 .tech-label {
   font-size: 14px; /* Adjust font size */
   margin-top: 5px;

@@ -1,0 +1,116 @@
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #ffffff;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 10px;
+  color: #000000;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+table {
+  width: auto; /* Change to auto to fit the content */
+  margin: 10px auto; /* Center the table */
+  border-collapse: collapse;
+}
+
+td {
+  padding: 2px 8px 2px 8px;
+  text-align: left; /* Add this line to left align the text */
+}
+
+button {
+  margin-left: 10px;
+}
+
+.centered {
+  text-align: center;
+}
+
+.available-points {
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.points-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: rgb(199, 0, 0);
+  color: white;
+  border-radius: 50%;
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  display: none; /* Initially hidden */
+}
+
+.points-badge.visible {
+  display: inline-block; /* Show when there are points */
+}
+
+.skill-description {
+  font-size: 0.9em;
+  color: #555;
+  padding-bottom: 20px;
+}
+
+.square-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px; /* Keep the corners slightly rounded */
+  /* Apply the same styles as the game's button */
+  background: #0d6e3f;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.square-button:hover:not(:disabled) {
+  filter: brightness(1.1);
+  -webkit-filter: brightness(1.1);
+}
+
+.square-button:disabled {
+  background: grey;
+  cursor: not-allowed;
+}
+
+.square-button:active {
+  background: #0b5a34;
+}

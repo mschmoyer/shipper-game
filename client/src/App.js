@@ -113,23 +113,7 @@ const App = () => {
   if (!isLoggedIn) {
     return (
       <div className="App">
-        <TitleBar 
-          gameTitle={gameTitle}
-          gameSubTitle={gameSubTitle}
-          onNewGame={handleNewGame} 
-          onToggleLeaderboard={toggleLeaderboard} 
-          onHowToPlay={toggleHowToPlay} 
-          onSettings={handleSettings} 
-        />
-        <InitialView onAccountCreated={handleAccountCreated} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="App">
-      {gameInfo && (
-        <>
+        <div className="centered-container">
           <TitleBar 
             gameTitle={gameTitle}
             gameSubTitle={gameSubTitle}
@@ -138,41 +122,61 @@ const App = () => {
             onHowToPlay={toggleHowToPlay} 
             onSettings={handleSettings} 
           />
-          <div className="content-wrapper">
-            <LeftWindow gameInfo={gameInfo} />
-            <div className="main-content">
-              {gameInfo.game_active ? (
-                <GameWindow 
-                  gameInfo={gameInfo} 
+          <InitialView onAccountCreated={handleAccountCreated} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      <div className="centered-container">
+        {gameInfo && (
+          <>
+            <TitleBar 
+              gameTitle={gameTitle}
+              gameSubTitle={gameSubTitle}
+              onNewGame={handleNewGame} 
+              onToggleLeaderboard={toggleLeaderboard} 
+              onHowToPlay={toggleHowToPlay} 
+              onSettings={handleSettings} 
+            />
+            <div className="content-wrapper">
+              <LeftWindow gameInfo={gameInfo} />
+              <div className="main-content">
+                {gameInfo.game_active ? (
+                  <GameWindow 
+                    gameInfo={gameInfo} 
+                  />
+                ) : (
+                  <EndGameView 
+                    gameInfo={gameInfo} 
+                    onNewGame={handleNewGame} 
+                  />
+                )}
+                <Leaderboard
+                  isOpen={isLeaderboardOpen}
+                  onClose={toggleLeaderboard}
+                  ordersShipped={leaderboardData.ordersShipped}
+                  moneyEarned={leaderboardData.moneyEarned}
+                  techLevel={leaderboardData.techLevel}
                 />
-              ) : (
-                <EndGameView 
-                  gameInfo={gameInfo} 
-                  onNewGame={handleNewGame} 
+                <HowToPlay
+                  isOpen={isHowToPlayOpen}
+                  onClose={toggleHowToPlay}
+                  gameTitle={gameTitle}
                 />
-              )}
-              <Leaderboard
-                isOpen={isLeaderboardOpen}
-                onClose={toggleLeaderboard}
-                ordersShipped={leaderboardData.ordersShipped}
-                moneyEarned={leaderboardData.moneyEarned}
-                techLevel={leaderboardData.techLevel}
-              />
-              <HowToPlay
-                isOpen={isHowToPlayOpen}
-                onClose={toggleHowToPlay}
-                gameTitle={gameTitle}
-              />
+              </div>
+              {false && 
+                <RightWindow />
+              }
             </div>
-            {false && 
-              <RightWindow />
+            {gameInfo.game_active &&
+              <InfoPanel gameInfo={gameInfo} />
             }
-          </div>
-          {gameInfo.game_active &&
-            <InfoPanel gameInfo={gameInfo} />
-          }
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

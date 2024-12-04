@@ -2,7 +2,7 @@ const { dbRun, dbGet, dbAll } = require('../database');
 const fs = require('fs');
 const path = require('path');
 const { BASE_PRODUCTS_PER_BUILD } = require('../constants');
-const { increaseBuildingSpeed } = require('./player-logic');
+const { addSkillPoints, increaseBuildingSpeed } = require('./player-logic');
 
 const assignRandomProductToPlayer = async (playerId) => {
   const products = await dbAll(
@@ -170,6 +170,8 @@ const ProductCompleted = async (purchaseOrderId, playerId) => {
     [purchaseOrderId],
     'Failed to update purchase order status'
   );
+
+  await addSkillPoints(playerId, 1);
 
   console.log('Product build completed successfully.');
 };

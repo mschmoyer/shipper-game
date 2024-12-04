@@ -1,5 +1,5 @@
 const { dbRun, dbGet, dbAll } = require('../database');
-const { SPEED_BOOST_FACTOR, BASE_BUILDING_SPEED_SECONDS, BASE_SHIPPING_SPEED_SECONDS, BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
+const { BASE_ORDER_SPAWN_MILLISECONDS, SPEED_BOOST_FACTOR, BASE_BUILDING_SPEED_SECONDS, BASE_SHIPPING_SPEED_SECONDS, BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { OrderStates } = require('../constants');
 
@@ -17,12 +17,12 @@ const CreateNewPlayer = async (name, businessName) => {
   const result = await dbRun(
     `INSERT INTO player (name, business_name, progress, is_shipping, money, tech_points, 
      tech_level, orders_shipped, total_money_earned, products_per_order, products_per_build,
-     shipping_speed, building_speed) 
+     shipping_speed, building_speed, order_spawn_milliseconds) 
      VALUES 
-     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
     [name, businessName, initialProgress, initialIsShipping, BASE_INITIAL_MONEY, initialTechPoints, 
       initialTechLevel, initialOrdersShipped, initialTotalMoneyEarned, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD,
-      BASE_SHIPPING_SPEED_SECONDS, BASE_BUILDING_SPEED_SECONDS],
+      BASE_SHIPPING_SPEED_SECONDS, BASE_BUILDING_SPEED_SECONDS, BASE_ORDER_SPAWN_MILLISECONDS],
     'Failed to create account'
   );
   const playerId = result.rows[0].id;
@@ -115,10 +115,54 @@ const increaseBuildingSpeed = async (playerId) => {
   await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase building speed');
 };
 
+const increaseOrderSpawnRate = async (playerId) => {
+  console.log('Increasing order spawn rate for player:', playerId);
+  const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1000) WHERE id = $2 returning order_spawn_milliseconds`;
+  await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase order spawn rate');
+}
+
+const addSkillPoints = async (playerId, points) => {
+  console.log('Adding skill points for player:', playerId);
+  const query = `UPDATE player SET available_points = available_points + $1 WHERE id = $2`;
+  await dbRun(query, [points, playerId], 'Failed to add skill points');
+}
+
+const upgradeSkill = async (playerId, skill) => {
+  const player = await getPlayerInfo(playerId);
+  if (player.available_points <= 0) {
+    return { success: false, error: 'Not enough available points' };
+  }
+  let query;
+  switch (skill) {
+    case 'shipping_points':
+      query = `UPDATE player SET shipping_points = shipping_points + 1, available_points = available_points - 1 WHERE id = $1`;
+      console.log('Upgrading shipping points for player:', playerId);
+      increaseShippingSpeed(playerId);
+      break;
+    case 'building_points':
+      query = `UPDATE player SET building_points = building_points + 1, available_points = available_points - 1 WHERE id = $1`;
+      console.log('Upgrading building points for player:', playerId);
+      increaseBuildingSpeed(playerId);
+      break;
+    case 'order_spawn_points':
+      query = `UPDATE player SET order_spawn_points = order_spawn_points + 1, available_points = available_points - 1 WHERE id = $1`;
+      console.log('Upgrading order spawn points for player:', playerId);
+      increaseOrderSpawnRate(playerId);
+      break;
+    default:
+      return { success: false, error: 'Invalid skill' };
+  }
+
+  await dbRun(query, [playerId], 'Failed to upgrade skill');
+  return { success: true };
+};
+
 module.exports = {
   getPlayerInfo,
   CreateNewPlayer,
   CalculatePlayerReputation,
   increaseShippingSpeed,
-  increaseBuildingSpeed
+  increaseBuildingSpeed,
+  upgradeSkill,
+  addSkillPoints
 };

@@ -33,3 +33,8 @@ Release the container
 
 Tail the logs
 ```heroku logs -t```
+
+### Commands: 
+
+Reset the database
+```heroku run node scripts/resetDatabase.js```

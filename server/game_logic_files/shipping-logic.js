@@ -4,7 +4,7 @@ const path = require('path');
 const { BASE_ORDER_DUE_SECONDS, OrderStates } = require('../constants');
 const { playerHasTechnology } = require('./technology-logic');
 const { getInventoryInfo, getActiveProduct } = require('./product-logic');
-const { getPlayerInfo } = require('./player-logic');
+const { addSkillPoints, getPlayerInfo } = require('./player-logic');
 const { increaseShippingSpeed } = require('./player-logic');
 
 const GenerateOrder = async (playerId) => {
@@ -252,6 +252,8 @@ const OrderCompleted = async (orderId, playerId) => {
     [order_state, orderId],
     'Failed to update order status'
   );
+
+  await addSkillPoints(playerId, 1);
 
   // log revenue, orders_shipped, and order_state
   // console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);

@@ -10,7 +10,7 @@ const { gameTick, CalculatePlayerReputation, expirePlayer, handleTruckToWarehous
 const { getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
-const { getPlayerInfo } = require('./game_logic_files/player-logic');
+const { getPlayerInfo, upgradeSkill } = require('./game_logic_files/player-logic'); // Import the upgradeSkill function
 const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
 
 const app = express();
@@ -156,6 +156,19 @@ app.post('/api/complete-find-the-product-haystack-game', async (req, res) => {
   const { succeeded } = req.body;
   await handleFindTheProductHaystackGameCompletion(req.session.playerId, succeeded);
   res.json({ success: true });
+});
+
+app.post('/api/upgrade-skill', async (req, res) => {
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+  const { skill } = req.body;
+
+  const result = await upgradeSkill(req.session.playerId, skill);
+  if (!result.success) {
+    return res.json(result);
+  }
+  res.json(result);
 });
 
 app.get('/api/leaderboard', async (req, res) => {

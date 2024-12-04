@@ -20,6 +20,7 @@ const BuildProductView = ({
   const [showOnHandCount, setShowOnHandCount] = useState(true);
 
   const ON_HAND_VISIBLE_DURATION = 15000;
+  const MINIGAME_SPAWN_CHANCE = 0.01;
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -38,7 +39,7 @@ const BuildProductView = ({
       .then(data => {
         if (data.message === 'Product build started successfully.') {
           console.log('Product build started successfully:', data);
-          if (Math.random() < 0.1) { // 10% chance to show the minigame
+          if (Math.random() < MINIGAME_SPAWN_CHANCE) { // 10% chance to show the minigame
             setShowMinigame(true);
           }
         } else {

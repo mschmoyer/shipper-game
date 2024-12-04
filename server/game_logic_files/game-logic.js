@@ -1,7 +1,7 @@
 const { dbRun, dbGet, dbAll } = require('../database');
 const fs = require('fs');
 const path = require('path');
-const { OrderStates, BASE_INITIAL_MONEY, BASE_ORDER_ARRIVAL_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, GAME_TIME_LIMIT_SECONDS } = require('../constants');
+const { OrderStates, BASE_ORDER_SPAWN_MILLISECONDS, MAXIMUM_ORDER_QUEUE_SIZE, GAME_TIME_LIMIT_SECONDS } = require('../constants');
 const { ProductCompleted, productTick } = require('./product-logic');
 const { OrderCanceled, OrderCompleted, GenerateOrder, getOrderList } = require('./shipping-logic');
 const { CreateNewPlayer, CalculatePlayerReputation } = require('./player-logic');
@@ -64,13 +64,14 @@ const gameTick = async (player) => {
     'Failed to retrieve last order'
   );
 
-  const readyForNewOrder = (!lastOrder || lastOrder.seconds_since_creation >= BASE_ORDER_ARRIVAL_SECONDS);
+  const spawnTime = (player.order_spawn_milliseconds || BASE_ORDER_SPAWN_MILLISECONDS) / 1000;
+  const readyForNewOrder = (!lastOrder || lastOrder.seconds_since_creation >= spawnTime);
 
   if (orders.length < MAXIMUM_ORDER_QUEUE_SIZE && readyForNewOrder) {
     await GenerateOrder(player.id);
   }
 
-  const secondsUntilNextOrder = Math.round(readyForNewOrder ? 0 : Math.max(0, BASE_ORDER_ARRIVAL_SECONDS - lastOrder.seconds_since_creation));
+  const secondsUntilNextOrder = Math.round(readyForNewOrder ? 0 : Math.max(0, spawnTime - lastOrder.seconds_since_creation));
   
   return { orders, secondsUntilNextOrder, timeRemainingSeconds };
 };

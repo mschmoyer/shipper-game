@@ -1,6 +1,6 @@
 [
   {
-    "name": "Hire Fulfillment Specialist",
+    "name": "Hire a Shipper",
     "description": "Hire a fulfillment specialist to manage order processing and shipping.",
     "tech_level_required": 1,
     "cost": 1500,
@@ -8,7 +8,9 @@
     "modifier_value": 1,
     "game_effect": "Automates order shipping.",
     "shipstation_kb_link": "https://www.shipstation.com/features/order-management/",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Staffing",
+    "emoji": "👷"
   },
   {
     "name": "Inventory Management",
@@ -19,10 +21,12 @@
     "tech_code": "inventory_management",
     "modifier_value": 1,
     "shipstation_kb_link": "https://www.shipstation.com/features/inventory-management/",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Inventory",
+    "emoji": "📦"
   },
   {
-    "name": "Hire Fabricator",
+    "name": "Hire a Fabricator",
     "description": "Hire a fabricator to create custom products.",
     "tech_level_required": 1,
     "cost": 1500,
@@ -30,7 +34,9 @@
     "modifier_value": 1,
     "game_effect": "Automates product creation.",
     "shipstation_kb_link": "",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Staffing",
+    "emoji": "🔧"
   },
   {
     "name": "Discounted Shipping Rates",
@@ -41,7 +47,9 @@
     "modifier_value": 0.3,
     "game_effect": "Decreases shipping costs by 30%.",
     "shipstation_kb_link": "https://www.shipstation.com/discounted-rates/",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Shipping",
+    "emoji": "🚚"
   },
   {
     "name": "SmartFill",
@@ -52,7 +60,9 @@
     "modifier_value": 1,
     "game_effect": "Eliminates a shipping step - inputting weights & dimensions!",
     "shipstation_kb_link": "https://support.shipworks.com/hc/en-us/articles/4407059024795-ShipSense-Overview",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Automation",
+    "emoji": "🤖"
   },
   {
     "name": "Product Bundles",
@@ -63,7 +73,9 @@
     "modifier_value": 1,
     "game_effect": "Ship an additional product with each order.",
     "shipstation_kb_link": "https://www.shipstation.com/blog/product-bundles/",
-    "acquirable": false
+    "acquirable": false,
+    "category": "Product",
+    "emoji": "📦"
   },
   {
     "name": "Rate Shopper",
@@ -74,7 +86,9 @@
     "modifier_value": 1,
     "game_effect": "Eliminates a shipping step - shopping for rates!",
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Rate-Shopping",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Shipping",
+    "emoji": "📦"
   },
   {
     "name": "Order Grid Filters",
@@ -85,6 +99,8 @@
     "modifier_value": 1,
     "game_effect": "Ships orders who are expiring soon first, instead of picking by random.",
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Order-Filters",
-    "acquirable": true
+    "acquirable": true,
+    "category": "Order Management",
+    "emoji": "📋"
   }
 ]

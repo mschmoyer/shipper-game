@@ -40,13 +40,13 @@ const LeftWindow = ({ gameInfo }) => {
           {index === 0 && secondsUntilNextOrder > 0 ? (
             <>
               <p>{isMobileMode ? 'Next:' : 'New Order in:'} {secondsUntilNextOrder}s...</p>
-              <p> </p>
+              <p>.</p>
               <p>🚚</p>
             </>
           ) : (
             <>
               <p>Waiting...</p>
-              <p> </p>
+              <p>.</p>
               <p>⏳</p>
             </>
           )}

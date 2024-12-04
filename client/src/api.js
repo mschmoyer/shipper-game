@@ -93,3 +93,10 @@ export const completeFindTheProductHaystackGame = (succeeded) => {
     body: JSON.stringify({ succeeded }),
   });
 };
+
+export const upgradeSkill = (skill) => {
+  return apiCall(`${baseUrl}/upgrade-skill`, {
+    method: 'POST',
+    body: JSON.stringify({ skill }),
+  });
+};

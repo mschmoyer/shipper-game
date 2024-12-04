@@ -4,7 +4,9 @@ CREATE TABLE IF NOT EXISTS player (
   name TEXT,
   business_name TEXT,
   money INTEGER DEFAULT 0,
-  order_spawn_seconds INTEGER DEFAULT 15,
+  order_spawn_milliseconds INTEGER DEFAULT 15000,
+  order_spawn_count INTEGER DEFAULT 1,
+  orders_per_ship INTEGER DEFAULT 1,
   shipping_speed INTEGER DEFAULT 2,
   building_speed INTEGER DEFAULT 2,
   products_per_order INTEGER DEFAULT 1,
@@ -20,7 +22,11 @@ CREATE TABLE IF NOT EXISTS player (
   final_money INTEGER DEFAULT 0,
   final_tech_level INTEGER DEFAULT 0,
   final_orders_shipped INTEGER DEFAULT 0,
-  final_reputation INTEGER DEFAULT 0
+  final_reputation INTEGER DEFAULT 0,
+  shipping_points INTEGER DEFAULT 0,
+  building_points INTEGER DEFAULT 0,
+  order_spawn_points INTEGER DEFAULT 0,
+  available_points INTEGER DEFAULT 0
 );
 
 -- Defines the global set of products that can be built
@@ -75,7 +81,9 @@ CREATE TABLE IF NOT EXISTS technologies (
   modifier_value REAL,
   game_effect TEXT,
   shipstation_kb_link TEXT,
-  acquirable BOOLEAN DEFAULT TRUE
+  acquirable BOOLEAN DEFAULT TRUE,
+  category TEXT,
+  emoji TEXT
 );
 
 -- Defines the technologies a player has access to
