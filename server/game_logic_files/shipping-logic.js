@@ -5,7 +5,7 @@ const { BASE_ORDER_DUE_SECONDS, OrderStates } = require('../constants');
 const { playerHasTechnology } = require('./technology-logic');
 const { getInventoryInfo, getActiveProduct } = require('./product-logic');
 const { getPlayerInfo } = require('./player-logic');
-
+const { increaseShippingSpeed } = require('./player-logic');
 
 const GenerateOrder = async (playerId) => {
   const player = await getPlayerInfo(playerId);
@@ -24,6 +24,7 @@ const GenerateOrder = async (playerId) => {
   return order;
 };
 
+// The player has requested to ship an order
 const shipOrder = async (playerId) => {
   let activeOrder = await getActiveOrder(playerId);
 
@@ -52,9 +53,17 @@ const shipOrder = async (playerId) => {
 
   const player = await getPlayerInfo(playerId);
 
+  // If the player has inventory management tech, prevent overselling / bad effetcts. 
   if (inventory[0].on_hand < player.products_per_order) {
-    return { error: 'Not enough inventory to fulfill the order' };
+    const hasInventoryManagementTech = await playerHasTechnology(playerId, 'inventory_management');
+    if (!hasInventoryManagementTech) {
+      return { error: 'Not enough inventory!' };
+    }
   }
+
+  // Increase the player speed 
+  // TODO: Temporary. Where should we put this? 
+  await increaseShippingSpeed(playerId);
 
   const { shipping_steps, total_duration } = await getShippingSteps(playerId);
 
@@ -87,7 +96,7 @@ const shipOrder = async (playerId) => {
 const getOrder = async (whereClause, params) => {
   let order = await dbGet(
     `SELECT *, 
-      EXTRACT(EPOCH FROM (NOW() - start_time)) AS elapsed_time,
+      EXTRACT(EPOCH FROM (NOW() - start_time))*1000 AS elapsed_time,
       ROUND(EXTRACT(EPOCH FROM ((due_by_time + interval '1 second' * duration) - NOW()))) AS delta_to_due_date
       FROM orders 
       WHERE ${whereClause} 
@@ -108,7 +117,7 @@ const getOrder = async (whereClause, params) => {
 const getOrderList = async (whereClause, params) => {
   let orders = await dbAll(
     `SELECT *, 
-      EXTRACT(EPOCH FROM (NOW() - start_time)) AS elapsed_time,
+      EXTRACT(EPOCH FROM (NOW() - start_time))*1000 AS elapsed_time,
       ROUND(EXTRACT(EPOCH FROM (due_by_time - NOW()))) AS delta_to_due_date
       FROM orders 
       WHERE ${whereClause}`,
@@ -118,7 +127,7 @@ const getOrderList = async (whereClause, params) => {
 
   for (let order of orders) {
     const { shipping_steps, total_duration } = await getShippingSteps(params[0]);
-    order.shipping_steps = shipping_steps;
+    //order.shipping_steps = shipping_steps;
     order.total_duration = total_duration;
   }
 
@@ -182,7 +191,7 @@ const getShippingSteps = async (playerId) => {
     'Failed to retrieve player shipping speed'
   );
 
-  const shippingSpeed = player.shipping_speed;
+  const shipping_speed_seconds = player.shipping_speed / 1000;
 
   // if user has the smartFill technology then eliminate the input_weights_dimensions step
   const hasPresetTech = await playerHasTechnology(playerId, 'smartfill');
@@ -195,46 +204,61 @@ const getShippingSteps = async (playerId) => {
     shipping_steps = shipping_steps.filter(step => step.step_code !== 'rate_shopping');
   }
 
-  shipping_steps = shipping_steps.map(step => ({ ...step, duration: shippingSpeed }));
+  shipping_steps = shipping_steps.map(step => ({ ...step, duration: shipping_speed_seconds }));
 
-  const total_duration = shipping_steps.length * shippingSpeed;
+  const total_duration = Math.round((shipping_steps.length * shipping_speed_seconds) * 1000);
   return { shipping_steps, total_duration }; // Ensure return statement is always executed
 };
 
 const OrderCompleted = async (orderId, playerId) => {
   const product = await getActiveProduct(playerId);
   const order = await getOrderById(orderId);
-
+  const inventory = await getInventoryInfo(playerId);
+  
   // log some useful info about this order in one line
-  console.log(`OrderCompleted - OrderId: ${orderId}, ProductId: ${product.id}, ProductQuantity: ${order.product_quantity}`);
+  // console.log(`OrderCompleted - OrderId: ${orderId}, ProductId: ${product.id}, ProductQuantity: ${order.product_quantity}`);
 
-  const revenue = Math.round(product.sales_price) * order.product_quantity;
+  let revenue = Math.round(product.sales_price) * order.product_quantity;
+  let orders_shipped = 1; 
+  let order_state = OrderStates.Shipped;
 
+  if (inventory[0].on_hand < order.product_quantity) {
+    // player did not have inventory to fulfill this order! PUNISH THEM!
+    // console.log('OrderCompleted - Player did not have enough inventory to fulfill this order. OrderId:', orderId);
+    revenue = 0;
+    orders_shipped = 0;
+    order_state = OrderStates.Lost;
+  } else {
+    // console.log('OrderCompleted - Deducting stock. Quantity:', order.product_quantity);
+
+    // Deduct stock from inventory
+    await dbRun(
+      'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 AND product_id = $3',
+      [order.product_quantity, playerId, product.id],
+      'Failed to deduct stock from inventory'
+    );
+  }
+
+  // Player earns revenue for this order and orders_shipped increases
   await dbRun(
-    'UPDATE player SET money = money + $1, orders_shipped = orders_shipped + 1, total_money_earned = total_money_earned + $2 WHERE id = $3',
-    [revenue, revenue, playerId],
+    'UPDATE player SET money = money + $1, orders_shipped = orders_shipped + $2, total_money_earned = total_money_earned + $3 WHERE id = $4',
+    [revenue, orders_shipped, revenue, playerId],
     'Failed to update money'
   );
+
+  // Update order state to shipped and deactivate it
   await dbRun(
     'UPDATE orders SET state = $1, active = false WHERE id = $2',
-    [OrderStates.Shipped, orderId],
+    [order_state, orderId],
     'Failed to update order status'
   );
 
-  console.log('Deducting stock - order.ProductQuantity:', order.product_quantity);
-
-  // Deduct stock from inventory
-  await dbRun(
-    'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 AND product_id = $3',
-    [order.product_quantity, playerId, product.id],
-    'Failed to deduct stock from inventory'
-  );
-
-  console.log('Order completed successfully. Revenue:', revenue);
+  // log revenue, orders_shipped, and order_state
+  // console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
 };
 
 const OrderCanceled = async (orderId, playerId) => {
-  console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
+  // console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
   await dbRun(
     'UPDATE orders SET active=false, state = $1 WHERE id = $2',
     [OrderStates.Canceled, orderId],

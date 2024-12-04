@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import './ship-order-view.css';
 import { startShipping } from '../api';
-import ProgressBar from './progress-bar';
-import GameWorkButton from './game-work-button';
+import ProgressBar from './reusable/progress-bar';
+import GameWorkButton from './reusable/game-work-button';
+import FindTheProductHaystackGame from './minigames/find-the-product-haystack'; // Import the new component
 
 const ShipOrderView = ({
   gameInfo,
@@ -12,9 +13,14 @@ const ShipOrderView = ({
   const [shippingError, setShippingError] = useState('');
   const [isAutoShipEnabled, setIsAutoShipEnabled] = useState(autoShipEnabled);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [showShipOrderProblemMinigame, setShowShipOrderProblemMinigame] = useState(false); // State to show/hide PackageGrid
 
   const handleShipOrder = useCallback(() => {
     if (isRetrying || gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
+      return;
+    }
+    if(Math.random() < 0.1) { // 10% chance to show the minigame
+      setShowShipOrderProblemMinigame(true);
       return;
     }
     gameInfo.is_shipping = true;
@@ -28,7 +34,6 @@ const ShipOrderView = ({
             if (data.message === 'Shipping started successfully.') {
               setShippingCost(data.shipping_cost);
             } else {
-              // setShippingError('❗ Not enough inventory to fulfill order!');
               setShippingError(data.error);
               gameInfo.is_shipping = false;
               if (isAutoShipEnabled) {
@@ -41,7 +46,7 @@ const ShipOrderView = ({
           .catch(error => console.error('Failed to start shipping:', error));
       }, 0);
     }, 0);
-  }, [gameInfo, isAutoShipEnabled]);
+  }, [gameInfo, isAutoShipEnabled, isRetrying]);
 
   useEffect(() => {
     if (gameInfo) {
@@ -81,13 +86,16 @@ const ShipOrderView = ({
 
   return (
     <div className="ship-order-container">
+      {showShipOrderProblemMinigame && 
+        <FindTheProductHaystackGame onClose={() => setShowShipOrderProblemMinigame(false)} />
+      } 
       <div className="ship-button-container">
         <GameWorkButton
           autoShip={isAutoShipEnabled}
           onClick={handleShipOrder}
           isWorkBeingDone={gameInfo.is_shipping}
-          titleDefault="Ship Order"
-          titleWhenWorking="Working..."
+          titleDefault="Ship"
+          titleWhenWorking="Shipping..."
           hotkey="S"
         />
         <div className="product-info">
@@ -109,12 +117,14 @@ const ShipOrderView = ({
           </div>
         </div>
       </div>
-      <ProgressBar
-        isError={!!shippingError}
-        isActive={gameInfo.is_shipping}
-        labelText={shippingError || (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps ? gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name : 'Waiting for an order to ship...')}
-        progress={gameInfo.progress}
-      />
+      <div className="ship-order-progress-bar-container">
+        <ProgressBar
+          isError={!!shippingError}
+          isActive={gameInfo.is_shipping}
+          labelText={shippingError || (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps ? gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name : 'Waiting for an order to ship...')}
+          progress={gameInfo.progress}
+        />
+      </div>
     </div>
   );
 };

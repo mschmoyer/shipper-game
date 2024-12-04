@@ -7,7 +7,18 @@
     "tech_code": "hire_warehouse_worker",
     "modifier_value": 1,
     "game_effect": "Automates order shipping.",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-User-Management",
+    "shipstation_kb_link": "https://www.shipstation.com/features/order-management/",
+    "acquirable": true
+  },
+  {
+    "name": "Inventory Management",
+    "description": "Implement an inventory management system to track stock levels and prevent stockouts.",
+    "game_effect": "Always see inventory counts and prevent workers from taking orders you don't have stock to fulfill.",
+    "tech_level_required": 1,
+    "cost": 1000,
+    "tech_code": "inventory_management",
+    "modifier_value": 1,
+    "shipstation_kb_link": "https://www.shipstation.com/features/inventory-management/",
     "acquirable": true
   },
   {
@@ -29,7 +40,7 @@
     "tech_code": "discounted_shipping_rates",
     "modifier_value": 0.3,
     "game_effect": "Decreases shipping costs by 30%.",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Discounted-Rates",
+    "shipstation_kb_link": "https://www.shipstation.com/discounted-rates/",
     "acquirable": true
   },
   {
@@ -44,14 +55,14 @@
     "acquirable": true
   },
   {
-    "name": "Bigger Bundles",
+    "name": "Product Bundles",
     "description": "Bundle multiple products together to create a new product.",
     "tech_level_required": 1,
     "cost": 1000,
     "tech_code": "bundles",
     "modifier_value": 1,
     "game_effect": "Ship an additional product with each order.",
-    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Product-Bundles",
+    "shipstation_kb_link": "https://www.shipstation.com/blog/product-bundles/",
     "acquirable": false
   },
   {

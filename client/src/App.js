@@ -40,7 +40,6 @@ const App = () => {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
-            console.log('Game Info:', data);
             if (data.error === 'No player found') {
               setIsLoggedIn(false);
               setGameInfo(null);
@@ -140,11 +139,7 @@ const App = () => {
             onSettings={handleSettings} 
           />
           <div className="content-wrapper">
-            <LeftWindow
-              orders={gameInfo.orders} 
-              active_order={gameInfo.active_order} 
-              secondsUntilNextOrder={gameInfo.secondsUntilNextOrder}
-            />
+            <LeftWindow gameInfo={gameInfo} />
             <div className="main-content">
               {gameInfo.game_active ? (
                 <GameWindow 

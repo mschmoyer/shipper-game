@@ -60,5 +60,24 @@
     min-height: 0px;
     /* allow scrolling */
     overflow-y: auto;
+    background-color: #ffffff;
+    max-width: 85px;
+  }
+
+  .p {
+    font-size: 12px;
+  }
+
+  .order-card {
+    padding: 3px;
+    margin-bottom: 5px;
+  }
+
+  .order-card p {
+    font-size: 12px;
+  }
+
+  .order-card h3 {
+    font-size: 14px;
   }
 }

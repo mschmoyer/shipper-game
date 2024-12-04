@@ -2,7 +2,6 @@
     width: 100%;
     background-color: #00331c;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
     color: #ffffff;
     display: flex;
     justify-content: space-between;
@@ -135,4 +134,18 @@
   margin-bottom: 20px;
   font-size: 24px;
   color: #333333;
+}
+
+@media (max-width: 600px) {
+  .title-bar {
+    padding: 0px;
+  }
+
+  .title-bar h1 {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
 }

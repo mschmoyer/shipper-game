@@ -1,6 +1,5 @@
 .info-panel {
-  height: 37px;
-  width: 97%;
+  width: 100%;
   background-color: #00331c;
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -21,4 +20,56 @@
 
 .info-panel p {
   margin: 5px 0;
+}
+
+.delta-positive {
+  animation: deltaUp 2s ease-in-out;
+  color: green;
+}
+
+.delta-negative {
+  animation: deltaUp 2s ease-in-out;
+  color: red;
+}
+
+.delta-label {
+  position: absolute;
+  animation: deltaAnimation 2s ease-in-out;
+  font-size: 40px;
+  font-weight: 700;
+  margin-left: -50px;
+  margin-top: -30px;
+}
+
+@keyframes deltaUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
+@keyframes deltaDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+@keyframes deltaAnimation {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
 }

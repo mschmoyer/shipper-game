@@ -1,11 +1,10 @@
 const { dbRun, dbGet, dbAll } = require('../database');
-const { BASE_BUILDING_SPEED_SECONDS, BASE_SHIPPING_SPEED_SECONDS, BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
+const { SPEED_BOOST_FACTOR, BASE_BUILDING_SPEED_SECONDS, BASE_SHIPPING_SPEED_SECONDS, BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
-const { assignRandomProductToPlayer } = require('./product-logic');
 const { OrderStates } = require('../constants');
 
 let reputationCache = {};
-const CACHE_EXPIRATION_TIME = 60 * 1000; // 1 minute in milliseconds
+const CACHE_EXPIRATION_TIME = 60 * 1000;
 
 const CreateNewPlayer = async (name, businessName) => {
   const initialProgress = 0;
@@ -27,12 +26,19 @@ const CreateNewPlayer = async (name, businessName) => {
     'Failed to create account'
   );
   const playerId = result.rows[0].id;
+  console.log('Created new player with id:', playerId);
   await initializeTechTree(playerId);
+  
+  // Dynamically require assignRandomProductToPlayer to avoid circular dependency
+  const { assignRandomProductToPlayer } = require('./product-logic');
   await assignRandomProductToPlayer(playerId);
+  
   return playerId;
 };
 
-
+// Calculate the player's reputation score based on their recent order history
+// Cached for a short period of time to reduce database queries
+// Reputation score is a percentage of successful orders out of total orders
 const CalculatePlayerReputation = async (playerId) => {
   const currentTime = Date.now();
 
@@ -56,7 +62,7 @@ const CalculatePlayerReputation = async (playerId) => {
     const dueByTime = new Date(order.due_by_time);
     const endTime = new Date(order.end_time);
 
-    if (order.state === OrderStates.Canceled) {
+    if (order.state === OrderStates.Canceled || order.state === OrderStates.Lost || order.state === OrderStates.Returned) {
       negativeCount++;
     } else if (order.state === OrderStates.Shipped && endTime <= dueByTime) {
       positiveCount++;
@@ -96,8 +102,23 @@ const getPlayerInfo = async (playerId) => {
   }
 };
 
+const increaseShippingSpeed = async (playerId) => {
+  console.log('Increasing shipping speed for player:', playerId);
+  const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1000) WHERE id = $2 RETURNING shipping_speed`;
+  await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase shipping speed');
+};
+
+const increaseBuildingSpeed = async (playerId) => {
+  console.log('Increasing building speed for player:', playerId);
+  console.log('SPEED_BOOST_FACTOR:', SPEED_BOOST_FACTOR);
+  const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1000) WHERE id = $2 returning building_speed`;
+  await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase building speed');
+};
+
 module.exports = {
   getPlayerInfo,
   CreateNewPlayer,
-  CalculatePlayerReputation
+  CalculatePlayerReputation,
+  increaseShippingSpeed,
+  increaseBuildingSpeed
 };

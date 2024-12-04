@@ -1,5 +1,5 @@
 import React from 'react';
-import Drawer from './drawer';
+import Drawer from './reusable/drawer';
 import './leaderboard.css';
 
 const truncate = (str, maxLength) => str.length > maxLength ? str.substring(0, maxLength - 3) + '...' : str;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './info-panel.css';
 
 const getReputationEmoji = (reputation) => {
@@ -24,16 +24,51 @@ const formatTimeRemaining = (timeRemaining) => {
   return timeRemaining > 60 ? `${Math.floor(timeRemaining / 60)} mins` : `${timeRemaining}s`;
 };
 
+const isMobileMode = window.innerWidth <= 600;
+
 const InfoPanel = ({ gameInfo }) => {
-  const player = gameInfo.player;
+  const [prevPlayer, setPrevPlayer] = useState({});
+  const [player, setPlayer] = useState(gameInfo.player);
+  const [deltas, setDeltas] = useState({});
+
+  useEffect(() => {
+    setPrevPlayer(player);
+    setPlayer(gameInfo.player);
+    setDeltas({
+      money: gameInfo.player.money - player.money,
+      orders_shipped: gameInfo.player.orders_shipped - player.orders_shipped,
+      reputation: gameInfo.player.reputation - player.reputation,
+    });
+  }, [gameInfo]);
+
+  const getDeltaClass = (delta) => {
+    if (delta > 0) return 'delta-positive';
+    if (delta < 0) return 'delta-negative';
+    return '';
+  };
+
+  const renderDelta = (delta) => {
+    if (delta === 0) return null;
+    return <span className={`delta-label ${getDeltaClass(delta)}`}>{delta > 0 ? `+${delta}` : delta}</span>;
+  };
+
   return (
     <div className="info-panel">
       <div className="info-values">
         <p>🌐 {player.business_name}</p>
-        <p>💰 ${formatCurrency(player.money)}</p>
-        <p>📦 Shipped: {player.orders_shipped}</p>
-        <p>{getReputationEmoji(player.reputation)} Reputation: {player.reputation}</p>
-        <p>⏳ Time Remaining: {formatTimeRemaining(gameInfo.timeRemaining)}</p>
+        <p>
+          💰 ${formatCurrency(player.money)}
+          {renderDelta(deltas.money)}
+        </p>
+        <p>
+          {isMobileMode ? '📦' : '📦 Shipped:'} {player.orders_shipped}
+          {renderDelta(deltas.orders_shipped)}
+        </p>
+        <p>
+          {getReputationEmoji(player.reputation)} {isMobileMode ? '' : 'Reputation: '}{player.reputation}
+          {renderDelta(deltas.reputation)}
+        </p>
+        <p>{isMobileMode ? '⏳' : '⏳ Time Remaining:'} {formatTimeRemaining(gameInfo.timeRemaining)}</p>
       </div>
     </div>
   );

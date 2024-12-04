@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { purchaseTechnology } from '../api';
-import Drawer from './drawer';
+import Drawer from './reusable/drawer';
 import './technology-view.css';
 
 const TechnologyView = ({ availableTechnologies, playerTechLevel, isOpen, onClose }) => {

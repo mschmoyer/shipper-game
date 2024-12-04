@@ -6,7 +6,7 @@ const { client, pgSessionStore } = require('./database');
 const authRoutes = require('./auth');
 const { OrderStates } = require('./constants');
 
-const { gameTick, CalculatePlayerReputation, expirePlayer } = require('./game_logic_files/game-logic');
+const { gameTick, CalculatePlayerReputation, expirePlayer, handleTruckToWarehouseGameCompletion, handleFindTheProductHaystackGameCompletion } = require('./game_logic_files/game-logic');
 const { getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
@@ -30,19 +30,6 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
 }));
-
-//Middleware to extract playerId from headers and set it in the session
-// app.use((req, res, next) => {
-//   const playerId = req.headers['x-player-id'];
-//   if (playerId && req.headers['x-player-id'] && !req.session.playerId) {
-//     // one out of every 100 requests, console log the playerId
-//     if (Math.random() < 0.01) {
-//       console.log('SESSIONS ARE BROKEN. Hack: Setting playerId in session:', playerId);
-//     }
-//     req.session.playerId = playerId;
-//   }
-//   next();
-// });
 
 app.use('/api', authRoutes);
 
@@ -151,6 +138,24 @@ app.post('/api/reset-player', async (req, res) => {
     }
     res.json({ success: true });
   });
+});
+
+app.post('/api/complete-truck-to-warehouse-game', async (req, res) => {
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+  const { succeeded } = req.body;
+  await handleTruckToWarehouseGameCompletion(req.session.playerId, succeeded);
+  res.json({ success: true });
+});
+
+app.post('/api/complete-find-the-product-haystack-game', async (req, res) => {
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+  const { succeeded } = req.body;
+  await handleFindTheProductHaystackGameCompletion(req.session.playerId, succeeded);
+  res.json({ success: true });
 });
 
 app.get('/api/leaderboard', async (req, res) => {

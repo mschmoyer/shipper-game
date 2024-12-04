@@ -6,6 +6,7 @@
   height: 100vh;
   background-color: #ffffff;
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 .content-wrapper {
@@ -21,7 +22,6 @@
   flex-direction: column;
   flex-grow: 1;
   align-items: center;
-  max-width: 800px;
   background-color: #f1f2f3;
   border-radius: 15px;
   color: #000000;

@@ -18,7 +18,6 @@ router.post('/create-account', async (req, res) => {
   const playerId = await generateInitialGameState(name, businessName);
   
   req.session.playerId = playerId;
-  console.log('Session after setting playerId:', req.session);
   req.session.save((err) => {
     if (err) {
       console.error('Failed to save session:', err.message);
@@ -32,12 +31,9 @@ router.post('/create-account', async (req, res) => {
 });
 
 router.get('/check-session', (req, res) => {
-  console.log('Checking session:', req.session);
   if (req.session.playerId) {
-    console.log('Session found for playerId:', req.session.playerId);
     res.json({ loggedIn: true });
   } else {
-    console.log('TODO: FIX THIS!!! Stop using header!!! No session found');
     res.json({ loggedIn: false });
   }
 });

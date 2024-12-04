@@ -1,5 +1,5 @@
 import React from 'react';
-import Drawer from './drawer';
+import Drawer from './reusable/drawer';
 import './how-to-play.css';
 
 const HowToPlay = ({ isOpen, onClose, gameTitle }) => {

@@ -16,7 +16,10 @@ const apiCall = (url, options = {}) => {
   });
 };
 
-const baseUrl = `${window.location.origin}/api`; // Pull from the browser's URL and add /api to it
+const port = process.env.PORT || 5050; // Default to port 3000 if process.env.PORT is undefined
+const baseUrl = window.location.hostname === 'localhost'
+  ? `http://localhost:${port}/api`
+  : `${window.location.origin}/api`;
 
 console.log('baseUrl:', baseUrl);
 console.log('process.env.REACT_APP_HEROKU_URL:', process.env.REACT_APP_HEROKU_URL);
@@ -74,5 +77,19 @@ export const resetPlayer = () => {
 export const startProductBuild = () => {
   return apiCall(`${baseUrl}/build-product`, {
     method: 'POST',
+  });
+};
+
+export const completeTruckToWarehouseGame = (succeeded) => {
+  return apiCall(`${baseUrl}/complete-truck-to-warehouse-game`, {
+    method: 'POST',
+    body: JSON.stringify({ succeeded }),
+  });
+};
+
+export const completeFindTheProductHaystackGame = (succeeded) => {
+  return apiCall(`${baseUrl}/complete-find-the-product-haystack-game`, {
+    method: 'POST',
+    body: JSON.stringify({ succeeded }),
   });
 };

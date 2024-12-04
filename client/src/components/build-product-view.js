@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './build-product-view.css';
 import { startProductBuild } from '../api';
-import ProgressBar from './progress-bar';
-import GameWorkButton from './game-work-button';
+import ProgressBar from './reusable/progress-bar';
+import GameWorkButton from './reusable/game-work-button';
+import TruckToWarehouseGame from './minigames/truck-to-warehouse-game'; // Import the new component
 
 const BuildProductView = ({ 
   gameInfo, 
@@ -13,8 +14,12 @@ const BuildProductView = ({
   const [isAutoBuildEnabled, setIsAutoBuildEnabled] = useState(autoBuildEnabled);
   const [isRetrying, setIsRetrying] = useState(false);
   const [hasInventoryTech, setHasInventoryTech] = useState(false);
-  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  const [isCheckInventoryModalOpen, setIsCheckInventoryModalOpen] = useState(false);
   const [inventoryProgress, setInventoryProgress] = useState(0);
+  const [showMinigame, setShowMinigame] = useState(false);
+  const [showOnHandCount, setShowOnHandCount] = useState(true);
+
+  const ON_HAND_VISIBLE_DURATION = 15000;
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -33,6 +38,9 @@ const BuildProductView = ({
       .then(data => {
         if (data.message === 'Product build started successfully.') {
           console.log('Product build started successfully:', data);
+          if (Math.random() < 0.1) { // 10% chance to show the minigame
+            setShowMinigame(true);
+          }
         } else {
           console.error('Failed to start product build:', data);
           setBuildError(result.error);
@@ -47,12 +55,14 @@ const BuildProductView = ({
   };
 
   const handleCheckInventory = () => {
-    setIsInventoryModalOpen(true);
+    setIsCheckInventoryModalOpen(true);
     setInventoryProgress(0);
     const interval = setInterval(() => {
       setInventoryProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
+          setShowOnHandCount(true);
+          setTimeout(() => setShowOnHandCount(false), ON_HAND_VISIBLE_DURATION);
           return 100;
         }
         return prev + 2;
@@ -60,8 +70,8 @@ const BuildProductView = ({
     }, 100);
   };
 
-  const closeInventoryModal = () => {
-    setIsInventoryModalOpen(false);
+  const closeCheckInventoryModal = () => {
+    setIsCheckInventoryModalOpen(false);
   };
 
   // Check if the player has the AutoBuild technology
@@ -69,7 +79,6 @@ const BuildProductView = ({
     if (gameInfo) {
       const hasAutoBuildTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_fabricator');
-      console.log('AutoBuild tech:', hasAutoBuildTech);
       if (hasAutoBuildTech) {
         setIsAutoBuildEnabled(true);
       } else {
@@ -108,7 +117,15 @@ const BuildProductView = ({
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowOnHandCount(false);
+    }, ON_HAND_VISIBLE_DURATION);
+    return () => clearTimeout(timer);
+  }, []);
+
   const product = gameInfo.product;
+  const inventoryAuditProgressBarLabelText = `Manually auditing inventory for ${product.name}...`;
 
   return (
     <div className="build-product-container">
@@ -117,7 +134,7 @@ const BuildProductView = ({
           autoShip={isAutoBuildEnabled}
           onClick={handleBuildProduct}
           isWorkBeingDone={product.is_building}
-          titleDefault="Start Build"
+          titleDefault="Build"
           titleWhenWorking="Building..."
           hotkey="B"
         />
@@ -146,31 +163,46 @@ const BuildProductView = ({
                 {hasInventoryTech ? (
                   <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
                 ) : (
-                  <button onClick={handleCheckInventory}>Check Inventory</button>
+                  showOnHandCount ? (
+                    <p className={!hasInventoryTech ? "blurred-value" : ""}>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+                  ) : (
+                    <button onClick={handleCheckInventory}>Check Inventory</button>
+                  )
                 )}
               </div>
             )}
           </div>
         </div>
       </div>
-      {isInventoryModalOpen && (
-        <div className="modal">
+      {isCheckInventoryModalOpen && (
+        <div className="check-inventory-modal">
           <div className="modal-content">
-            <span className="close" onClick={closeInventoryModal}>&times;</span>
+            <span className="close" onClick={closeCheckInventoryModal}>&times;</span>
+            <p>Knowing how much inventory you have available is important to prevent taking orders you cannot fulfill.  </p>
             {inventoryProgress < 100 ? (
-              <ProgressBar isActive={true} progress={inventoryProgress} labelText="Checking inventory..." />
+              <ProgressBar 
+                isActive={true} 
+                progress={inventoryProgress} 
+                labelText={inventoryAuditProgressBarLabelText}
+              />
             ) : (
               <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
             )}
+            <p>Buy the 🛠️<b>Inventory Tracking</b> technology to see inventory information instantly without having to wait for this!</p>
           </div>
         </div>
       )}
-      <ProgressBar
-        isError={!!buildError}
-        isActive={product.is_building}
-        labelText={buildError || (product.isBuilding ? product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name : 'Waiting for a build order...')}
-        progress={product.progress}
-      />
+      {showMinigame && (
+        <TruckToWarehouseGame onClose={() => setShowMinigame(false)} />
+      )}
+      <div className='build-product-progress-bar-container'>
+        <ProgressBar
+          isError={!!buildError}
+          isActive={product.is_building}
+          labelText={buildError || (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name} for ${product.name}` : `Waiting for a build of ${product.name}...`)}
+          progress={product.progress}
+        />
+      </div>
       
     </div>
   );

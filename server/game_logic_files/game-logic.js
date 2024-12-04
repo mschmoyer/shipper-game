@@ -47,7 +47,6 @@ const gameTick = async (player) => {
 
   for (const order of orders) {
     if (order.state === OrderStates.InProgress && order.elapsed_time >= order.duration) {
-      // TODO: if past due, then still count as shipped but penalize user. 
       await OrderCompleted(order.id, player.id);
     } else if (order.state !== OrderStates.InProgress && order.delta_to_due_date <= 0) {
       await OrderCanceled(order.id, player.id);
@@ -76,13 +75,44 @@ const gameTick = async (player) => {
   return { orders, secondsUntilNextOrder, timeRemainingSeconds };
 };
 
-let reputationCache = {};
-const CACHE_EXPIRATION_TIME = 60 * 1000; // 1 minute in milliseconds
+const handleTruckToWarehouseGameCompletion = async (playerId, succeeded) => {
+  if (succeeded) {
+    // Handle success logic, e.g., reward player
+    console.log(`Player ${playerId} succeeded in Truck to Warehouse game.`);
+  } else {
+    // Handle failure logic, e.g., penalize player
+    console.log(`Player ${playerId} failed in Truck to Warehouse game.`);
+    await dbRun(
+      'UPDATE inventory SET on_hand = 0 WHERE player_id = $1',
+      [playerId],
+      'Failed to update stock level'
+    );
+  }
+};
+
+const handleFindTheProductHaystackGameCompletion = async (playerId, succeeded) => {
+  if (succeeded) {
+    // Handle success logic, e.g., reward player
+    console.log(`Player ${playerId} succeeded in Find the Product Haystack game.`);
+  } else {
+    // Handle failure logic, e.g., penalize player
+    console.log(`Player ${playerId} failed in Find the Product Haystack game.`);
+    const player = await dbGet('SELECT money FROM player WHERE id = $1', [playerId], 'Failed to retrieve player money');
+    const deduction = Math.min(5000, player.money);
+    await dbRun(
+      'UPDATE player SET money = money - $1 WHERE id = $2',
+      [deduction, playerId],
+      'Failed to update player money'
+    );
+  }
+};
 
 module.exports = { 
   generateInitialGameState, 
   gameTick,
   productTick,
   ProductCompleted,
-  expirePlayer
+  expirePlayer,
+  handleTruckToWarehouseGameCompletion,
+  handleFindTheProductHaystackGameCompletion
 };

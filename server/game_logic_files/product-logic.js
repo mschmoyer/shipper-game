@@ -2,6 +2,7 @@ const { dbRun, dbGet, dbAll } = require('../database');
 const fs = require('fs');
 const path = require('path');
 const { BASE_PRODUCTS_PER_BUILD } = require('../constants');
+const { increaseBuildingSpeed } = require('./player-logic');
 
 const assignRandomProductToPlayer = async (playerId) => {
   const products = await dbAll(
@@ -11,8 +12,8 @@ const assignRandomProductToPlayer = async (playerId) => {
   );
   console.log('products:', products);
   const productId = products[0].id;
-  await dbRun(
-    'INSERT INTO player_products (player_id, product_id) VALUES ($1, $2)',
+  const new_product = await dbRun(
+    'INSERT INTO player_products (player_id, product_id) VALUES ($1, $2) RETURNING *',
     [playerId, productId],
     'Failed to assign product to player'
   );
@@ -21,6 +22,7 @@ const assignRandomProductToPlayer = async (playerId) => {
     [playerId, productId, 0],
     'Failed to add initial stock to inventory'
   );
+  return new_product;
 };
 
 const getActiveProduct = async (playerId) => {
@@ -36,7 +38,7 @@ const getActiveProduct = async (playerId) => {
 
   const purchase_order = await dbGet(
     `SELECT *, 
-            EXTRACT(EPOCH FROM (NOW() - start_time)) AS elapsed_time 
+            EXTRACT(EPOCH FROM (NOW() - start_time))*1000 AS elapsed_time 
      FROM purchase_orders 
      WHERE player_id = $1 AND active = true 
      LIMIT 1`,
@@ -54,7 +56,7 @@ const getActiveProduct = async (playerId) => {
   product.progress = progress;
   product.is_building = is_building;
   product.start_time = start_time;
-  product.elapsed_time = elapsed_time;
+  product.elapsed_time = elapsed_time/1000;
 
   return product;
 };
@@ -77,11 +79,11 @@ const getBuildingSteps = async (playerId) => {
     'Failed to retrieve player building speed'
   );
 
-  const buildingSpeed = player.building_speed;
+  const building_speed_seconds = player.building_speed / 1000;
 
-  building_steps = building_steps.map(step => ({ ...step, duration: step.duration * buildingSpeed }));
+  building_steps = building_steps.map(step => ({ ...step, duration: step.duration * building_speed_seconds }));
 
-  const building_duration = building_steps.length * buildingSpeed;
+  const building_duration = Math.round((building_steps.length * building_speed_seconds) * 1000);
   return { building_steps, building_duration };
 };
 
@@ -115,6 +117,10 @@ const startProductBuild = async (playerId) => {
     console.log('Player does not have enough money to build the product');
     return { error: 'You do not have enough money to build the product' };
   }
+
+  // Increase the player speed 
+  // TODO: Temporary. Where should we put this? 
+  increaseBuildingSpeed(playerId);
 
   const totalBuildCost = activeProduct.cost_to_build * quantity;
 
@@ -171,7 +177,7 @@ const ProductCompleted = async (purchaseOrderId, playerId) => {
 const productTick = async (playerId) => {
   const activeProducts = await dbAll(
     `SELECT *, 
-            EXTRACT(EPOCH FROM (NOW() - start_time)) AS elapsed_time 
+            EXTRACT(EPOCH FROM (NOW() - start_time))*1000 AS elapsed_time 
      FROM purchase_orders 
      WHERE player_id = $1 AND active = true`,
     [playerId],
