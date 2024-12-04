@@ -7,10 +7,10 @@ const { OrderCanceled, OrderCompleted, GenerateOrder, getOrderList } = require('
 const { CreateNewPlayer, CalculatePlayerReputation } = require('./player-logic');
 
 const generateInitialGameState = async (name, businessName) => {
-  console.log('generateInitialGameState called with:', { name, businessName });
+  console.log('User started a new game! Details:', { name, businessName });
 
   const playerId = await CreateNewPlayer(name, businessName);
-  console.log('Generated playerId in generateInitialGameState:', playerId);
+  // console.log('Generated playerId in generateInitialGameState:', playerId);
   return playerId;
 };
 

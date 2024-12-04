@@ -38,3 +38,10 @@ Tail the logs
 
 Reset the database
 ```heroku run node scripts/resetDatabase.js```
+
+
+### Docker 
+
+Clean up
+```docker container prune```
+```docker image prune```

@@ -27,18 +27,27 @@ const formatTimeRemaining = (timeRemaining) => {
 const isMobileMode = window.innerWidth <= 600;
 
 const InfoPanel = ({ gameInfo }) => {
+  const defaultPlayer = {
+    business_name: 'N/A',
+    money: 0,
+    orders_shipped: 0,
+    reputation: 0,
+  };
+
   const [prevPlayer, setPrevPlayer] = useState({});
-  const [player, setPlayer] = useState(gameInfo.player);
+  const [player, setPlayer] = useState(gameInfo ? gameInfo.player : defaultPlayer);
   const [deltas, setDeltas] = useState({});
 
   useEffect(() => {
-    setPrevPlayer(player);
-    setPlayer(gameInfo.player);
-    setDeltas({
-      money: gameInfo.player.money - player.money,
-      orders_shipped: gameInfo.player.orders_shipped - player.orders_shipped,
-      reputation: gameInfo.player.reputation - player.reputation,
-    });
+    if (gameInfo) {
+      setPrevPlayer(player);
+      setPlayer(gameInfo.player);
+      setDeltas({
+        money: gameInfo.player.money - player.money,
+        orders_shipped: gameInfo.player.orders_shipped - player.orders_shipped,
+        reputation: gameInfo.player.reputation - player.reputation,
+      });
+    }
   }, [gameInfo]);
 
   const getDeltaClass = (delta) => {
@@ -68,7 +77,7 @@ const InfoPanel = ({ gameInfo }) => {
           {getReputationEmoji(player.reputation)} {isMobileMode ? '' : 'Reputation: '}{player.reputation}
           {renderDelta(deltas.reputation)}
         </p>
-        <p>{isMobileMode ? '⏳' : '⏳ Time Remaining:'} {formatTimeRemaining(gameInfo.timeRemaining)}</p>
+        <p>{isMobileMode ? '⏳' : '⏳ Time Remaining:'} {formatTimeRemaining(gameInfo && gameInfo.timeRemaining ? gameInfo.timeRemaining : 0)}</p>
       </div>
     </div>
   );

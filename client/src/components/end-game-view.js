@@ -29,7 +29,8 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
   return (
     <div className="end-game-view">
       <h1>Congratulations, {player.business_name}!</h1>
-      <p>You have successfully completed the game. Here are your final stats:</p>
+      <p>Your business has been acquired and you were paid handsomely enough to start another one!</p>
+      <p>Here are your final stats:</p>
       <div className="stats-grid">
         <div><strong>Money:</strong> 💰 ${formatMoney(player.final_money)}</div>
         <div><strong>Tech Level:</strong> 🖥️ {player.final_tech_level}</div>
@@ -60,6 +61,12 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
         ) : (
           <p>No technologies acquired.</p>
         )}
+      </div>
+      <div className="banner-ad">
+        <a href="https://www.shipstation.com" target="_blank" rel="noopener noreferrer" className="banner-link">
+          <img src="https://www.shipstation.com/wp-content/uploads/2024/08/shipstation.svg" alt="ShipStation Logo" />
+          <p>Get ShipStation now!</p>
+        </a>
       </div>
       <button className="new-game-button" onClick={onNewGame}>Start a New Business</button>
     </div>

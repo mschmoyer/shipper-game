@@ -21,8 +21,8 @@ const baseUrl = window.location.hostname === 'localhost'
   ? `http://localhost:${port}/api`
   : `${window.location.origin}/api`;
 
-console.log('baseUrl:', baseUrl);
-console.log('process.env.REACT_APP_HEROKU_URL:', process.env.REACT_APP_HEROKU_URL);
+// console.log('baseUrl:', baseUrl);
+// console.log('process.env.REACT_APP_HEROKU_URL:', process.env.REACT_APP_HEROKU_URL);
 
 export const startShipping = () => {
   return apiCall(`${baseUrl}/ship-order`, {
@@ -43,8 +43,6 @@ export const createAccount = (accountData) => {
 };
 
 export const checkSession = () => {
-  console.log('baseUrl:', baseUrl);
-  console.log('process.env.REACT_APP_HEROKU_URL:', process.env.REACT_APP_HEROKU_URL);
   return apiCall(`${baseUrl}/check-session`);
 };
 

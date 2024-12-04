@@ -20,7 +20,7 @@ const BuildProductView = ({
   const [showOnHandCount, setShowOnHandCount] = useState(true);
 
   const ON_HAND_VISIBLE_DURATION = 15000;
-  const MINIGAME_SPAWN_CHANCE = 0.01;
+  const MINIGAME_SPAWN_CHANCE = 0.02; // Update spawn chance to 2%
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);

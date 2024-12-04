@@ -123,6 +123,8 @@ const App = () => {
             onSettings={handleSettings} 
           />
           <InitialView onAccountCreated={handleAccountCreated} />
+
+          <InfoPanel gameInfo={gameInfo} />
         </div>
       </div>
     );
@@ -170,10 +172,8 @@ const App = () => {
               {false && 
                 <RightWindow />
               }
-            </div>
-            {gameInfo.game_active &&
-              <InfoPanel gameInfo={gameInfo} />
-            }
+            </div>            
+            <InfoPanel gameInfo={gameInfo} />
           </>
         )}
       </div>

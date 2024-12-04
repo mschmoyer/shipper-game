@@ -35,14 +35,14 @@ app.use('/api', authRoutes);
 
 app.get('/api/game-info', async (req, res) => {
   if (!req.session.playerId) {
-    console.log('Unauthorized access to game-info');
+    // console.log('Unauthorized access to game-info');
     return res.status(401).json({ error: 'No player session' });
   }
 
   const player = await getPlayerInfo(req.session.playerId);
   if(!player) {
     // kill the session if the player is not found
-    console.log('No player found for session:', req.session);
+    // console.log('No player found for session:', req.session);
     req.session.destroy();
     return res.status(401).json({ error: 'No player found' });
   }

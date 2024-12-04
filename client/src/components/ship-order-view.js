@@ -15,7 +15,7 @@ const ShipOrderView = ({
   const [isRetrying, setIsRetrying] = useState(false);
   const [showShipOrderProblemMinigame, setShowShipOrderProblemMinigame] = useState(false); // State to show/hide PackageGrid
   
-  const MINIGAME_SPAWN_CHANCE = 0.01;
+  const MINIGAME_SPAWN_CHANCE = 0.02;
 
   const handleShipOrder = useCallback(() => {
     if (isRetrying || gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {

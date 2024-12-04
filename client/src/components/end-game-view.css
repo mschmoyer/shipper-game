@@ -75,6 +75,28 @@
   margin-bottom: 20px;
 }
 
+.banner-ad {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.banner-ad img {
+  height: 50px;
+  margin-right: 10px;
+}
+
+.banner-ad p {
+  font-size: 1.2em;
+  color: #333;
+  margin: 0;
+  text-align: center;
+}
+
 @media (max-width: 600px) {
   .end-game-view {
     padding: 10px;

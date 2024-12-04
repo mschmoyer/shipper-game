@@ -103,26 +103,25 @@ const getPlayerInfo = async (playerId) => {
 };
 
 const increaseShippingSpeed = async (playerId) => {
-  console.log('Increasing shipping speed for player:', playerId);
+  // console.log('Increasing shipping speed for player:', playerId);
   const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1000) WHERE id = $2 RETURNING shipping_speed`;
   await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase shipping speed');
 };
 
 const increaseBuildingSpeed = async (playerId) => {
-  console.log('Increasing building speed for player:', playerId);
-  console.log('SPEED_BOOST_FACTOR:', SPEED_BOOST_FACTOR);
+  // console.log('Increasing building speed for player:', playerId);
   const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1000) WHERE id = $2 returning building_speed`;
   await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase building speed');
 };
 
 const increaseOrderSpawnRate = async (playerId) => {
-  console.log('Increasing order spawn rate for player:', playerId);
+  // console.log('Increasing order spawn rate for player:', playerId);
   const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1000) WHERE id = $2 returning order_spawn_milliseconds`;
-  await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase order spawn rate');
+  await dbRun(query, [SPEED_BOOST_FACTOR * 10, playerId], 'Failed to increase order spawn rate');
 }
 
 const addSkillPoints = async (playerId, points) => {
-  console.log('Adding skill points for player:', playerId);
+  // console.log('Adding skill points for player:', playerId);
   const query = `UPDATE player SET available_points = available_points + $1 WHERE id = $2`;
   await dbRun(query, [points, playerId], 'Failed to add skill points');
 }
