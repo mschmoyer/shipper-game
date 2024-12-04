@@ -118,10 +118,6 @@ const startProductBuild = async (playerId) => {
     return { error: 'You do not have enough money to build the product' };
   }
 
-  // Increase the player speed 
-  // TODO: Temporary. Where should we put this? 
-  increaseBuildingSpeed(playerId);
-
   const totalBuildCost = activeProduct.cost_to_build * quantity;
 
   // Deduct the money. 
@@ -171,7 +167,11 @@ const ProductCompleted = async (purchaseOrderId, playerId) => {
     'Failed to update purchase order status'
   );
 
-  await addSkillPoints(playerId, 1);
+  // do this one out of 10 times
+  const random = Math.floor(Math.random() * 10);
+  if (random === 0) {
+    await addSkillPoints(playerId, 1);
+  }
 
   console.log('Product build completed successfully.');
 };

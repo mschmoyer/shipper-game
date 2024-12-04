@@ -95,6 +95,19 @@ const getPlayerInfo = async (playerId) => {
   if(row) {
     const reputation = await CalculatePlayerReputation(playerId);
     row.reputation = reputation; 
+
+    // Dynamically require getBuildingSteps and getShippingSteps to avoid circular dependency
+    const { getBuildingSteps } = require('./product-logic');
+    const { getShippingSteps } = require('./shipping-logic');
+
+    // get shipping and building steps and return count of steps and duration for each
+    const { building_steps, building_duration } = await getBuildingSteps(playerId);
+    row.building_step_count = building_steps.length;
+    row.building_duration = building_duration;
+    const { shipping_steps, total_duration } = await getShippingSteps(playerId);
+    row.shipping_step_count = shipping_steps.length;
+    row.shipping_duration = total_duration;
+
     return row;
   } else {
     console.error('Failed to retrieve player info');

@@ -30,6 +30,11 @@
   font-weight: bold;
 }
 
+.skill-drawer-container {
+  height: 800px;
+  width: 500px;
+}
+
 .close:hover,
 .close:focus {
   color: black;
@@ -113,4 +118,11 @@ button {
 
 .square-button:active {
   background: #0b5a34;
+}
+
+@media (max-width: 600px) {
+  .skill-drawer-container {
+    width: 100%;
+    height: 100%;
+  }
 }

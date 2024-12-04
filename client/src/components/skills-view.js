@@ -16,9 +16,8 @@ const SkillsView = ({ player, isOpen, onClose }) => {
   const disableUpgrade = player.available_points <= 0;
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} title="Player Skills">
+    <Drawer isOpen={isOpen} onClose={onClose} title="Player Skills" className="skill-drawer-container">
       <div className="available-points">⭐ Available Points: {player.available_points}</div>
-      <h3 className="centered">Skills</h3>
       <table>
         <tbody>
           <tr>
@@ -65,13 +64,16 @@ const SkillsView = ({ player, isOpen, onClose }) => {
           </tr>
         </tbody>
       </table>
+      
       <h3 className="centered">Statistics</h3>
       <table>
         <tbody>
           <tr><td>Avg. Order Arrival</td><td>{formatSpeed(player.order_spawn_milliseconds)}s</td></tr>
           <tr><td>Order Spawn Count</td><td>{player.order_spawn_count}</td></tr>
-          <tr><td>Shipping Speed</td><td>{formatSpeed(player.shipping_speed)}s</td></tr>
-          <tr><td>Building Speed</td><td>{formatSpeed(player.building_speed)}s</td></tr>
+          <tr><td>Shipping Speed</td><td>{formatSpeed(player.shipping_duration)}s</td></tr>
+          <tr><td>Shipping Steps</td><td>{player.shipping_step_count}</td></tr>
+          <tr><td>Building Speed</td><td>{formatSpeed(player.building_duration)}s</td></tr>
+          <tr><td>Building Steps</td><td>{player.building_step_count}</td></tr>
           <tr><td>Products per Order</td><td>{player.products_per_order}</td></tr>
           <tr><td>Products per Build</td><td>{player.products_per_build}</td></tr>
         </tbody>

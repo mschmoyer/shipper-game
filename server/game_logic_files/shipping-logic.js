@@ -61,10 +61,6 @@ const shipOrder = async (playerId) => {
     }
   }
 
-  // Increase the player speed 
-  // TODO: Temporary. Where should we put this? 
-  await increaseShippingSpeed(playerId);
-
   const { shipping_steps, total_duration } = await getShippingSteps(playerId);
 
   const { shipping_cost, sales_price } = await calculateShippingAndBuyLabel(playerId, activeOrder.distance);
@@ -253,7 +249,11 @@ const OrderCompleted = async (orderId, playerId) => {
     'Failed to update order status'
   );
 
-  await addSkillPoints(playerId, 1);
+  // do this one out of 10 times
+  const random = Math.floor(Math.random() * 10);
+  if (random === 0) {
+    await addSkillPoints(playerId, 1);
+  }
 
   // log revenue, orders_shipped, and order_state
   // console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
