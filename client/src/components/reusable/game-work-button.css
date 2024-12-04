@@ -1,7 +1,7 @@
 .game-work-button {
   width: 120px;
-  height: 120px;
-  border-radius: 15px; /* Rounded corners */
+  height: 100%;
+  border-radius: 8px; /* Rounded corners */
   border: none;
   background: #0d6e3f;
   color: #ffffff;
@@ -11,38 +11,27 @@
   transition: background 0.3s, transform 0.1s;
   appearance: button;
   border: solid transparent;
-  border-radius: 16px;
+  border-radius: 8px;
   border-width: 0 0 4px;
   box-sizing: border-box;
   font-family: din-round, sans-serif;
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: .8px;
   line-height: 20px;
-  margin: 0;
-  outline: none;
-  overflow: visible;
   padding: 13px 16px;
   text-align: center;
-  text-transform: uppercase;
   touch-action: manipulation;
-  transform: translateZ(0);
-  transition: filter .2s;
-  user-select: none;
-  -webkit-user-select: none;
   vertical-align: middle;
-  white-space: nowrap;
-  width: 100%;
+  width: 120px;
 }
 
 .game-work-button:after {
   background-clip: padding-box;
   background: #0d6e3f;
   border: solid transparent;
-  border-radius: 16px;
+  border-radius: 8px;
   border-width: 0 0 4px;
   bottom: -4px;
-  content: "";
   left: 0;
   position: absolute;
   right: 0;
@@ -62,7 +51,6 @@
 
 .game-work-button:hover {
   background: #0b5a34;
-  transform: scale(0.95); /* Push-in animation */
 }
 
 .game-work-button:disabled {
@@ -88,4 +76,28 @@
   font-style: italic;
   margin-top: 5px;
   color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .game-work-button {
+    width: 80px;
+    height: 80px;
+    font-size: 14px;
+  }
+
+  .hotkey-info {
+    font-size: 10px;
+  }
+
+  .product-info {
+    padding: 4px;
+  }
+
+  .product-info p {
+    line-height: 10pt;
+  }
+
+  .product-info h3 {
+    margin-bottom: -8px;
+  }
 }

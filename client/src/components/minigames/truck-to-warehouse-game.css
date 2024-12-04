@@ -1,0 +1,88 @@
+.minigame-modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.minigame-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.minigame-area {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.truck {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  font-size: 24px;
+  transition: left 0.1s, top 0.1s; /* Smooth movement */
+}
+
+.factory {
+  position: absolute;
+  right: 10%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+}
+
+.obstacle {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  font-size: 24px;
+}
+
+.minigame-content p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.minigame-content button {
+  background: #0d6e3f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  font-size: 18pt;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.minigame-content button:hover {
+  background: #0b5a34;
+}
+
+.tech-prompt {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #555555;
+}
+
+.mobile-controls {
+  display: flex;
+  justify-content: center;
+}

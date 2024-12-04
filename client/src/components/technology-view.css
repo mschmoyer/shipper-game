@@ -142,3 +142,31 @@
 .tech-kb-link:hover {
   text-decoration: underline;
 }
+
+.ship-order-progress-bar-container {
+  width: calc(100% - 140px);
+}
+
+@media (max-width: 600px) {
+  .technology-drawer-container {
+    height: 100%;
+  }
+
+  .tech-card {
+    width: 100%;
+  }
+
+  .tech-card:nth-child(1) {
+    --rotate-angle: 0; /* Tilt left */
+    top: 0px;
+  }
+  
+  .tech-card:nth-child(3) {
+    --rotate-angle: 0; /* Tilt right */
+    top: 0px;
+  }
+
+  .ship-order-progress-bar-container {
+    width: calc(100% - 20px);
+  }
+}

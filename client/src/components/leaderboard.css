@@ -72,3 +72,9 @@
 .leaderboard-section tr:hover {
   background-color: #ddd;
 }
+
+@media (max-width: 600px) {
+  .leaderboard-container {
+    flex-direction: column;
+  }
+}

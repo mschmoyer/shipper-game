@@ -3,146 +3,116 @@ const fs = require('fs');
 const path = require('path');
 const { OrderStates, BASE_INITIAL_MONEY, BASE_ORDER_ARRIVAL_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, GAME_TIME_LIMIT_SECONDS } = require('../constants');
 const { ProductCompleted, productTick } = require('./product-logic');
-const { OrderCanceled, OrderCompleted, GenerateOrder } = require('./shipping-logic');
-const { CreateNewPlayer } = require('./player-logic');
+const { OrderCanceled, OrderCompleted, GenerateOrder, getOrderList } = require('./shipping-logic');
+const { CreateNewPlayer, CalculatePlayerReputation } = require('./player-logic');
 
 const generateInitialGameState = async (name, businessName) => {
   console.log('generateInitialGameState called with:', { name, businessName });
 
-  try {
-    const playerId = await CreateNewPlayer(name, businessName);
-    console.log('Generated playerId in generateInitialGameState:', playerId);
-    return playerId;
-  } catch (err) {
-    console.error('Error in generateInitialGameState:', err);
-    throw new Error(err.message);
-  }
+  const playerId = await CreateNewPlayer(name, businessName);
+  console.log('Generated playerId in generateInitialGameState:', playerId);
+  return playerId;
 };
 
-async function expirePlayer(playerId) {
-  const player = await dbGet('SELECT * FROM player WHERE id = ?', [playerId], 'Failed to retrieve player');
-  
+async function expirePlayer(player) {
+  console.log(`Expiring player: ${player.id} - ${player.name} - ${player.business_name}`);
+
   // Calculate final fields
   const finalMoney = player.money;
-  const finalTechLevel = player.techLevel;
-  const finalOrdersShipped = player.ordersShipped;
-  const finalReputation = await CalculatePlayerReputation(playerId);
+  const finalTechLevel = player.tech_level;
+  const finalOrdersShipped = player.orders_shipped;
+  const finalReputation = await CalculatePlayerReputation(player.id);
 
   // Set player to inactive and update final fields
   await dbRun(
-    'UPDATE player SET active = 0, finalMoney = ?, finalTechLevel = ?, finalOrdersShipped = ?, finalReputation = ? WHERE id = ?',
-    [finalMoney, finalTechLevel, finalOrdersShipped, finalReputation, playerId],
+    'UPDATE player SET active = false, final_money = $1, final_tech_level = $2, final_orders_shipped = $3, final_reputation = $4 WHERE id = $5',
+    [finalMoney, finalTechLevel, finalOrdersShipped, finalReputation, player.id],
     'Failed to expire player'
   );
 }
 
-const gameTick = async (playerId, player) => {
+const gameTick = async (player) => {
+  
+  const timeRemainingSeconds = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsed_time, 0);
 
-  if(!player) {
-    return { "error": "Player not found" };
+  if (timeRemainingSeconds <= 0) {
+    await expirePlayer(player);
+    return { orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
   }
 
-  const playerTimeRemaining = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsedTime, 0);
-
-  if (playerTimeRemaining <= 0) {
-    await expirePlayer(playerId);
-    return { secondsUntilNextOrder: 0, playerTimeRemaining };
-  }
-
-  const activeOrders = await dbAll(
-    `SELECT *,
-      (strftime('%s', 'now') - strftime('%s', startTime)) AS elapsedTime,
-      (strftime('%s', 'now') > strftime('%s', dueByTime)) AS isOverdue
-      FROM orders 
-      WHERE playerId = ? AND active = 1`,
-    [playerId],
-    'Failed to retrieve active orders'
+  const orders = await getOrderList(
+    'player_id = $1 AND active = true',
+    [player.id]
   );
 
-  for (const order of activeOrders) {
-    if (order.state === OrderStates.InProgress && order.elapsedTime >= order.duration) {
-      await OrderCompleted(order.id, playerId);
-    } else if (order.isOverdue) {
-      await OrderCanceled(order.id, playerId);
+  for (const order of orders) {
+    if (order.state === OrderStates.InProgress && order.elapsed_time >= order.duration) {
+      await OrderCompleted(order.id, player.id);
+    } else if (order.state !== OrderStates.InProgress && order.delta_to_due_date <= 0) {
+      await OrderCanceled(order.id, player.id);
     }
   }
 
-  await productTick(playerId); 
+  await productTick(player.id); 
 
   const lastOrder = await dbGet(
     `SELECT *,
-      (strftime('%s', 'now') - strftime('%s', startTime)) AS elapsedTime,
-      strftime('%s', 'now') AS currentTime
+      EXTRACT(EPOCH FROM (NOW() - created_at)) AS seconds_since_creation
       FROM orders 
-      WHERE playerId = ? ORDER BY id DESC LIMIT 1`,
-    [playerId],
+      WHERE player_id = $1 ORDER BY id DESC LIMIT 1`,
+    [player.id],
     'Failed to retrieve last order'
   );
 
-  const newOrderInterval = BASE_ORDER_ARRIVAL_SECONDS;
-  const maximumGeneratableOrders = MAXIMUM_ORDER_QUEUE_SIZE;
-  const readyForNewOrder = (!lastOrder || lastOrder.elapsedTime >= newOrderInterval);
+  const readyForNewOrder = (!lastOrder || lastOrder.seconds_since_creation >= BASE_ORDER_ARRIVAL_SECONDS);
 
-  if (activeOrders.length < maximumGeneratableOrders && readyForNewOrder) {
-    await GenerateOrder(playerId);
+  if (orders.length < MAXIMUM_ORDER_QUEUE_SIZE && readyForNewOrder) {
+    await GenerateOrder(player.id);
   }
 
-  const secondsUntilNextOrder = readyForNewOrder ? 0 : Math.max(0, newOrderInterval - lastOrder.elapsedTime);
-  return { secondsUntilNextOrder: Math.round(secondsUntilNextOrder), timeRemainingSeconds: playerTimeRemaining };
+  const secondsUntilNextOrder = Math.round(readyForNewOrder ? 0 : Math.max(0, BASE_ORDER_ARRIVAL_SECONDS - lastOrder.seconds_since_creation));
+  
+  return { orders, secondsUntilNextOrder, timeRemainingSeconds };
 };
 
-let reputationCache = {};
-const CACHE_EXPIRATION_TIME = 60 * 1000; // 1 minute in milliseconds
-
-const CalculatePlayerReputation = async (playerId) => {
-  const currentTime = Date.now();
-
-  if (reputationCache[playerId] && (currentTime - reputationCache[playerId].timestamp < CACHE_EXPIRATION_TIME)) {
-    return reputationCache[playerId].score;
-  }
-
-  try {
-    const orders = await dbAll(
-      `SELECT state, dueByTime, startTime, duration 
-       FROM orders 
-       WHERE playerId = ? and createdAt > datetime('now', '-5 minutes')`,
+const handleTruckToWarehouseGameCompletion = async (playerId, succeeded) => {
+  if (succeeded) {
+    // Handle success logic, e.g., reward player
+    console.log(`Player ${playerId} succeeded in Truck to Warehouse game.`);
+  } else {
+    // Handle failure logic, e.g., penalize player
+    console.log(`Player ${playerId} failed in Truck to Warehouse game.`);
+    await dbRun(
+      'UPDATE inventory SET on_hand = 0 WHERE player_id = $1',
       [playerId],
-      'Failed to retrieve orders'
+      'Failed to update stock level'
     );
+  }
+};
 
-    let positiveCount = 0;
-    let negativeCount = 0;
-
-    for (const order of orders) {
-      const dueByTime = new Date(order.dueByTime);
-      const endTime = new Date(new Date(order.startTime).getTime() + order.duration * 1000);
-
-      if (order.state === OrderStates.Canceled) {
-        negativeCount++;
-      } else if (order.state === OrderStates.Shipped && endTime <= dueByTime) {
-        positiveCount++;
-      }
-    }
-
-    const totalOrders = positiveCount + negativeCount;
-    const reputationScore = totalOrders > 0 ? (positiveCount / totalOrders) * 100 : 100;
-
-    reputationCache[playerId] = {
-      score: Math.round(reputationScore),
-      timestamp: currentTime
-    };
-
-    return reputationCache[playerId].score;
-  } catch (err) {
-    throw new Error(err.message);
+const handleFindTheProductHaystackGameCompletion = async (playerId, succeeded) => {
+  if (succeeded) {
+    // Handle success logic, e.g., reward player
+    console.log(`Player ${playerId} succeeded in Find the Product Haystack game.`);
+  } else {
+    // Handle failure logic, e.g., penalize player
+    console.log(`Player ${playerId} failed in Find the Product Haystack game.`);
+    const player = await dbGet('SELECT money FROM player WHERE id = $1', [playerId], 'Failed to retrieve player money');
+    const deduction = Math.min(5000, player.money);
+    await dbRun(
+      'UPDATE player SET money = money - $1 WHERE id = $2',
+      [deduction, playerId],
+      'Failed to update player money'
+    );
   }
 };
 
 module.exports = { 
   generateInitialGameState, 
   gameTick,
-  CalculatePlayerReputation,
   productTick,
   ProductCompleted,
-  expirePlayer
+  expirePlayer,
+  handleTruckToWarehouseGameCompletion,
+  handleFindTheProductHaystackGameCompletion
 };

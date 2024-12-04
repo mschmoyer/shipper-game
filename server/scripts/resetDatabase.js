@@ -1,35 +1,26 @@
-const fs = require('fs');
-const path = require('path');
-const { db, initDatabase } = require('../database');
-
-const dbPath = path.join(__dirname, '../database/game.db');
-
-const deleteDatabase = (dbFilePath) => {
-  if (fs.existsSync(dbFilePath)) {
-    fs.unlinkSync(dbFilePath);
-    console.log(`Deleted database file: ${dbFilePath}`);
-  }
-};
+const { client, initDatabase } = require('../database');
 
 const resetDatabase = async () => {
-  deleteDatabase(dbPath);
-
   try {
+    await client.connect();
+    await client.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+    console.log('Database schema dropped and recreated.');
+
     await initDatabase();
     console.log('Database initialized successfully.');
   } catch (err) {
     console.error('Failed to initialize the database:', err.message);
-    if (err.code === 'SQLITE_IOERR') {
-      console.error('Please check your disk space and file permissions.');
-    }
   } finally {
-    db.close((err) => {
-      if (err) {
-        console.error('Failed to close the database:', err.message);
-      } else {
-        console.log('Database connection closed.');
-      }
-    });
+    // console.log('Closing the database connection.');
+    // client.end(err => {
+    //   if (err) {
+    //     console.error('Failed to close the database connection:', err.message);
+    //   } else {
+    //     console.log('Database connection closed.');
+    //   }
+    //   process.exit(err ? 1 : 0); // Exit the process with appropriate status code
+    // });
+      process.exit(0); // Exit the process with appropriate status code
   }
 };
 

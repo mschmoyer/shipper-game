@@ -40,8 +40,12 @@ const App = () => {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
-            console.log('Game Info:', data);
-            setGameInfo(data);
+            if (data.error === 'No player found') {
+              setIsLoggedIn(false);
+              setGameInfo(null);
+            } else {
+              setGameInfo(data);
+            }
           })
           .catch(error => console.error('Failed to load game info:', error));
       };
@@ -52,12 +56,6 @@ const App = () => {
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
-
-  useEffect(() => {
-    if (gameInfo && gameInfo.activeOrder) {
-      console.log('Active Order:', gameInfo.activeOrder);
-    }
-  }, [gameInfo]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -141,13 +139,9 @@ const App = () => {
             onSettings={handleSettings} 
           />
           <div className="content-wrapper">
-            <LeftWindow
-              orders={gameInfo.orders} 
-              activeOrder={gameInfo.activeOrder} 
-              secondsUntilNextOrder={gameInfo.secondsUntilNextOrder}
-            />
+            <LeftWindow gameInfo={gameInfo} />
             <div className="main-content">
-              {gameInfo.gameActive ? (
+              {gameInfo.game_active ? (
                 <GameWindow 
                   gameInfo={gameInfo} 
                 />
@@ -170,9 +164,11 @@ const App = () => {
                 gameTitle={gameTitle}
               />
             </div>
-            <RightWindow />
+            {false && 
+              <RightWindow />
+            }
           </div>
-          {gameInfo.gameActive &&
+          {gameInfo.game_active &&
             <InfoPanel gameInfo={gameInfo} />
           }
         </>

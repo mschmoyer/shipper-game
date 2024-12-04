@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './build-product-view.css';
 import { startProductBuild } from '../api';
-import ProgressBar from './progress-bar';
-import GameWorkButton from './game-work-button';
+import ProgressBar from './reusable/progress-bar';
+import GameWorkButton from './reusable/game-work-button';
+import TruckToWarehouseGame from './minigames/truck-to-warehouse-game'; // Import the new component
 
 const BuildProductView = ({ 
   gameInfo, 
@@ -12,16 +13,23 @@ const BuildProductView = ({
   const [buildError, setBuildError] = useState('');
   const [isAutoBuildEnabled, setIsAutoBuildEnabled] = useState(autoBuildEnabled);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [hasInventoryTech, setHasInventoryTech] = useState(false);
+  const [isCheckInventoryModalOpen, setIsCheckInventoryModalOpen] = useState(false);
+  const [inventoryProgress, setInventoryProgress] = useState(0);
+  const [showMinigame, setShowMinigame] = useState(false);
+  const [showOnHandCount, setShowOnHandCount] = useState(true);
+
+  const ON_HAND_VISIBLE_DURATION = 15000;
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
 
   const handleBuildProduct = async () => {
-    if (isRetrying || gameInfo.product.isBuilding) {
+    if (isRetrying || gameInfo.product.is_building) {
       return;
     }
-    gameInfo.product.isBuilding = true;
+    gameInfo.product.is_building = true;
     gameInfo.product.progress = 0;
     setBuildError('');
 
@@ -30,13 +38,15 @@ const BuildProductView = ({
       .then(data => {
         if (data.message === 'Product build started successfully.') {
           console.log('Product build started successfully:', data);
+          if (Math.random() < 0.1) { // 10% chance to show the minigame
+            setShowMinigame(true);
+          }
         } else {
           console.error('Failed to start product build:', data);
           setBuildError(result.error);
-          gameInfo.product.isBuilding = false;
+          gameInfo.product.is_building = false;
           if (isAutoBuildEnabled) {
             setIsRetrying(true);
-            console.log('isRetrying:', isRetrying);
             setTimeout(handleBuildProduct, 10000); // Add a one-second delay before retrying
           }
         }
@@ -44,32 +54,55 @@ const BuildProductView = ({
       .catch(error => console.error('Failed to start product build:', error));
   };
 
+  const handleCheckInventory = () => {
+    setIsCheckInventoryModalOpen(true);
+    setInventoryProgress(0);
+    const interval = setInterval(() => {
+      setInventoryProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setShowOnHandCount(true);
+          setTimeout(() => setShowOnHandCount(false), ON_HAND_VISIBLE_DURATION);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 100);
+  };
+
+  const closeCheckInventoryModal = () => {
+    setIsCheckInventoryModalOpen(false);
+  };
+
   // Check if the player has the AutoBuild technology
   useEffect(() => {
     if (gameInfo) {
-      const hasAutoBuildTech = gameInfo.acquiredTechnologies && 
-        gameInfo.acquiredTechnologies.some(tech => tech.techCode === 'hire_fabricator');
-      console.log('AutoBuild tech:', hasAutoBuildTech);
+      const hasAutoBuildTech = gameInfo.acquired_technologies && 
+        gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_fabricator');
       if (hasAutoBuildTech) {
         setIsAutoBuildEnabled(true);
       } else {
         setIsAutoBuildEnabled(false);
       }
+
+      const hasInventoryTech = gameInfo.acquired_technologies && 
+        gameInfo.acquired_technologies.some(tech => tech.tech_code === 'inventory_management');
+      setHasInventoryTech(hasInventoryTech);
     }
   }, [gameInfo]);
 
   useEffect(() => {
-    if (isAutoBuildEnabled && !gameInfo.product.isBuilding && !isRetrying) {
+    if (isAutoBuildEnabled && !gameInfo.product.is_building && !isRetrying) {
       console.log('Starting new build automatically, autoBuildEnabled:', isAutoBuildEnabled);
       handleBuildProduct();
     }
-  }, [isAutoBuildEnabled, gameInfo.product.isBuilding, isRetrying]);
+  }, [isAutoBuildEnabled, gameInfo.product.is_building, isRetrying]);
 
   useEffect(() => {
     if (!gameInfo.product.isBuilding && isAutoBuildEnabled && !isRetrying) {
       setTimeout(handleBuildProduct, 10); // Add a one-second delay before retrying
     }
-  }, [gameInfo.product.isBuilding, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
+  }, [gameInfo.product.is_building, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -84,7 +117,15 @@ const BuildProductView = ({
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowOnHandCount(false);
+    }, ON_HAND_VISIBLE_DURATION);
+    return () => clearTimeout(timer);
+  }, []);
+
   const product = gameInfo.product;
+  const inventoryAuditProgressBarLabelText = `Manually auditing inventory for ${product.name}...`;
 
   return (
     <div className="build-product-container">
@@ -92,8 +133,8 @@ const BuildProductView = ({
         <GameWorkButton
           autoShip={isAutoBuildEnabled}
           onClick={handleBuildProduct}
-          isWorkBeingDone={product.isBuilding}
-          titleDefault="Start Build"
+          isWorkBeingDone={product.is_building}
+          titleDefault="Build"
           titleWhenWorking="Building..."
           hotkey="B"
         />
@@ -105,33 +146,63 @@ const BuildProductView = ({
                 <span className="close" onClick={toggleModal}>&times;</span>
                 <p>📝 Description: {product.description}</p>
                 <p>⚖️ Weight: {product.weight} kg</p>
-                <p>💵 Cost: ${product.costToBuild}</p>
-                <p>💲 Price: ${product.salesPrice}</p>
+                <p>💵 Cost: ${product.cost_to_build}</p>
+                <p>💲 Price: ${product.sales_price}</p>
               </div>
             </div>
           )}
           <div className="cost-info">
             <div className="shipping-info">
-              <p>🔢 Quantity: {gameInfo.player.productsPerBuild}</p>
+              <p>🔢 Quantity: {gameInfo.player.products_per_build}</p>
             </div>
             <div className="profit-info">
-              <p>💰 Build Cost: ${product.costToBuild}</p>
+              <p>💰 Build Cost: ${product.cost_to_build}</p>
             </div>
             {gameInfo.inventory[0] && (
               <div className="inventory-info">
-                <p>📦 {gameInfo.inventory[0].onHand} on hand</p>
+                {hasInventoryTech ? (
+                  <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+                ) : (
+                  showOnHandCount ? (
+                    <p className={!hasInventoryTech ? "blurred-value" : ""}>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+                  ) : (
+                    <button onClick={handleCheckInventory}>Check Inventory</button>
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
-      
-      <ProgressBar
-        isError={!!buildError}
-        isActive={product.isBuilding}
-        labelText={buildError || (product.isBuilding ? product.buildingSteps[Math.floor(product.progress / (100 / product.buildingSteps.length))].name : 'Waiting for a build order...')}
-        progress={product.progress}
-      />
+      {isCheckInventoryModalOpen && (
+        <div className="check-inventory-modal">
+          <div className="modal-content">
+            <span className="close" onClick={closeCheckInventoryModal}>&times;</span>
+            <p>Knowing how much inventory you have available is important to prevent taking orders you cannot fulfill.  </p>
+            {inventoryProgress < 100 ? (
+              <ProgressBar 
+                isActive={true} 
+                progress={inventoryProgress} 
+                labelText={inventoryAuditProgressBarLabelText}
+              />
+            ) : (
+              <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+            )}
+            <p>Buy the 🛠️<b>Inventory Tracking</b> technology to see inventory information instantly without having to wait for this!</p>
+          </div>
+        </div>
+      )}
+      {showMinigame && (
+        <TruckToWarehouseGame onClose={() => setShowMinigame(false)} />
+      )}
+      <div className='build-product-progress-bar-container'>
+        <ProgressBar
+          isError={!!buildError}
+          isActive={product.is_building}
+          labelText={buildError || (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name} for ${product.name}` : `Waiting for a build of ${product.name}...`)}
+          progress={product.progress}
+        />
+      </div>
       
     </div>
   );

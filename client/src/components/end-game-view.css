@@ -74,3 +74,26 @@
   gap: 10px;
   margin-bottom: 20px;
 }
+
+@media (max-width: 600px) {
+  .end-game-view {
+    padding: 10px;
+  }
+
+  .end-game-view h1 {
+    font-size: 1.5em;
+  }
+
+  .end-game-view p {
+    font-size: 1em;
+  }
+
+  .new-game-button {
+    width: 100%;
+    font-size: 1em;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
