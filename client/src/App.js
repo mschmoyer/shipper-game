@@ -13,7 +13,7 @@ import RightWindow from './components/right-window';
 import Cookies from 'js-cookie';
 
 // CONSTANTS
-const gameTitle = "Shipper Game";
+const gameTitle = "Click & Ship Tycoon";
 const gameSubTitle = "The game of efficient shipping! ™";
 
 const App = () => {
@@ -22,6 +22,7 @@ const App = () => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ ordersShipped: [], moneyEarned: [], techLevel: [] });
+  const [isGameActive, setIsGameActive] = useState(true);
 
   // Check if the player is logged in
   useEffect(() => {
@@ -34,9 +35,9 @@ const App = () => {
       .catch(error => console.error('Failed to check session:', error));
   }, []);
 
-  // Fetch game info every 400ms if the player is logged in
+  // The big Game Info fetcher loop
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && isGameActive) {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
@@ -45,6 +46,9 @@ const App = () => {
               setGameInfo(null);
             } else {
               setGameInfo(data);
+              if (!data.game_active) {
+                setIsGameActive(false);
+              }
             }
           })
           .catch(error => console.error('Failed to load game info:', error));
@@ -55,7 +59,7 @@ const App = () => {
 
       return () => clearInterval(interval);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isGameActive]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -72,6 +76,7 @@ const App = () => {
       .then(data => {
         if (data.loggedIn) {
           setIsLoggedIn(true);
+          setIsGameActive(true);
         }
       })
       .catch(error => console.error('Failed to check session:', error));

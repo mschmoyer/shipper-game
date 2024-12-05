@@ -17,6 +17,7 @@
         "orders_shipped": 0,
         "total_money_earned": 0,
         "active": true,
+        "reputation": 50,
         "final_money": 0,
         "final_tech_level": 0,
         "final_orders_shipped": 0,
@@ -24,6 +25,7 @@
         "shipping_points": 0,
         "building_points": 0,
         "order_spawn_points": 0,
-        "available_points": 3
+        "available_points": 3,
+        "xp": 100
     }
 ]

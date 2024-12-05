@@ -1,5 +1,5 @@
 const { dbRun, dbGet, dbAll } = require('../database');
-const { SPEED_BOOST_FACTOR, XP_FOR_SKILL_POINT } = require('../constants');
+const { SPEED_BOOST_FACTOR, BASE_XP_FOR_SKILL_POINT } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { OrderStates } = require('../constants');
 
@@ -11,9 +11,10 @@ const CreateNewPlayer = async (name, businessName) => {
   const result = await dbRun(
     `INSERT INTO player (name, business_name, money, tech_points,
       tech_level, orders_shipped, total_money_earned, products_per_order, products_per_build,
-      shipping_speed, building_speed, order_spawn_milliseconds, available_points)
+      shipping_speed, building_speed, order_spawn_milliseconds, available_points, reputation, xp)
       SELECT $1, $2, money, tech_points, tech_level, orders_shipped, total_money_earned,
-      products_per_order, products_per_build, shipping_speed, building_speed, order_spawn_milliseconds, available_points
+      products_per_order, products_per_build, shipping_speed, building_speed, order_spawn_milliseconds, 
+      available_points, reputation, xp
       FROM player
       WHERE id = 1
       RETURNING id`,
@@ -73,6 +74,15 @@ const CalculatePlayerReputation = async (playerId) => {
 
   reputationCache[playerId] = reputationData;
 
+  // store the score in the player.reputation field
+  await dbRun(
+    `UPDATE player
+     SET reputation = $1
+     WHERE id = $2`,
+    [reputationData.score, playerId],
+    'Failed to update player reputation'
+  );
+
   return reputationData;
 };
 
@@ -114,9 +124,9 @@ const getPlayerInfo = async (playerId) => {
 const increaseShippingSpeed = async (player) => {
   // console.log('Increasing shipping speed for player:', playerId);
 
-  // if player's current shipping_speed is 1, do not decrease it further, instead increase the products_per_order
+  // if player's current shipping_speed is 1, do not decrease it further, instead increase the orders_per_ship
   if(player.shipping_speed === 1) {
-    const query = `UPDATE player SET products_per_order = GREATEST(products_per_order + 1, 1) WHERE id = $1 RETURNING products_per_order`;
+    const query = `UPDATE player SET orders_per_ship = GREATEST(orders_per_ship + 1, 1) WHERE id = $1 RETURNING orders_per_ship`;
     await dbRun(query, [player.id], 'Failed to increase products per order');
   } else {
     const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1) WHERE id = $2 RETURNING shipping_speed`;
@@ -155,21 +165,29 @@ const increaseOrderSpawnRate = async (player) => {
 const addSkillPoints = async (player, points) => {
   // console.log('Adding skill points for player:', playerId);
   console.log('Adding skill points:', points, ' for player:', player.name, ' (', player.id, ')');
-  const query = `UPDATE player SET available_points = available_points + $1 WHERE id = $2`;
+  const query = `UPDATE player SET available_points = LEAST(available_points + $1, 999) WHERE id = $2`;
   await dbRun(query, [points, player.id], 'Failed to add skill points');
 }
 
 const gainXP = async (player, new_xp) => {
-  let newTotalXP = player.xp + new_xp;
-  const skillPointsGained = Math.floor(newTotalXP / XP_FOR_SKILL_POINT);
-  if (skillPointsGained > 0) {
-    console.log('Gained XP:', new_xp, ' for player:', player.name, ' (', player.id, ')');
-    await addSkillPoints(player, skillPointsGained);
-    newTotalXP -= skillPointsGained * XP_FOR_SKILL_POINT;
+  // This now consumes XP points. When zero, gain skill points. 
+  let xpToConsume = new_xp;
+  let newTotalXP = player.xp - new_xp;
+  if (newTotalXP < 0) {
+    await addSkillPoints(player, 1);
+    const totalPoints = player.points_spent + player.available_points - 3;
+    const next_xp_requirement = calculateXPRequirement(totalPoints + 1);
+    xpToConsume = Math.abs(newTotalXP);
+    newTotalXP = next_xp_requirement - xpToConsume;
   }
-  
+ 
   const query = `UPDATE player SET xp = $1 WHERE id = $2`;
   await dbRun(query, [newTotalXP, player.id], 'Failed to gain XP');
+};
+
+const calculateXPRequirement = (skillPoints) => {
+  const BaseXP = 100; // Base XP value, adjust as needed
+  return Math.round(BaseXP * Math.pow(skillPoints, 1.5));
 };
 
 const upgradeSkill = async (playerId, skill) => {
@@ -180,15 +198,15 @@ const upgradeSkill = async (playerId, skill) => {
   let query;
   switch (skill) {
     case 'shipping_points':
-      query = `UPDATE player SET shipping_points = shipping_points + 1, available_points = available_points - 1 WHERE id = $1`;
+      query = `UPDATE player SET points_spent = points_spent + 1, shipping_points = shipping_points + 1, available_points = available_points - 1 WHERE id = $1`;
       increaseShippingSpeed(player);
       break;
     case 'building_points':
-      query = `UPDATE player SET building_points = building_points + 1, available_points = available_points - 1 WHERE id = $1`;
+      query = `UPDATE player SET points_spent = points_spent + 1, building_points = building_points + 1, available_points = available_points - 1 WHERE id = $1`;
       increaseBuildingSpeed(player);
       break;
     case 'order_spawn_points':
-      query = `UPDATE player SET order_spawn_points = order_spawn_points + 1, available_points = available_points - 1 WHERE id = $1`;
+      query = `UPDATE player SET points_spent = points_spent + 1, order_spawn_points = order_spawn_points + 1, available_points = available_points - 1 WHERE id = $1`;
       increaseOrderSpawnRate(player);
       break;
     default:
@@ -239,6 +257,18 @@ async function expirePlayer(player) {
   );
 }
 
+const toggleBuildingAutomation = async (playerId) => {
+  console.log('Toggling building automation for player:', playerId);
+  const player = await dbRun(
+    'UPDATE player SET building_automation_enabled = NOT building_automation_enabled WHERE id = $1 RETURNING building_automation_enabled',
+    [playerId],
+    'Failed to update building automation status'
+  );
+  console.log('Building automation enabled:', player.rows[0].building_automation_enabled);
+
+  return player.rows[0].building_automation_enabled;
+};
+
 module.exports = {
   getPlayerInfo,
   CreateNewPlayer,
@@ -246,5 +276,6 @@ module.exports = {
   addSkillPoints,
   expirePlayer,
   updateLastGameUpdate,
-  gainXP
+  gainXP,
+  toggleBuildingAutomation
 };

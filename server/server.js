@@ -9,7 +9,7 @@ const { gameTick, handleTruckToWarehouseGameCompletion, handleFindTheProductHays
 const { getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
-const { getPlayerInfo, expirePlayer, upgradeSkill } = require('./game_logic_files/player-logic'); // Import the upgradeSkill function
+const { getPlayerInfo, expirePlayer, upgradeSkill, toggleBuildingAutomation } = require('./game_logic_files/player-logic'); // Import the upgradeSkill and toggleBuildingAutomation functions
 const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
 const { getAdminStats } = require('./admin-logic'); // Import the admin logic
 
@@ -50,11 +50,6 @@ app.get('/api/game-info', async (req, res) => {
   const available_technologies = await getAvailableTechnologies(req.session.playerId);
   const acquired_technologies = await getAcquiredTechnologies(req.session.playerId);
 
-  if (player && !player.active) {
-    // The game is no longer active. Show final stats. 
-    return res.json({ game_active: false, player, orders: [], acquired_technologies});
-  }
-
   const active_order = await getActiveOrder(req.session.playerId);
 
   const product = await getActiveProduct(req.session.playerId);
@@ -62,7 +57,7 @@ app.get('/api/game-info', async (req, res) => {
   const inventory = await getInventoryInfo(req.session.playerId);
 
   // This moves the game along
-  const gameTickData = await gameTick(player, product, inventory);
+  const gData = await gameTick(player, product, inventory);
   
   const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 100;
   
@@ -70,19 +65,21 @@ app.get('/api/game-info', async (req, res) => {
 
   res.json({
     active_order,
-    game_active: true,
+    game_active: player && player.active,
+    game_status: gData.game_status,
     player,
     progress,
     is_shipping,
     product,
     inventory,
-    orders: gameTickData.orders,
-    secondsUntilNextOrder: gameTickData.secondsUntilNextOrder,
-    timeRemaining: Math.round(gameTickData.timeRemainingSeconds),
+    orders: gData.orders,
+    secondsUntilNextOrder: gData.secondsUntilNextOrder,
+    timeRemaining: Math.round(gData.timeRemainingSeconds),
     available_technologies,
     acquired_technologies,
-    productsBuilt: gameTickData.productsBuilt,
-    ordersShipped: gameTickData.ordersShipped
+    productsBuilt: gData.productsBuilt,
+    ordersShipped: gData.ordersShipped,
+    minigames_enabled: false
   });
 });
 
@@ -171,6 +168,15 @@ app.post('/api/upgrade-skill', async (req, res) => {
     return res.json(result);
   }
   res.json(result);
+});
+
+app.post('/api/toggle-building-automation', async (req, res) => {
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+
+  const result = await toggleBuildingAutomation(req.session.playerId);
+  res.json({ new_value: result });
 });
 
 app.get('/api/leaderboard', async (req, res) => {

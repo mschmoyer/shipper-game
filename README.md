@@ -18,7 +18,7 @@ export DATABASE_URL=postgres://shipper_user:superHardPasswordToGuess@localhost:5
 
 ```node server.js```
 
-```node 
+```node scripts/resetDatabase.js``` 
 
 ## Heroku
 
@@ -41,6 +41,8 @@ Tail the logs
 Reset the database
 ```heroku run node scripts/resetDatabase.js```
 
+Login to Postgres
+```heroku pg:psql --app shipper-game```
 
 ### Docker 
 

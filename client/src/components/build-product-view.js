@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import './build-product-view.css';
-import { startProductBuild } from '../api';
+import { startProductBuild, toggleBuildingAutomation } from '../api';
 import ProgressBar from './reusable/progress-bar';
 import GameWorkButton from './reusable/game-work-button';
 import TruckToWarehouseGame from './minigames/truck-to-warehouse-game';
@@ -39,7 +39,7 @@ const BuildProductView = ({
       .then(data => {
         if (data.message === 'Product build started successfully.') {
           console.log('🛠️ Building commenced! Your products are being crafted with love and code!');
-          if (Math.random() < MINIGAME_SPAWN_CHANCE) { // 2% chance to show the minigame
+          if (Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled) { // 2% chance to show the minigame
             setShowMinigame(true);
           }
         } else {
@@ -57,6 +57,20 @@ const BuildProductView = ({
         console.log('💥 Oops! Something went wrong. Maybe the designer of this game should consider a career in gardening.');
       });
   }, [isRetrying, gameInfo, isAutoBuildEnabled]);
+
+  const handleGameWorkButtonClick = useCallback(async () => {
+    if (isAutoBuildEnabled) {
+      const result = await toggleBuildingAutomation();
+      if (result.success) {
+        setIsAutoBuildEnabled(result.building_automation_enabled);
+      }
+      return;
+    }
+    if (isRetrying || gameInfo.product.is_building) {
+      return;
+    }
+    handleBuildProduct();
+  }, [isRetrying, isAutoBuildEnabled, handleBuildProduct]);
 
   const handleCheckInventory = () => {
     setShowOnHandCount(false);
@@ -126,7 +140,7 @@ const BuildProductView = ({
       <div className="build-button-container">
         <GameWorkButton
           autoShip={isAutoBuildEnabled}
-          onClick={handleBuildProduct}
+          onClick={handleGameWorkButtonClick}
           isWorkBeingDone={product.is_building}
           titleDefault="Build"
           titleWhenWorking="Building..."

@@ -1,26 +1,26 @@
 [
   {
-    "stepCode": "fill_ship_to",
+    "step_code": "fill_ship_to",
     "name": "Filling Out Ship To Fields"
   },
   {
-    "stepCode": "input_weights_dimensions",
+    "step_code": "input_weights_dimensions",
     "name": "Inputting Product Weights & Dimension"
   },
   {
-    "stepCode": "select_carrier",
+    "step_code": "select_carrier",
     "name": "Selecting a Carrier"
   },
   {
-    "stepCode": "rate_shopping",
+    "step_code": "rate_shopping",
     "name": "Rate Shopping Services"
   },
   {
-    "stepCode": "adjust_insurance_confirmation",
+    "step_code": "adjust_insurance_confirmation",
     "name": "Adjusting Insurance and Confirmation"
   },
   {
-    "stepCode": "print_label",
+    "step_code": "print_label",
     "name": "Printing a Label"
   }
 ]

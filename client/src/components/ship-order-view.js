@@ -33,7 +33,7 @@ const ShipOrderView = ({
           setShippingCost(data.shipping_cost);
           const hasScanToVerifyTech = gameInfo.acquired_technologies && 
             gameInfo.acquired_technologies.some(tech => tech.tech_code === 'scan_to_verify');
-          if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE) { // Check for scan_to_verify tech
+          if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled) { // Check for scan_to_verify tech
             setShowShipOrderProblemMinigame(true);
             return;
           }

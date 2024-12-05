@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS player (
   total_money_earned INTEGER DEFAULT 0,  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   active BOOLEAN DEFAULT TRUE,
+  reputation INTEGER DEFAULT 50,
   final_money INTEGER DEFAULT 0,
   final_tech_level INTEGER DEFAULT 0,
   final_orders_shipped INTEGER DEFAULT 0,
@@ -27,8 +28,11 @@ CREATE TABLE IF NOT EXISTS player (
   building_points INTEGER DEFAULT 0,
   order_spawn_points INTEGER DEFAULT 0,
   available_points INTEGER DEFAULT 0,
+  points_spent INTEGER DEFAULT 0,
   last_game_update TIMESTAMP,
-  xp INTEGER DEFAULT 0
+  xp INTEGER DEFAULT 0,
+  shipping_automation_enabled BOOLEAN DEFAULT TRUE,
+  building_automation_enabled BOOLEAN DEFAULT TRUE
 );
 
 -- Defines the global set of products that can be built

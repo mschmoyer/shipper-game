@@ -1,5 +1,6 @@
 import React from 'react';
 import './end-game-view.css';
+import { messages } from './messages';
 
 const getReputationEmoji = (reputation) => {
   if (reputation === 100) return '🌟';
@@ -20,16 +21,14 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
     return money.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  if (!gameInfo || !gameInfo.player) {
-    return <div className="end-game-view">Game information is not available.</div>;
-  }
-
   const player = gameInfo.player;
+  const gameStatus = gameInfo.game_status;
+  const message = messages[gameStatus] || messages.time_expired;
 
   return (
     <div className="end-game-view">
-      <h1>Congratulations, {player.business_name}!</h1>
-      <p>Your business has been acquired and you were paid handsomely enough to start another one!</p>
+      <h1>{message.title}, {player.business_name}!</h1>
+      <p>{message.description}</p>
       <p>Here are your final stats:</p>
       <div className="stats-grid">
         <div><strong>Money:</strong> 💰 ${formatMoney(player.final_money)}</div>
@@ -65,6 +64,7 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
       <div className="banner-ad">
         <a href="https://www.shipstation.com" target="_blank" rel="noopener noreferrer" className="banner-link">
           <img src="https://www.shipstation.com/wp-content/uploads/2024/08/shipstation.svg" alt="ShipStation Logo" />
+          <p>Want to be this efficient with your shipping?</p>
           <p>Get ShipStation now!</p>
         </a>
       </div>

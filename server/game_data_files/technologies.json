@@ -13,7 +13,7 @@
     "emoji": "👷"
   },
   {
-    "name": "Inventory Management",
+    "name": "Inventory Tracking",
     "description": "Implement an inventory management system to track stock levels and prevent stockouts.",
     "tech_level_required": 1,
     "cost": 1000,

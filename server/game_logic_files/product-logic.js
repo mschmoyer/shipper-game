@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { gainXP } = require('./player-logic');
 const { playerHasTechnology } = require('./technology-logic');
-const { XP_PER_OPERATION } = require('../constants');
+const { XP_GAINED_PER_OPERATION } = require('../constants');
 
 const productTick = async (player, product, inventory, elapsed_time) => {
-  let building_speed = player.building_speed;
+  let building_speed = Math.max(player.building_speed, 10);
 
   const products_to_build = Math.floor(elapsed_time / building_speed);
 
@@ -15,7 +15,7 @@ const productTick = async (player, product, inventory, elapsed_time) => {
 
   // The player could be building so fast that products could get build in between the 1 second game tick. Simulate this time gap. 
   let totalProductsBuilt = 0;
-  if(products_to_build > 0 && hasHireFabricator) {
+  if(products_to_build > 0 && hasHireFabricator && player.building_automation_enabled) {
     totalProductsBuilt = await _synthesizeBuiltProducts(player, product, inventory, products_to_build);
   }
 
@@ -36,7 +36,7 @@ const productTick = async (player, product, inventory, elapsed_time) => {
   }
 
   if (totalProductsBuilt > 0) {
-    await gainXP(player, totalProductsBuilt * XP_PER_OPERATION);
+    await gainXP(player, totalProductsBuilt * XP_GAINED_PER_OPERATION);
   }
   
   return totalProductsBuilt;
@@ -57,14 +57,11 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
       console.log('_synthesizeBuiltProducts::for - player.money:', money);
     }
     const cost_to_build = product.cost_to_build * player.products_per_build;
-    if( money >= cost_to_build) {
-      money -= cost_to_build;
-      totalProducts += player.products_per_build;
-      totalCost += cost_to_build;
-    } else {
-      // Ran out of money or inventory. 
-      break;
-    }
+
+    // NOTE: i'm letting people go negative...
+    money -= cost_to_build;
+    totalProducts += player.products_per_build;
+    totalCost += cost_to_build;
   }
 
   if (totalProducts > 0) {  
@@ -169,6 +166,28 @@ const getBuildingSteps = async (playerId) => {
   return { building_steps, building_duration };
 };
 
+const ProductCompleted = async (purchaseOrderId, playerId) => {
+  const purchaseOrder = await dbGet(
+    'SELECT * FROM purchase_orders WHERE id = $1',
+    [purchaseOrderId],
+    'Failed to retrieve purchase order'
+  );
+
+  await dbRun(
+    'UPDATE inventory SET on_hand = on_hand + $1 WHERE player_id = $2 AND product_id = $3',
+    [purchaseOrder.quantity, playerId, purchaseOrder.product_id],
+    'Failed to update inventory'
+  );
+
+  await dbRun(
+    'UPDATE purchase_orders SET active = false WHERE id = $1',
+    [purchaseOrderId],
+    'Failed to update purchase order status'
+  );
+
+  return purchaseOrder.quantity;
+};
+
 const startProductBuild = async (playerId) => {
   let activeOrder = await dbGet(
     `SELECT * FROM purchase_orders 
@@ -197,12 +216,15 @@ const startProductBuild = async (playerId) => {
   const quantity = player.products_per_build || 1;
   const hasEnoughMoney = player.money >= activeProduct.cost_to_build * quantity;
 
-  if (!hasEnoughMoney) {
-    console.log('Player does not have enough money to build the product');
-    return { error: 'You do not have enough money to build the product' };
-  }
+  // NOTE: i'm letting people go negative...
+  // if (!hasEnoughMoney) {
+  //   console.log('Player does not have enough money to build the product');
+  //   return { error: 'You do not have enough money to build the product' };
+  // }
 
   const totalBuildCost = activeProduct.cost_to_build * quantity;
+  const building_speed = Math.max(player.building_speed, 100);
+  let product_build_ms = (player.building_speed < 1000 ? building_speed : (player.building_duration));
 
   // Deduct the money. 
   await dbRun(
@@ -211,13 +233,17 @@ const startProductBuild = async (playerId) => {
     'Failed to deduct money from player'
   );
 
-  await dbRun(
+  const newPurchaseOrder = await dbRun(
     `INSERT INTO purchase_orders (player_id, start_time, duration, active, quantity, product_id) 
     VALUES 
-    ($1, NOW(), $2, true, $3, $4)`,
+    ($1, NOW(), $2, true, $3, $4) RETURNING id`,
     [playerId, building_duration, quantity, activeProduct.id],
     'Failed to start product build'
   );
+
+  if (product_build_ms > 0 && newPurchaseOrder && newPurchaseOrder.id) {
+    await ProductCompleted(newPurchaseOrder.id, playerId);
+  }
 
   return { 
     message: 'Product build started successfully.',
@@ -227,28 +253,6 @@ const startProductBuild = async (playerId) => {
     quantity,
     totalCost: activeProduct.cost_to_build * quantity
   };
-};
-
-const ProductCompleted = async (purchaseOrderId, playerId) => {
-  const purchaseOrder = await dbGet(
-    'SELECT * FROM purchase_orders WHERE id = $1',
-    [purchaseOrderId],
-    'Failed to retrieve purchase order'
-  );
-
-  await dbRun(
-    'UPDATE inventory SET on_hand = on_hand + $1 WHERE player_id = $2 AND product_id = $3',
-    [purchaseOrder.quantity, playerId, purchaseOrder.product_id],
-    'Failed to update inventory'
-  );
-
-  await dbRun(
-    'UPDATE purchase_orders SET active = false WHERE id = $1',
-    [purchaseOrderId],
-    'Failed to update purchase order status'
-  );
-
-  return purchaseOrder.quantity;
 };
 
 module.exports = {

@@ -27,7 +27,7 @@ const InitialView = ({ onAccountCreated }) => {
   return (
     <div className="initial-view">
       <p className="game-description">
-        Welcome to Shipper Game! Manage your shipping business, upgrade your technology, and become the best in the industry.
+        Welcome to Click & Ship Tycoon! Manage your shipping business, upgrade your technology, and become the best in the industry.
       </p>
       <form className="account-form" onSubmit={handleSubmit}>
         <div className="form-group">

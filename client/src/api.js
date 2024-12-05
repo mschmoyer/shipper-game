@@ -16,13 +16,10 @@ const apiCall = (url, options = {}) => {
   });
 };
 
-const port = process.env.PORT || 5050; // Default to port 3000 if process.env.PORT is undefined
+const port = process.env.PORT || 5050;
 const baseUrl = window.location.hostname === 'localhost'
   ? `http://localhost:${port}/api`
   : `${window.location.origin}/api`;
-
-// console.log('baseUrl:', baseUrl);
-// console.log('process.env.REACT_APP_HEROKU_URL:', process.env.REACT_APP_HEROKU_URL);
 
 export const startShipping = () => {
   return apiCall(`${baseUrl}/ship-order`, {
@@ -101,4 +98,10 @@ export const upgradeSkill = (skill) => {
 
 export const fetchAdminStats = () => {
   return apiCall(`${baseUrl}/admin-stats`);
+};
+
+export const toggleBuildingAutomation = () => {
+  return apiCall(`${baseUrl}/toggle-building-automation`, {
+    method: 'POST',
+  });
 };

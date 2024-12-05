@@ -144,7 +144,7 @@
 }
 
 .ship-order-progress-bar-container {
-  width: calc(100% - 140px);
+  width: calc(100% - 340px);
 }
 
 @media (max-width: 600px) {

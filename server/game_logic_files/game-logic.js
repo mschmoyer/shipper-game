@@ -1,5 +1,5 @@
 const { dbRun, dbGet } = require('../database');
-const { GAME_TIME_LIMIT_SECONDS } = require('../constants');
+const { GAME_TIME_LIMIT_SECONDS, GAME_DEBT_LIMIT } = require('../constants');
 const { productTick } = require('./product-logic');
 const { OrderTick } = require('./shipping-logic');
 const { CreateNewPlayer, expirePlayer, updateLastGameUpdate } = require('./player-logic');
@@ -21,17 +21,22 @@ const gameTick = async (player, product, inventory) => {
 
   if (timeRemainingSeconds <= 0) {
     await expirePlayer(player);
-    return { orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
-  }
+    return { game_status: 'time_expired', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
+  } else if (player.money < GAME_DEBT_LIMIT) {
+    await expirePlayer(player);
+    return { game_status: 'debt_limit_reached', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
+  } else if (player.reputation.score <= 0) {
+    await expirePlayer(player);
+    return { game_status: 'reputation_too_low', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
+  } else {
+    // Do builds and product completions
+    const productsBuilt = await productTick(player, product, inventory, timeSinceLastUpdate); 
 
-  // Do builds and product completions
-  const productsBuilt = await productTick(player, product, inventory, timeSinceLastUpdate); 
+    // Do order completions and new orders
+    const { orders, secondsUntilNextOrder, ordersShipped } = await OrderTick(player, product, inventory, timeSinceLastUpdate);
 
-  // Do order completions and new orders
-  const { orders, secondsUntilNextOrder, ordersShipped } = await OrderTick(player, product, inventory, timeSinceLastUpdate);
-
-  const data = { orders, secondsUntilNextOrder, timeRemainingSeconds, productsBuilt, ordersShipped };
-  return data; 
+    return { game_status: 'active', orders, secondsUntilNextOrder, timeRemainingSeconds };
+  } 
 };
 
 const handleTruckToWarehouseGameCompletion = async (playerId, succeeded) => {

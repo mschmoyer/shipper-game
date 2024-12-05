@@ -193,14 +193,23 @@
 }
 
 .build-product-progress-bar-container {
-  width: calc(100% - 140px);
+  width: calc(100% - 340px);
   margin-bottom: 0px;
 }
 
 @media (max-width: 600px) {
+  .build-product-container {
+    margin-bottom: 4px;
+  }
+
+  .build-button-container {
+    margin-bottom: 4px;
+  }
+
   .product-info {
     min-width: 100%;
-    margin-left: 0;
+    width: 80px;
+    padding: 2px;
   }
 
   .cost-info {
@@ -212,7 +221,7 @@
   }
 
   .inventory-info button {
-    width: 100%;
+    width: 150px;
   }
   
   .build-product-progress-bar-container {

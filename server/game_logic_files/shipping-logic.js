@@ -1,7 +1,7 @@
 const { dbRun, dbGet, dbAll } = require('../database');
 const fs = require('fs');
 const path = require('path');
-const { XP_PER_OPERATION, BASE_ORDER_DUE_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, OrderStates } = require('../constants');
+const { XP_GAINED_PER_OPERATION, BASE_ORDER_DUE_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, GAME_SHIPPING_COST_PER_MILE, GAME_MIN_SHIPPING_DISTANCE, GAME_MAX_SHIPPING_DISTANCE, OrderStates } = require('../constants');
 const { playerHasTechnology } = require('./technology-logic');
 const { getInventoryInfo, getActiveProduct } = require('./product-logic');
 const { gainXP, getPlayerInfo } = require('./player-logic');
@@ -40,7 +40,7 @@ const OrderTick = async (player, product, inventory, elapsed_time) => {
   }
 
   if (ordersShipped > 0) {
-    await gainXP(player, ordersShipped * XP_PER_OPERATION);
+    await gainXP(player, ordersShipped * XP_GAINED_PER_OPERATION);
   }
 
   return { orders, secondsUntilNextOrder, ordersShipped };
@@ -49,16 +49,16 @@ const OrderTick = async (player, product, inventory, elapsed_time) => {
 const GenerateOrders = async (player, product, inventory, elapsed_time, existing_order_count) => {
 
   // using elapsed_time and player.order_spawn_milliseconds, calculate the number of orders to generate and generate them
-  let order_spawn_milliseconds = player.order_spawn_milliseconds || BASE_ORDER_SPAWN_MILLISECONDS;
-  let order_ship_milliseconds = player.shipping_duration;
+  let order_spawn_milliseconds = Math.max(player.order_spawn_milliseconds, 10) || BASE_ORDER_SPAWN_MILLISECONDS;
+  const shipping_speed = Math.max(player.shipping_speed, 100);
+  let order_ship_milliseconds = (player.shipping_speed < 1000 ? shipping_speed : (player.shipping_duration));
+
+  // console.log('GenerateOrders - OrderSpawnMilliseconds:', order_spawn_milliseconds, 'order_ship_ms:', order_ship_milliseconds);
 
   let orders_to_generate = Math.max(0, Math.floor(elapsed_time / order_spawn_milliseconds)) * player.order_spawn_count;
 
-  // log order spawn, shipping speed and elapsed time in one line
-  // console.log(`GenerateOrders - OrderSpawn: ${order_spawn_milliseconds}, ShippingSpeed: ${order_ship_milliseconds}, ElapsedTime: ${elapsed_time}`);
-  
   // using elapsed_time, orders, and player.shipping_speed (milliseconds), calculate how many orders were shipped in this time period
-  let new_orders_to_ship = Math.max(0, Math.floor(elapsed_time / order_ship_milliseconds));
+  let new_orders_to_ship = Math.max(10, Math.floor(elapsed_time / order_ship_milliseconds)) * player.orders_per_ship;
   let ordersShipped = 0;
 
   // check if player has technology hire_warehouse_worker
@@ -66,6 +66,8 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, existing
   if(!hasHireWarehouseWorker) {
     new_orders_to_ship = 0;
   }
+
+  // console.log('GenerateOrders - OrdersToGenerate:', orders_to_generate, 'OrdersToShip:', new_orders_to_ship, 'ExistingOrders:', existing_order_count);
 
   if(new_orders_to_ship > 0) {
     ordersShipped = await _synthesizeShippedOrders(player, new_orders_to_ship, product, inventory);
@@ -84,12 +86,16 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, existing
     }
   }
 
-  if( orders_to_generate > 0 || new_orders_to_ship > 0) {
+  // if( orders_to_generate > 0 || new_orders_to_ship > 0) {
     // log new_orders_to_ship and orders_to_generate and existing_order_count in one line
-    console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${existing_order_count}`);
-  }
+    // console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${existing_order_count}`);
+  // }
 
   return ordersShipped;
+}
+
+const calculateDistance = () => {
+  return Math.round(Math.random() * (GAME_MAX_SHIPPING_DISTANCE - GAME_MIN_SHIPPING_DISTANCE) + GAME_MIN_SHIPPING_DISTANCE);
 }
 
 const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inventory) => {
@@ -110,7 +116,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       total_stock_to_deduct += player.products_per_order;
       totalOrdersShipped++;
       const shippingCostPerMile = 0.05; // Cost per mile
-      const distance = Math.round(Math.random() * 1000); // Random distance in miles
+      const distance = calculateDistance();
       const revenue = shippingData.sales_price - shippingData.cost_to_build - (distance * shippingCostPerMile);
       if(i == 0) {
         console.log(`_synthesizeShippedOrders - Distance: ${distance}, Revenue: ${revenue}, SalesPrice: ${shippingData.sales_price}, CostToBuild: ${shippingData.cost_to_build}`);
@@ -148,7 +154,7 @@ const _GenerateOrder = async (playerId, state = OrderStates.AwaitingShipment) =>
   const player = await getPlayerInfo(playerId);
 
   // TODO: maybe shouldn't be random? 
-  const distance = Math.round(Math.random() * 1000); // Random distance in miles
+  const distance = calculateDistance();
 
   const due_by_time_seconds = BASE_ORDER_DUE_SECONDS;
 
@@ -201,8 +207,10 @@ const shipOrder = async (playerId) => {
   }
 
   const { shipping_steps, total_duration } = await getShippingSteps(playerId);
-
   const shippingData = await calculateShippingAndBuyLabel(playerId, activeOrder.distance);
+
+  const shipping_speed = Math.max(player.shipping_speed, 100);
+  let order_ship_milliseconds = (player.shipping_speed < 1000 ? shipping_speed : (player.shipping_duration));
 
   await dbRun(
     'UPDATE orders SET duration = $1, state = $2, start_time = NOW(), shipping_cost = $3, product_quantity = $4 WHERE id = $5',
@@ -217,6 +225,10 @@ const shipOrder = async (playerId) => {
     [shippingData.total_cost, playerId],
     'Failed to update shipping status'
   );
+
+  if(order_ship_milliseconds < 1000) {
+    OrderCompleted(activeOrder.id, playerId);
+  }
 
   return { 
     message: 'Shipping started successfully.',
@@ -284,13 +296,12 @@ const calculateShippingAndBuyLabel = async (playerId, distance) => {
     'Failed to retrieve product info'
   );
 
-  const shippingCostPerMile = 0.05; // Cost per mile
+  const shippingCostPerMile = GAME_SHIPPING_COST_PER_MILE;
   let shipping_cost = distance * shippingCostPerMile;
 
   const discountedShippingModifier = await playerHasTechnology(playerId, 'discounted_shipping_rates');
   if (discountedShippingModifier) {
-    console.log('Applying discounted shipping modifier:', discountedShippingModifier);
-    shipping_cost *= (1 - discountedShippingModifier); // Reduce shipping cost by the modifier value
+    shipping_cost *= (1 - discountedShippingModifier);
   }
 
   const total_cost = Math.round(shipping_cost + product.cost_to_build);

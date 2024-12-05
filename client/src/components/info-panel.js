@@ -63,7 +63,7 @@ const InfoPanel = ({ gameInfo }) => {
     <div className="info-panel">
       <div className="info-values">
         <p>🌐 {player.business_name}</p>
-        <p>
+        <p className={player.money < 0 ? 'negative-money' : ''}>
           💰 ${formatCurrency(player.money)}
           {renderDelta(deltas.money)}
         </p>
