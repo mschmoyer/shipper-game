@@ -168,7 +168,7 @@ const ProductCompleted = async (purchaseOrderId, playerId) => {
   );
 
   // do this one out of 10 times
-  const random = Math.floor(Math.random() * 10);
+  const random = Math.floor(Math.random() * 3);
   if (random === 0) {
     await addSkillPoints(playerId, 1);
   }
