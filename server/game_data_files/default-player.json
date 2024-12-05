@@ -2,11 +2,11 @@
     {
         "name": "default_player",
         "business_name": "default_business",
-        "money": 750,
+        "money": 1000,
         "order_spawn_milliseconds": 15000,
         "order_spawn_count": 1,
         "orders_per_ship": 1,
-        "shipping_speed": 2000,
+        "shipping_speed": 1600,
         "building_speed": 2000,
         "products_per_order": 1,
         "products_per_build": 3,

@@ -21,10 +21,6 @@ const ShipOrderView = ({
     if (isRetrying || gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
       return;
     }
-    if(Math.random() < MINIGAME_SPAWN_CHANCE) { // 10% chance to show the minigame
-      setShowShipOrderProblemMinigame(true);
-      return;
-    }
     gameInfo.is_shipping = true;
     gameInfo.progress = 0;
     setShippingError('');
@@ -35,6 +31,12 @@ const ShipOrderView = ({
           .then(data => {
             if (data.message === 'Shipping started successfully.') {
               setShippingCost(data.shipping_cost);
+              const hasScanToVerifyTech = gameInfo.acquired_technologies && 
+                gameInfo.acquired_technologies.some(tech => tech.tech_code === 'scan_to_verify');
+              if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE) { // Check for scan_to_verify tech
+                setShowShipOrderProblemMinigame(true);
+                return;
+              }
             } else {
               setShippingError(data.error);
               gameInfo.is_shipping = false;
@@ -71,7 +73,7 @@ const ShipOrderView = ({
   }, [gameInfo.is_shipping, gameInfo.progress, isAutoShipEnabled, handleShipOrder, isRetrying]);
 
   const firstItem = gameInfo.inventory[0];
-  const totalProfit = (gameInfo.product.sales_price * gameInfo.player.products_per_order) - gameInfo.product.cost_to_build - shippingCost;
+  const totalProfit = Math.round((gameInfo.product.sales_price * gameInfo.player.products_per_order) - gameInfo.product.cost_to_build - shippingCost);
 
   return (
     <div className="ship-order-container">
@@ -100,7 +102,7 @@ const ShipOrderView = ({
             {firstItem && (
               <div className="inventory-info">
                 <p>💰 Sale Price: ${gameInfo.product.sales_price}</p>
-                <p>💵 Est. profit: ${totalProfit}</p>
+                <p>💵 Profit: ${totalProfit}</p>
               </div>
             )}
           </div>

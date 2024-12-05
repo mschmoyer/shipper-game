@@ -112,6 +112,19 @@ const BuildProductView = ({
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if ((event.key === 'C' || event.key === 'c') && !showOnHandCount && inventoryProgress === 0) {
+        handleCheckInventory();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [showOnHandCount, inventoryProgress]);
+
   const product = gameInfo.product;
   const player = gameInfo.player;
   const inventoryAuditProgressBarLabelText = `Manually auditing inventory for ${product.name}...`;

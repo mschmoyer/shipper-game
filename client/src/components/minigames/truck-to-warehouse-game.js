@@ -119,7 +119,7 @@ const TruckToWarehouseGame = ({ onClose }) => {
       <div className="minigame-content">
         {showInstructions ? (
           <div>
-            <p>You lost your shipment of products! Use the arrow keys to drive the truck to the factory.</p>
+            <p>You forgot to ask a supplier to make the components you need. Quickly drive your truck to get the parts. Use the arrow keys to drive the truck to the factory.</p>
             <button onClick={() => setShowInstructions(false)}>Start</button>
           </div>
         ) : gameMessage ? (
@@ -161,7 +161,7 @@ const TruckToWarehouseGame = ({ onClose }) => {
           </div>
         )}
         <p className="tech-prompt">
-          Purchase the inventory tracking technology to avoid having this problem again! 📦
+          Purchase the Purchase Order technology to avoid having this problem again! 📦
           <br />
           <strong>Note:</strong> Failing this game will set your stock level to zero.
         </p>

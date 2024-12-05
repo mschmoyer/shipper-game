@@ -102,5 +102,31 @@
     "acquirable": true,
     "category": "Order Management",
     "emoji": "📋"
+  },
+  {
+    "name": "Scan to Verify",
+    "description": "Use a barcode scanner to verify that the correct items are being shipped.",
+    "tech_level_required": 1,
+    "cost": 1000,
+    "tech_code": "scan_to_verify",
+    "modifier_value": 1,
+    "game_effect": "You won't lose products and cause customer issues (minigame)!",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360031021831-Verify-Print-Shipments-with-Barcode-Scan",
+    "acquirable": true,
+    "category": "Automation",
+    "emoji": "📦"
+  },
+  {
+    "name": "Purchase Orders",
+    "description": "Create and manage purchase orders to keep track of inventory and costs.",
+    "tech_level_required": 1,
+    "cost": 1000,
+    "tech_code": "purchase_orders",
+    "modifier_value": 1,
+    "game_effect": "Prevents you from losing incoming parts for your widgets and having to run out and get some yourself (minigame).",
+    "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Purchase-Orders",
+    "acquirable": true,
+    "category": "Inventory",
+    "emoji": "📦"
   }
 ]
