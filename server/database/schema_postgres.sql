@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS player (
   shipping_points INTEGER DEFAULT 0,
   building_points INTEGER DEFAULT 0,
   order_spawn_points INTEGER DEFAULT 0,
-  available_points INTEGER DEFAULT 0
+  available_points INTEGER DEFAULT 0,
+  last_game_update TIMESTAMP,
+  xp INTEGER DEFAULT 0
 );
 
 -- Defines the global set of products that can be built

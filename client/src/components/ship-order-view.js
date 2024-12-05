@@ -70,21 +70,8 @@ const ShipOrderView = ({
     }
   }, [gameInfo.is_shipping, gameInfo.progress, isAutoShipEnabled, handleShipOrder, isRetrying]);
 
-  useEffect(() => {
-    const handleKeyPress = (event) => {
-      if (event.key === 'S' || event.key === 's') {
-        handleShipOrder();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [handleShipOrder]);
-
   const firstItem = gameInfo.inventory[0];
-  const totalProfit = gameInfo.product.sales_price - gameInfo.product.cost_to_build - shippingCost;
+  const totalProfit = (gameInfo.product.sales_price * gameInfo.player.products_per_order) - gameInfo.product.cost_to_build - shippingCost;
 
   return (
     <div className="ship-order-container">
@@ -125,6 +112,8 @@ const ShipOrderView = ({
           isActive={gameInfo.is_shipping}
           labelText={shippingError || (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps ? gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name : 'Waiting for an order to ship...')}
           progress={gameInfo.progress}
+          speed={gameInfo.player.shipping_speed}
+          autoMode={isAutoShipEnabled}
         />
       </div>
     </div>

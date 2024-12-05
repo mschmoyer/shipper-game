@@ -4,7 +4,7 @@
     "description": "A simple widget",
     "weight": 0.4,
     "cost_to_build": 25,
-    "sales_price": 200,
+    "sales_price": 300,
     "image_url": "http://example.com/gourmet-bbq-spice.jpg"
   }
 ]

@@ -11,7 +11,7 @@ router.post('/create-account', async (req, res) => {
     'Failed to check existing player'
   );
   if (existingPlayer) {
-    console.log('Business name already exists:', existingPlayer);
+    console.log('Failed to create account. Business name already exists:', existingPlayer, ' Player name = ', name);
     return res.status(200).json({ success: false, error: 'Business name already exists. Please try another.' });
   }
   console.log('Creating account with:', { name, businessName });
@@ -24,7 +24,6 @@ router.post('/create-account', async (req, res) => {
       res.status(500).json({ error: 'Failed to save session.' });
     } else {
       console.log('Account created successfully with playerId:', playerId);
-      console.log('Session after saving:', req.session);
       res.json({ success: true, playerId });
     }
   });

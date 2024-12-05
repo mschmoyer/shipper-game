@@ -15,11 +15,11 @@
   {
     "name": "Inventory Management",
     "description": "Implement an inventory management system to track stock levels and prevent stockouts.",
-    "game_effect": "Always see inventory counts and prevent workers from taking orders you don't have stock to fulfill.",
     "tech_level_required": 1,
     "cost": 1000,
     "tech_code": "inventory_management",
     "modifier_value": 1,
+    "game_effect": "Always see inventory counts and prevent workers from taking orders you don't have stock to fulfill.",
     "shipstation_kb_link": "https://www.shipstation.com/features/inventory-management/",
     "acquirable": true,
     "category": "Inventory",

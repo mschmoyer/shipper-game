@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .build-button-container {
@@ -193,6 +194,7 @@
 
 .build-product-progress-bar-container {
   width: calc(100% - 140px);
+  margin-bottom: 0px;
 }
 
 @media (max-width: 600px) {

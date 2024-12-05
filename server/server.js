@@ -4,13 +4,12 @@ const path = require('path');
 const session = require('express-session');
 const { client, pgSessionStore } = require('./database');
 const authRoutes = require('./auth');
-const { OrderStates } = require('./constants');
 
-const { gameTick, CalculatePlayerReputation, expirePlayer, handleTruckToWarehouseGameCompletion, handleFindTheProductHaystackGameCompletion } = require('./game_logic_files/game-logic');
+const { gameTick, handleTruckToWarehouseGameCompletion, handleFindTheProductHaystackGameCompletion } = require('./game_logic_files/game-logic');
 const { getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
-const { getPlayerInfo, upgradeSkill } = require('./game_logic_files/player-logic'); // Import the upgradeSkill function
+const { getPlayerInfo, expirePlayer, upgradeSkill } = require('./game_logic_files/player-logic'); // Import the upgradeSkill function
 const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
 
 const app = express();
@@ -55,18 +54,18 @@ app.get('/api/game-info', async (req, res) => {
     return res.json({ game_active: false, player, orders: [], acquired_technologies});
   }
 
-  // This moves the game along
-  const { orders, secondsUntilNextOrder, timeRemainingSeconds } = await gameTick(player);
-
   const active_order = await getActiveOrder(req.session.playerId);
-
-  const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 100;
-  
-  const is_shipping = active_order ? progress < 100 : false;
 
   const product = await getActiveProduct(req.session.playerId);
 
   const inventory = await getInventoryInfo(req.session.playerId);
+
+  // This moves the game along
+  const gameTickData = await gameTick(player, product, inventory);
+  
+  const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 100;
+  
+  const is_shipping = active_order ? progress < 100 : false;
 
   res.json({
     active_order,
@@ -76,11 +75,13 @@ app.get('/api/game-info', async (req, res) => {
     is_shipping,
     product,
     inventory,
-    orders,
-    secondsUntilNextOrder,
-    timeRemaining: Math.round(timeRemainingSeconds),
+    orders: gameTickData.orders,
+    secondsUntilNextOrder: gameTickData.secondsUntilNextOrder,
+    timeRemaining: Math.round(gameTickData.timeRemainingSeconds),
     available_technologies,
-    acquired_technologies
+    acquired_technologies,
+    productsBuilt: gameTickData.productsBuilt,
+    ordersShipped: gameTickData.ordersShipped
   });
 });
 

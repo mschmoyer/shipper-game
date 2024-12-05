@@ -22,7 +22,6 @@ const makeNewTechnologyAvailable = async (playerId) => {
   );
 
   const excludedTechCodes = [...availableTechCodes, ...acquiredTechCodes].map(tech => tech.tech_code);
-  console.log('Excluded Technology Codes for playerId', playerId, ':', excludedTechCodes);
 
   let query = `SELECT id, tech_code, shipstation_kb_link FROM technologies`;
   if (excludedTechCodes.length > 0) {
@@ -35,7 +34,6 @@ const makeNewTechnologyAvailable = async (playerId) => {
     [],
     'Failed to retrieve new technology'
   );
-  console.log('New Technology for playerId', playerId, ':', newTech);
 
   if (newTech) {
     await dbRun(
@@ -43,7 +41,6 @@ const makeNewTechnologyAvailable = async (playerId) => {
       [playerId, newTech.id],
       'Failed to insert new available technology'
     );
-    console.log('New technology made available for playerId', playerId, ':', newTech.id);
     return true;
   } else {
     console.log('No new technology available for playerId', playerId);

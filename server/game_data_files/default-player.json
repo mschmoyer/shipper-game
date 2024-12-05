@@ -1,0 +1,29 @@
+[
+    {
+        "name": "default_player",
+        "business_name": "default_business",
+        "money": 750,
+        "order_spawn_milliseconds": 15000,
+        "order_spawn_count": 1,
+        "orders_per_ship": 1,
+        "shipping_speed": 2000,
+        "building_speed": 2000,
+        "products_per_order": 1,
+        "products_per_build": 3,
+        "progress": 0,
+        "is_shipping": false,
+        "tech_points": 0,
+        "tech_level": 1,
+        "orders_shipped": 0,
+        "total_money_earned": 0,
+        "active": true,
+        "final_money": 0,
+        "final_tech_level": 0,
+        "final_orders_shipped": 0,
+        "final_reputation": 0,
+        "shipping_points": 0,
+        "building_points": 0,
+        "order_spawn_points": 0,
+        "available_points": 3
+    }
+]

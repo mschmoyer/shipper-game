@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './game-work-button.css';
 
 const GameWorkButton = ({ autoShip, onClick, isWorkBeingDone, titleDefault, titleWhenWorking, hotkey }) => {
   const isMobileMode = window.innerWidth <= 600;
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if ((event.key === hotkey.toLowerCase() || event.key === hotkey.toUpperCase()) && !isMobileMode && !isWorkBeingDone) {
+        onClick();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [hotkey, isMobileMode, isWorkBeingDone, onClick]);
+
   return (
     <button
       className={`game-work-button ${autoShip ? 'auto-ship' : ''}`}
@@ -10,7 +24,7 @@ const GameWorkButton = ({ autoShip, onClick, isWorkBeingDone, titleDefault, titl
       disabled={isWorkBeingDone}
     >
       {autoShip ? 'Working...' : isWorkBeingDone ? titleWhenWorking : titleDefault}
-      {!isWorkBeingDone && hotkey && !isMobileMode && <div className="hotkey-info">Hotkey: {hotkey}</div>}
+      {hotkey && !isMobileMode && <div className="hotkey-info">Hotkey: {hotkey}</div>}
     </button>
   );
 };

@@ -1,5 +1,5 @@
 const { dbRun, dbGet, dbAll } = require('../database');
-const { BASE_ORDER_SPAWN_MILLISECONDS, SPEED_BOOST_FACTOR, BASE_BUILDING_SPEED_SECONDS, BASE_SHIPPING_SPEED_SECONDS, BASE_INITIAL_MONEY, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD } = require('../constants');
+const { SPEED_BOOST_FACTOR, XP_FOR_SKILL_POINT } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { OrderStates } = require('../constants');
 
@@ -7,29 +7,24 @@ let reputationCache = {};
 const CACHE_EXPIRATION_TIME = 60 * 1000;
 
 const CreateNewPlayer = async (name, businessName) => {
-  const initialProgress = 0;
-  const initialIsShipping = false;
-  const initialTechPoints = 0;
-  const initialTechLevel = 1;
-  const initialOrdersShipped = 0;
-  const initialTotalMoneyEarned = 0;
-
+  // insert a new player using the default values from player.id = 1
   const result = await dbRun(
-    `INSERT INTO player (name, business_name, progress, is_shipping, money, tech_points, 
-     tech_level, orders_shipped, total_money_earned, products_per_order, products_per_build,
-     shipping_speed, building_speed, order_spawn_milliseconds) 
-     VALUES 
-     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
-    [name, businessName, initialProgress, initialIsShipping, BASE_INITIAL_MONEY, initialTechPoints, 
-      initialTechLevel, initialOrdersShipped, initialTotalMoneyEarned, BASE_PRODUCTS_PER_ORDER, BASE_PRODUCTS_PER_BUILD,
-      BASE_SHIPPING_SPEED_SECONDS, BASE_BUILDING_SPEED_SECONDS, BASE_ORDER_SPAWN_MILLISECONDS],
+    `INSERT INTO player (name, business_name, money, tech_points,
+      tech_level, orders_shipped, total_money_earned, products_per_order, products_per_build,
+      shipping_speed, building_speed, order_spawn_milliseconds, available_points)
+      SELECT $1, $2, money, tech_points, tech_level, orders_shipped, total_money_earned,
+      products_per_order, products_per_build, shipping_speed, building_speed, order_spawn_milliseconds, available_points
+      FROM player
+      WHERE id = 1
+      RETURNING id`,
+    [name, businessName],
     'Failed to create account'
   );
+
   const playerId = result.rows[0].id;
   console.log('Created new player with id:', playerId);
   await initializeTechTree(playerId);
   
-  // Dynamically require assignRandomProductToPlayer to avoid circular dependency
   const { assignRandomProductToPlayer } = require('./product-logic');
   await assignRandomProductToPlayer(playerId);
   
@@ -117,27 +112,41 @@ const getPlayerInfo = async (playerId) => {
 
 const increaseShippingSpeed = async (playerId) => {
   // console.log('Increasing shipping speed for player:', playerId);
-  const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1000) WHERE id = $2 RETURNING shipping_speed`;
+  const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1) WHERE id = $2 RETURNING shipping_speed`;
   await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase shipping speed');
 };
 
 const increaseBuildingSpeed = async (playerId) => {
   // console.log('Increasing building speed for player:', playerId);
-  const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1000) WHERE id = $2 returning building_speed`;
+  const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1) WHERE id = $2 returning building_speed`;
   await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase building speed');
 };
 
 const increaseOrderSpawnRate = async (playerId) => {
   // console.log('Increasing order spawn rate for player:', playerId);
-  const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1000) WHERE id = $2 returning order_spawn_milliseconds`;
+  const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1) WHERE id = $2 returning order_spawn_milliseconds`;
   await dbRun(query, [SPEED_BOOST_FACTOR * 10, playerId], 'Failed to increase order spawn rate');
 }
 
-const addSkillPoints = async (playerId, points) => {
+const addSkillPoints = async (player, points) => {
   // console.log('Adding skill points for player:', playerId);
+  console.log('Adding skill points:', points, ' for player:', player.name, ' (', player.id, ')');
   const query = `UPDATE player SET available_points = available_points + $1 WHERE id = $2`;
-  await dbRun(query, [points, playerId], 'Failed to add skill points');
+  await dbRun(query, [points, player.id], 'Failed to add skill points');
 }
+
+const gainXP = async (player, new_xp) => {
+  let newTotalXP = player.xp + new_xp;
+  const skillPointsGained = Math.floor(newTotalXP / XP_FOR_SKILL_POINT);
+  if (skillPointsGained > 0) {
+    console.log('Gained XP:', new_xp, ' for player:', player.name, ' (', player.id, ')');
+    await addSkillPoints(player, skillPointsGained);
+    newTotalXP -= skillPointsGained * XP_FOR_SKILL_POINT;
+  }
+  
+  const query = `UPDATE player SET xp = $1 WHERE id = $2`;
+  await dbRun(query, [newTotalXP, player.id], 'Failed to gain XP');
+};
 
 const upgradeSkill = async (playerId, skill) => {
   const player = await getPlayerInfo(playerId);
@@ -169,12 +178,49 @@ const upgradeSkill = async (playerId, skill) => {
   return { success: true };
 };
 
+// update the last_game_update field in player
+async function updateLastGameUpdate(playerId, last_game_update) {
+  if(!last_game_update) {
+    last_game_update = new Date();
+  }
+  // console.log('last_game_update:', last_game_update);
+  const query = `UPDATE player 
+                  SET last_game_update = NOW()
+                  WHERE id = $2 
+                  RETURNING last_game_update, EXTRACT(EPOCH FROM (NOW() - $1)) AS elapsed_time`;
+                  
+  // return elapsed time since last game update in milliseconds
+  const row = await dbGet(query, [last_game_update, playerId], 'Failed to update last game update');
+
+  // log playerId and elapsed_time on one line
+  // console.log('updateLastGameUpdate - playerId:', playerId, 'elapsed_time:', row.elapsed_time * 1000);
+
+  return row.elapsed_time * 1000;
+}
+
+async function expirePlayer(player) {
+  console.log(`Expiring player: ${player.id} - ${player.name} - ${player.business_name}`);
+
+  // Calculate final fields
+  const finalMoney = player.money;
+  const finalTechLevel = player.tech_level;
+  const finalOrdersShipped = player.orders_shipped;
+  const finalReputation = await CalculatePlayerReputation(player.id);
+
+  // Set player to inactive and update final fields
+  await dbRun(
+    'UPDATE player SET active = false, final_money = $1, final_tech_level = $2, final_orders_shipped = $3, final_reputation = $4 WHERE id = $5',
+    [finalMoney, finalTechLevel, finalOrdersShipped, finalReputation, player.id],
+    'Failed to expire player'
+  );
+}
+
 module.exports = {
   getPlayerInfo,
   CreateNewPlayer,
-  CalculatePlayerReputation,
-  increaseShippingSpeed,
-  increaseBuildingSpeed,
   upgradeSkill,
-  addSkillPoints
+  addSkillPoints,
+  expirePlayer,
+  updateLastGameUpdate,
+  gainXP
 };

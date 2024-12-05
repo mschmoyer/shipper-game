@@ -4,7 +4,6 @@
   height: 37px;
   background: linear-gradient(180deg, #696969, #afafaf, #696969);
   border-radius: 5px;
-  margin-bottom: 20px;
   border: 1px solid #000000;
 }
 
@@ -21,6 +20,26 @@
 
 .progress-bar.smooth {
   transition: width 1s linear;
+}
+
+.progress-bar.automated {
+  background: linear-gradient(0deg, #dd4a0c, #ff9c72,  #dd4a0c);
+}
+
+.progress-bar.flash {
+  animation: pulse 1s infinite, shake 0.1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .progress-label {

@@ -41,7 +41,7 @@ const FindTheProductHaystackGame = ({ onClose }) => {
           <div className="found-product-message">You found the missing product!</div>
         ) : remainingSearches <= 0 ? (
           <div className="found-product-message">
-            You failed to find the product! You will lose up to 5000 from your money.
+            You failed to find the product! It will cost you $1000 to make the customer whole.
           </div>
         ) : (
           <div>
@@ -62,7 +62,7 @@ const FindTheProductHaystackGame = ({ onClose }) => {
         <p className="tech-prompt">
           Buy the <b>Scan To Verify</b> tech to prevent this ugly situation from impacting your order fulfillment!
           <br />
-          <strong>Note:</strong> Failing this game will deduct up to 5000 from your money.
+          <strong>Note:</strong> Failing this game could cause a customer to demand money back. 
         </p>
       </div>
     </div>

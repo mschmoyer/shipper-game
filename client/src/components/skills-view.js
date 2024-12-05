@@ -76,6 +76,7 @@ const SkillsView = ({ player, isOpen, onClose }) => {
           <tr><td>Building Steps</td><td>{player.building_step_count}</td></tr>
           <tr><td>Products per Order</td><td>{player.products_per_order}</td></tr>
           <tr><td>Products per Build</td><td>{player.products_per_build}</td></tr>
+          <tr><td>XP</td><td>{player.xp}</td></tr>
         </tbody>
       </table>
     </Drawer>

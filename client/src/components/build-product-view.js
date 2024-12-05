@@ -56,7 +56,7 @@ const BuildProductView = ({
   };
 
   const handleCheckInventory = () => {
-    setIsCheckInventoryModalOpen(true);
+    setShowOnHandCount(false);
     setInventoryProgress(0);
     const interval = setInterval(() => {
       setInventoryProgress(prev => {
@@ -106,19 +106,6 @@ const BuildProductView = ({
   }, [gameInfo.product.is_building, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
 
   useEffect(() => {
-    const handleKeyPress = (event) => {
-      if (event.key === 'B' || event.key === 'b') {
-        handleBuildProduct();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, []);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       setShowOnHandCount(false);
     }, ON_HAND_VISIBLE_DURATION);
@@ -126,6 +113,7 @@ const BuildProductView = ({
   }, []);
 
   const product = gameInfo.product;
+  const player = gameInfo.player;
   const inventoryAuditProgressBarLabelText = `Manually auditing inventory for ${product.name}...`;
 
   return (
@@ -167,7 +155,15 @@ const BuildProductView = ({
                   showOnHandCount ? (
                     <p className={!hasInventoryTech ? "blurred-value" : ""}>📦 {gameInfo.inventory[0].on_hand} on hand</p>
                   ) : (
-                    <button onClick={handleCheckInventory}>Check Inventory</button>
+                    inventoryProgress > 0 && inventoryProgress < 100 ? (
+                      <ProgressBar 
+                        isActive={true} 
+                        progress={inventoryProgress} 
+                        labelText="Auditing..."
+                      />
+                    ) : (
+                      <button onClick={handleCheckInventory}>Check Inventory</button>
+                    )
                   )
                 )}
               </div>
@@ -202,6 +198,8 @@ const BuildProductView = ({
           isActive={product.is_building}
           labelText={buildError || (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name} for ${product.name}` : `Waiting for a build of ${product.name}...`)}
           progress={product.progress}
+          speed={player.building_speed}
+          autoMode={isAutoBuildEnabled}
         />
       </div>
       
