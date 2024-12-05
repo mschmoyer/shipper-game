@@ -17,60 +17,71 @@ const ShipOrderView = ({
   
   const MINIGAME_SPAWN_CHANCE = 0.02;
 
-  const handleShipOrder = useCallback(() => {
-    if (isRetrying || gameInfo.orders.length === 0 || !gameInfo.orders.some(order => order.state === 'AwaitingShipment')) {
+  const handleShipOrder = useCallback(async () => {
+    if (isRetrying || gameInfo.is_shipping) {
       return;
     }
     gameInfo.is_shipping = true;
     gameInfo.progress = 0;
     setShippingError('');
-    setTimeout(() => {
-      setIsRetrying(false);
-      setTimeout(() => {
-        startShipping()
-          .then(data => {
-            if (data.message === 'Shipping started successfully.') {
-              setShippingCost(data.shipping_cost);
-              const hasScanToVerifyTech = gameInfo.acquired_technologies && 
-                gameInfo.acquired_technologies.some(tech => tech.tech_code === 'scan_to_verify');
-              if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE) { // Check for scan_to_verify tech
-                setShowShipOrderProblemMinigame(true);
-                return;
-              }
-            } else {
-              setShippingError(data.error);
-              gameInfo.is_shipping = false;
-              if (isAutoShipEnabled) {
-                setIsRetrying(true);
-                console.log('isRetrying:', isRetrying);
-                setTimeout(handleShipOrder, 10000); // Add a one-second delay before retrying
-              }
-            }
-          })
-          .catch(error => console.error('Failed to start shipping:', error));
-      }, 0);
-    }, 0);
-  }, [gameInfo, isAutoShipEnabled, isRetrying]);
 
+    setIsRetrying(false);
+    const result = await startShipping()
+      .then(data => {
+        if (data.message === 'Shipping started successfully.') {
+          console.log('🚀 Shipping initiated! Your products are on their way to greatness!');
+          setShippingCost(data.shipping_cost);
+          const hasScanToVerifyTech = gameInfo.acquired_technologies && 
+            gameInfo.acquired_technologies.some(tech => tech.tech_code === 'scan_to_verify');
+          if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE) { // Check for scan_to_verify tech
+            setShowShipOrderProblemMinigame(true);
+            return;
+          }
+        } else {
+          console.log('❌ Failed to start shipping:', data.error);
+          setShippingError(data.error);
+          gameInfo.is_shipping = false;
+          if (isAutoShipEnabled) {
+            setIsRetrying(true);
+            setTimeout(handleShipOrder, 10000);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('❌ Failed to start shipping:', error);
+        console.log('💥 Something went wrong! Maybe the designer of this game should stick to tic-tac-toe.');
+      });
+  }, [isRetrying, gameInfo, isAutoShipEnabled]);
+
+  // Check if the player has the hire_warehouse_worker tech
   useEffect(() => {
     if (gameInfo) {
-      const hasAutoShipTech = gameInfo.acquired_technologies && gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_warehouse_worker');
+      const hasAutoShipTech = gameInfo.acquired_technologies && 
+        gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_warehouse_worker');
       setIsAutoShipEnabled(hasAutoShipTech);
     }
   }, [gameInfo]);
 
   useEffect(() => {
-    if (isAutoShipEnabled && !gameInfo.is_shipping && !isRetrying) {
+    if (!gameInfo.is_shipping && isAutoShipEnabled && !isRetrying) {
       console.log('Starting new order automatically on mount, autoShipEnabled:', isAutoShipEnabled);
       handleShipOrder();
     }
-  }, [isAutoShipEnabled, gameInfo.is_shipping, handleShipOrder, isRetrying]);
+  }, [gameInfo.is_shipping, isAutoShipEnabled, isRetrying, handleShipOrder, isRetrying]);
 
-  useEffect(() => {
-    if (!gameInfo.is_shipping && isAutoShipEnabled && !isRetrying) {
-      setTimeout(handleShipOrder, 10); // Add a one-second delay before
+  const getShippingStepName = () => {
+    if (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps) {
+      return gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name;
     }
-  }, [gameInfo.is_shipping, gameInfo.progress, isAutoShipEnabled, handleShipOrder, isRetrying]);
+    return 'Waiting for an order to ship...';
+  };
+
+  const getLabelText = () => {
+    if (shippingError) {
+      return shippingError;
+    }
+    return getShippingStepName();
+  };
 
   const firstItem = gameInfo.inventory[0];
   const totalProfit = Math.round((gameInfo.product.sales_price * gameInfo.player.products_per_order) - gameInfo.product.cost_to_build - shippingCost);
@@ -112,7 +123,7 @@ const ShipOrderView = ({
         <ProgressBar
           isError={!!shippingError}
           isActive={gameInfo.is_shipping}
-          labelText={shippingError || (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps ? gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name : 'Waiting for an order to ship...')}
+          labelText={getLabelText()}
           progress={gameInfo.progress}
           speed={gameInfo.player.shipping_speed}
           autoMode={isAutoShipEnabled}

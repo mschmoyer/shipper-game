@@ -36,7 +36,7 @@ const GameWindow = ({ gameInfo }) => {
       </div>
       <TechnologyView
         availableTechnologies={gameInfo.available_technologies}
-        playerTechLevel={gameInfo.player.tech_level}
+        player={gameInfo.player}
         isOpen={isTechViewVisible}
         onClose={() => setIsTechViewVisible(false)}
       />

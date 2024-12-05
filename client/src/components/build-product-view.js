@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './build-product-view.css';
 import { startProductBuild } from '../api';
 import ProgressBar from './reusable/progress-bar';
 import GameWorkButton from './reusable/game-work-button';
-import TruckToWarehouseGame from './minigames/truck-to-warehouse-game'; // Import the new component
+import TruckToWarehouseGame from './minigames/truck-to-warehouse-game';
 
 const BuildProductView = ({ 
   gameInfo, 
@@ -26,7 +26,7 @@ const BuildProductView = ({
     setIsModalOpen(!isModalOpen);
   };
 
-  const handleBuildProduct = async () => {
+  const handleBuildProduct = useCallback(async () => {
     if (isRetrying || gameInfo.product.is_building) {
       return;
     }
@@ -38,13 +38,13 @@ const BuildProductView = ({
     const result = await startProductBuild()
       .then(data => {
         if (data.message === 'Product build started successfully.') {
-          console.log('Product build started successfully:', data);
-          if (Math.random() < MINIGAME_SPAWN_CHANCE) { // 10% chance to show the minigame
+          console.log('🛠️ Building commenced! Your products are being crafted with love and code!');
+          if (Math.random() < MINIGAME_SPAWN_CHANCE) { // 2% chance to show the minigame
             setShowMinigame(true);
           }
         } else {
-          console.error('Failed to start product build:', data);
-          setBuildError(result.error);
+          console.error('❌ Failed to start product build:', data);
+          setBuildError(data.error);
           gameInfo.product.is_building = false;
           if (isAutoBuildEnabled) {
             setIsRetrying(true);
@@ -52,8 +52,11 @@ const BuildProductView = ({
           }
         }
       })
-      .catch(error => console.error('Failed to start product build:', error));
-  };
+      .catch(error => {
+        console.error('❌ Failed to start product build:', error);
+        console.log('💥 Oops! Something went wrong. Maybe the designer of this game should consider a career in gardening.');
+      });
+  }, [isRetrying, gameInfo, isAutoBuildEnabled]);
 
   const handleCheckInventory = () => {
     setShowOnHandCount(false);
@@ -80,11 +83,7 @@ const BuildProductView = ({
     if (gameInfo) {
       const hasAutoBuildTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_fabricator');
-      if (hasAutoBuildTech) {
-        setIsAutoBuildEnabled(true);
-      } else {
-        setIsAutoBuildEnabled(false);
-      }
+      setIsAutoBuildEnabled(hasAutoBuildTech);
 
       const hasInventoryTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'inventory_management');
@@ -93,17 +92,10 @@ const BuildProductView = ({
   }, [gameInfo]);
 
   useEffect(() => {
-    if (isAutoBuildEnabled && !gameInfo.product.is_building && !isRetrying) {
-      console.log('Starting new build automatically, autoBuildEnabled:', isAutoBuildEnabled);
+    if (!gameInfo.product.is_building && isAutoBuildEnabled && !isRetrying) {
       handleBuildProduct();
     }
-  }, [isAutoBuildEnabled, gameInfo.product.is_building, isRetrying]);
-
-  useEffect(() => {
-    if (!gameInfo.product.isBuilding && isAutoBuildEnabled && !isRetrying) {
-      setTimeout(handleBuildProduct, 10); // Add a one-second delay before retrying
-    }
-  }, [gameInfo.product.is_building, gameInfo.product.progress, isAutoBuildEnabled, isRetrying]);
+  }, [gameInfo.product.is_building, isAutoBuildEnabled, isRetrying, handleBuildProduct]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

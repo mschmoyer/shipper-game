@@ -50,9 +50,12 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, existing
 
   // using elapsed_time and player.order_spawn_milliseconds, calculate the number of orders to generate and generate them
   let order_spawn_milliseconds = player.order_spawn_milliseconds || BASE_ORDER_SPAWN_MILLISECONDS;
-  let order_ship_milliseconds = player.shipping_speed;
+  let order_ship_milliseconds = player.shipping_duration;
 
-  let orders_to_generate = Math.max(0, Math.floor(elapsed_time / order_spawn_milliseconds));
+  let orders_to_generate = Math.max(0, Math.floor(elapsed_time / order_spawn_milliseconds)) * player.order_spawn_count;
+
+  // log order spawn, shipping speed and elapsed time in one line
+  // console.log(`GenerateOrders - OrderSpawn: ${order_spawn_milliseconds}, ShippingSpeed: ${order_ship_milliseconds}, ElapsedTime: ${elapsed_time}`);
   
   // using elapsed_time, orders, and player.shipping_speed (milliseconds), calculate how many orders were shipped in this time period
   let new_orders_to_ship = Math.max(0, Math.floor(elapsed_time / order_ship_milliseconds));
@@ -99,10 +102,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
   let available_stock = inventory[0].on_hand;
   let total_stock_to_deduct = 0;
   const shippingData = await calculateShippingAndBuyLabel(player.id, 100);
-  console.log('shippingData:', shippingData);
 
-  console.log(`_synthesizeShippedOrders - AvailableStock: ${available_stock}, ProductPerOrder: ${player.products_per_order}`);
-  
   // loop through new_orders_to_ship and synthesize the orders
   for (let i = 0; i < new_orders_to_ship; i++) {
     if(available_stock >= player.products_per_order) {
@@ -121,25 +121,26 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
     }
   }
 
-  // update player orders_shipped and total_money_earned and money 
-  const playerRow = await dbRun(
-    `UPDATE player 
-      SET orders_shipped = orders_shipped + $1, total_money_earned = total_money_earned + $2, money = money + $2 
-      WHERE id = $3
-      RETURNING orders_shipped, total_money_earned, money`,
-    [totalOrdersShipped, Math.round(totalRevenue), player.id],
-    'Failed to update player orders_shipped, total_money_earned, and money'
-  );
+  if(totalOrdersShipped <= 0) {
+    // update player orders_shipped and total_money_earned and money 
+    const playerRow = await dbRun(
+      `UPDATE player 
+        SET orders_shipped = orders_shipped + $1, total_money_earned = total_money_earned + $2, money = money + $2 
+        WHERE id = $3
+        RETURNING orders_shipped, total_money_earned, money`,
+      [totalOrdersShipped, Math.round(totalRevenue), player.id],
+      'Failed to update player orders_shipped, total_money_earned, and money'
+    );
 
-  // update inventory counts
-  const invRow = await dbRun(
-    'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 RETURNING on_hand',
-    [total_stock_to_deduct, player.id],
-    'Failed to update inventory on_hand'
-  );
+    // update inventory counts
+    const invRow = await dbRun(
+      'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 RETURNING on_hand',
+      [total_stock_to_deduct, player.id],
+      'Failed to update inventory on_hand'
+    );
 
-  console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${playerRow.rows[0].orders_shipped}, Money: ${playerRow.rows[0].money}, on_hand: ${invRow.rows[0].on_hand}`);
-
+    console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}, Money: ${playerRow.rows[0].money}, on_hand: ${invRow.rows[0].on_hand}`);
+  }
   return totalOrdersShipped;
 }
 

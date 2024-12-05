@@ -38,41 +38,42 @@ const CalculatePlayerReputation = async (playerId) => {
   const currentTime = Date.now();
 
   if (reputationCache[playerId] && (currentTime - reputationCache[playerId].timestamp < CACHE_EXPIRATION_TIME)) {
-    return reputationCache[playerId].score;
+    return reputationCache[playerId];
   }
 
   const orders = await dbAll(
-    `SELECT state, due_by_time, 
-            start_time + interval '1 second' * duration AS end_time 
+    `SELECT state
      FROM orders 
      WHERE player_id = $1 and created_at > NOW() - INTERVAL '5 minutes'`,
     [playerId],
     'Failed to retrieve orders'
   );
 
-  let positiveCount = 0;
-  let negativeCount = 0;
+  let shippedOrders = 0;
+  let failedOrders = 0;
 
   for (const order of orders) {
-    const dueByTime = new Date(order.due_by_time);
-    const endTime = new Date(order.end_time);
-
     if (order.state === OrderStates.Canceled || order.state === OrderStates.Lost || order.state === OrderStates.Returned) {
-      negativeCount++;
-    } else if (order.state === OrderStates.Shipped && endTime <= dueByTime) {
-      positiveCount++;
+      failedOrders++;
+    } else if (order.state === OrderStates.Shipped) {
+      shippedOrders++;
     }
   }
 
-  const totalOrders = positiveCount + negativeCount;
-  const reputationScore = totalOrders > 0 ? (positiveCount / totalOrders) * 100 : 100;
+  const totalOrders = shippedOrders + failedOrders;
+  const reputationScore = totalOrders > 0 ? (shippedOrders / totalOrders) * 100 : 100;
 
-  reputationCache[playerId] = {
+  const reputationData = {
     score: Math.round(reputationScore),
+    shipped_orders: shippedOrders,
+    failed_orders: failedOrders,
+    total_orders: totalOrders,
     timestamp: currentTime
   };
 
-  return reputationCache[playerId].score;
+  reputationCache[playerId] = reputationData;
+
+  return reputationData;
 };
 
 const getPlayerInfo = async (playerId) => {
@@ -110,22 +111,45 @@ const getPlayerInfo = async (playerId) => {
   }
 };
 
-const increaseShippingSpeed = async (playerId) => {
+const increaseShippingSpeed = async (player) => {
   // console.log('Increasing shipping speed for player:', playerId);
-  const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1) WHERE id = $2 RETURNING shipping_speed`;
-  await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase shipping speed');
+
+  // if player's current shipping_speed is 1, do not decrease it further, instead increase the products_per_order
+  if(player.shipping_speed === 1) {
+    const query = `UPDATE player SET products_per_order = GREATEST(products_per_order + 1, 1) WHERE id = $1 RETURNING products_per_order`;
+    await dbRun(query, [player.id], 'Failed to increase products per order');
+  } else {
+    const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1) WHERE id = $2 RETURNING shipping_speed`;
+    await dbRun(query, [SPEED_BOOST_FACTOR, player.id], 'Failed to increase shipping speed');
+  }
+  return;
 };
 
-const increaseBuildingSpeed = async (playerId) => {
+const increaseBuildingSpeed = async (player) => {
   // console.log('Increasing building speed for player:', playerId);
-  const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1) WHERE id = $2 returning building_speed`;
-  await dbRun(query, [SPEED_BOOST_FACTOR, playerId], 'Failed to increase building speed');
+
+  // if player's current building_speed is 1, do not decrease it further, instead increase the products_per_build
+  if(player.building_speed === 1) {
+    const query = `UPDATE player SET products_per_build = GREATEST(products_per_build + 1, 1) WHERE id = $1 RETURNING products_per_build`;
+    await dbRun(query, [player.id], 'Failed to increase products per build');
+  } else {
+    const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1) WHERE id = $2 returning building_speed`;
+    await dbRun(query, [SPEED_BOOST_FACTOR, player.id], 'Failed to increase building speed');
+  }
+  return;
 };
 
-const increaseOrderSpawnRate = async (playerId) => {
+const increaseOrderSpawnRate = async (player) => {
   // console.log('Increasing order spawn rate for player:', playerId);
-  const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1) WHERE id = $2 returning order_spawn_milliseconds`;
-  await dbRun(query, [SPEED_BOOST_FACTOR * 10, playerId], 'Failed to increase order spawn rate');
+
+  // if player's current order_spawn_milliseconds is 1, do not decrease it further, instead increase the order_spawn_count
+  if(player.order_spawn_milliseconds === 1) {
+    const query = `UPDATE player SET order_spawn_count = GREATEST(order_spawn_count + 1, 1) WHERE id = $1 RETURNING order_spawn_count`;
+    await dbRun(query, [player.id], 'Failed to increase order spawn points');
+  } else {
+    const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1) WHERE id = $2 returning order_spawn_milliseconds`;
+    await dbRun(query, [SPEED_BOOST_FACTOR * 10, player.id], 'Failed to increase order spawn rate');
+  }
 }
 
 const addSkillPoints = async (player, points) => {
@@ -157,22 +181,22 @@ const upgradeSkill = async (playerId, skill) => {
   switch (skill) {
     case 'shipping_points':
       query = `UPDATE player SET shipping_points = shipping_points + 1, available_points = available_points - 1 WHERE id = $1`;
-      console.log('Upgrading shipping points for player:', playerId);
-      increaseShippingSpeed(playerId);
+      increaseShippingSpeed(player);
       break;
     case 'building_points':
       query = `UPDATE player SET building_points = building_points + 1, available_points = available_points - 1 WHERE id = $1`;
-      console.log('Upgrading building points for player:', playerId);
-      increaseBuildingSpeed(playerId);
+      increaseBuildingSpeed(player);
       break;
     case 'order_spawn_points':
       query = `UPDATE player SET order_spawn_points = order_spawn_points + 1, available_points = available_points - 1 WHERE id = $1`;
-      console.log('Upgrading order spawn points for player:', playerId);
-      increaseOrderSpawnRate(playerId);
+      increaseOrderSpawnRate(player);
       break;
     default:
+      console.log('Invalid skill:', skill);
       return { success: false, error: 'Invalid skill' };
   }
+
+  console.log('upgradeSkill - playerId:', playerId, 'player.name:', player.name, 'skill:', skill);
 
   await dbRun(query, [playerId], 'Failed to upgrade skill');
   return { success: true };
@@ -205,8 +229,8 @@ async function expirePlayer(player) {
   const finalMoney = player.money;
   const finalTechLevel = player.tech_level;
   const finalOrdersShipped = player.orders_shipped;
-  const finalReputation = await CalculatePlayerReputation(player.id);
-
+  const reputationData = await CalculatePlayerReputation(player.id);
+  const finalReputation = reputationData.score;
   // Set player to inactive and update final fields
   await dbRun(
     'UPDATE player SET active = false, final_money = $1, final_tech_level = $2, final_orders_shipped = $3, final_reputation = $4 WHERE id = $5',

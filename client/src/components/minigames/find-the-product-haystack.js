@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { completeFindTheProductHaystackGame } from '../../api'; // Import the API function
 import './find-the-product-haystack.css';
 
@@ -7,14 +7,14 @@ const FindTheProductHaystackGame = ({ onClose }) => {
   const [clickedIndexes, setClickedIndexes] = useState([]);
   const [foundProduct, setFoundProduct] = useState(false);
   const [remainingSearches, setRemainingSearches] = useState(15);
-  let gameCompleted = false;
+  let gameCompleted = useRef(false);
 
   const handleClick = (index) => {
-    if (!gameCompleted) {
+    if (!gameCompleted.current) {
       if (index === correctIndex) {
         setFoundProduct(true);
         completeFindTheProductHaystackGame(true); // Call API with success
-        gameCompleted = true;
+        gameCompleted.current = true;
         setTimeout(onClose, 2000);
       } else {
         setClickedIndexes([...clickedIndexes, index]);
@@ -25,9 +25,9 @@ const FindTheProductHaystackGame = ({ onClose }) => {
 
   useEffect(() => {
     if (remainingSearches <= 0 && !foundProduct) {
-      if (!gameCompleted) {
+      if (!gameCompleted.current) {
         completeFindTheProductHaystackGame(false); // Call API with failure
-        gameCompleted = true;
+        gameCompleted.current = true;
         setTimeout(onClose, 2000);
       }
     }

@@ -98,3 +98,7 @@ export const upgradeSkill = (skill) => {
     body: JSON.stringify({ skill }),
   });
 };
+
+export const fetchAdminStats = () => {
+  return apiCall(`${baseUrl}/admin-stats`);
+};

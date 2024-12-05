@@ -3,7 +3,7 @@ import { purchaseTechnology } from '../api';
 import Drawer from './reusable/drawer';
 import './technology-view.css';
 
-const TechnologyView = ({ availableTechnologies, playerTechLevel, isOpen, onClose }) => {
+const TechnologyView = ({ availableTechnologies, player, isOpen, onClose }) => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [newsMessage, setNewsMessage] = useState('');
 
@@ -25,7 +25,10 @@ const TechnologyView = ({ availableTechnologies, playerTechLevel, isOpen, onClos
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Available Technologies" className="technology-drawer-container">
-      <div className="tech-level">Tech Level: {playerTechLevel}</div>
+      <div className="tech-level">
+        <span>🛠️ Tech Level: {player ? player.tech_level : 0}</span>
+        <span style={{ marginLeft: '20px' }}>💰 Money: ${player ? player.money : 0}</span>
+      </div>
       <div className="tech-cards-container">
         {availableTechnologies.map(tech => (
           <div key={tech.id} className="tech-card">

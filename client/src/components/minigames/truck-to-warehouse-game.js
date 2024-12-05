@@ -17,7 +17,7 @@ const TruckToWarehouseGame = ({ onClose }) => {
   const [velocity, setVelocity] = useState(0); // Velocity in tiles per second
   const [gameMessage, setGameMessage] = useState('');
   const [showInstructions, setShowInstructions] = useState(true);
-  const [obstacles, setObstacles] = useState(
+  const [obstacles] = useState(
     Array.from({ length: 5 }, () => ({
       position: getRandomPosition(),
       emoji: obstacleEmojis[Math.floor(Math.random() * obstacleEmojis.length)],

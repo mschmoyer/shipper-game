@@ -34,21 +34,19 @@ const InfoPanel = ({ gameInfo }) => {
     reputation: 0,
   };
 
-  const [prevPlayer, setPrevPlayer] = useState({});
   const [player, setPlayer] = useState(gameInfo ? gameInfo.player : defaultPlayer);
   const [deltas, setDeltas] = useState({});
 
   useEffect(() => {
     if (gameInfo) {
-      setPrevPlayer(player);
       setPlayer(gameInfo.player);
       setDeltas({
         money: gameInfo.player.money - player.money,
         orders_shipped: gameInfo.player.orders_shipped - player.orders_shipped,
-        reputation: gameInfo.player.reputation - player.reputation,
+        reputation: gameInfo.player.reputation.score - player.reputation.score,
       });
     }
-  }, [gameInfo]);
+  }, [gameInfo, player]);
 
   const getDeltaClass = (delta) => {
     if (delta > 0) return 'delta-positive';
@@ -74,7 +72,7 @@ const InfoPanel = ({ gameInfo }) => {
           {renderDelta(deltas.orders_shipped)}
         </p>
         <p>
-          {getReputationEmoji(player.reputation)} {isMobileMode ? '' : 'Reputation: '}{player.reputation}
+          {getReputationEmoji(player.reputation.score)} {isMobileMode ? '' : 'Reputation: '}{player.reputation.score}
           {renderDelta(deltas.reputation)}
         </p>
         <p>{isMobileMode ? '⏳' : '⏳ Time Remaining:'} {formatTimeRemaining(gameInfo && gameInfo.timeRemaining ? gameInfo.timeRemaining : 0)}</p>

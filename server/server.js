@@ -11,6 +11,7 @@ const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./gam
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
 const { getPlayerInfo, expirePlayer, upgradeSkill } = require('./game_logic_files/player-logic'); // Import the upgradeSkill function
 const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
+const { getAdminStats } = require('./admin-logic'); // Import the admin logic
 
 const app = express();
 const port = process.env.PORT || 5005;
@@ -181,10 +182,25 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+app.get('/api/admin-stats', async (req, res) => {
+  try {
+    const stats = await getAdminStats();
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve admin stats' });
+  }
+});
+
+app.get('/admin', (req, res) => {
+  console.log('Serving admin.html');
+  res.sendFile(path.join(__dirname, '../client/dist', 'admin.html')); // Update the path to 'dist'
+});
+
 // Serve the React frontend
 app.use(express.static(path.join(__dirname, '../client/build')));
 
 app.get('*', (req, res) => {
+  console.log('Serving index.html');
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 

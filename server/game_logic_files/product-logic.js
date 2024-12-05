@@ -236,7 +236,6 @@ const ProductCompleted = async (purchaseOrderId, playerId) => {
     'Failed to retrieve purchase order'
   );
 
-  console.log('productId:', purchaseOrder.product_id);
   await dbRun(
     'UPDATE inventory SET on_hand = on_hand + $1 WHERE player_id = $2 AND product_id = $3',
     [purchaseOrder.quantity, playerId, purchaseOrder.product_id],
