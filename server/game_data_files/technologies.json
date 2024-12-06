@@ -1,6 +1,6 @@
 [
   {
-    "name": "Hire a Shipper",
+    "name": "Hire Fulfillment Specialist",
     "description": "Hire a fulfillment specialist to manage order processing and shipping.",
     "tech_level_required": 1,
     "cost": 1500,
@@ -19,7 +19,7 @@
     "cost": 1000,
     "tech_code": "inventory_management",
     "modifier_value": 1,
-    "game_effect": "Always see inventory counts and prevent workers from taking orders you don't have stock to fulfill.",
+    "game_effect": "Always see inventory counts (no manual audit required) and prevent workers from taking orders you don't have stock to fulfill.",
     "shipstation_kb_link": "https://www.shipstation.com/features/inventory-management/",
     "acquirable": true,
     "category": "Inventory",
@@ -44,16 +44,16 @@
     "tech_level_required": 1,
     "cost": 1000,
     "tech_code": "discounted_shipping_rates",
-    "modifier_value": 0.5,
-    "game_effect": "Decreases shipping costs by 30%.",
+    "modifier_value": 0.88,
+    "game_effect": "Decreases shipping costs by 88%!",
     "shipstation_kb_link": "https://www.shipstation.com/discounted-rates/",
     "acquirable": true,
     "category": "Shipping",
     "emoji": "🚚"
   },
   {
-    "name": "SmartFill",
-    "description": "Automatically fill in shipping fields based on previous orders.",
+    "name": "ShipSense AI",
+    "description": "Automatically fill in shipping details based on historical data and machine learning.",
     "tech_level_required": 1,
     "cost": 1000,
     "tech_code": "smartfill",
@@ -66,16 +66,16 @@
   },
   {
     "name": "Product Bundles",
-    "description": "Bundle multiple products together to create a new product.",
+    "description": "Bundle products together to increase average order value and offer discounts to customers.",
     "tech_level_required": 1,
     "cost": 1000,
     "tech_code": "bundles",
-    "modifier_value": 1,
-    "game_effect": "Ship an additional product with each order.",
+    "modifier_value": 1.5,
+    "game_effect": "Increase your average order sales price by 50%!",
     "shipstation_kb_link": "https://www.shipstation.com/blog/product-bundles/",
-    "acquirable": false,
+    "acquirable": true,
     "category": "Product",
-    "emoji": "📦"
+    "emoji": "🎁"
   },
   {
     "name": "Rate Shopper",
@@ -88,7 +88,7 @@
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Rate-Shopping",
     "acquirable": true,
     "category": "Shipping",
-    "emoji": "📦"
+    "emoji": "🛒"
   },
   {
     "name": "Order Grid Filters",
@@ -114,7 +114,7 @@
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360031021831-Verify-Print-Shipments-with-Barcode-Scan",
     "acquirable": true,
     "category": "Automation",
-    "emoji": "📦"
+    "emoji": "🔍"
   },
   {
     "name": "Purchase Orders",
@@ -127,6 +127,6 @@
     "shipstation_kb_link": "https://help.shipstation.com/hc/en-us/articles/360025856951-Purchase-Orders",
     "acquirable": true,
     "category": "Inventory",
-    "emoji": "📦"
+    "emoji": "📝"
   }
 ]

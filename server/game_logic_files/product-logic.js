@@ -112,7 +112,11 @@ const assignRandomProductToPlayer = async (playerId) => {
 
 const getActiveProduct = async (playerId) => {
   let product = await dbGet(
-    'SELECT p.*, pp.product_id FROM products p JOIN player_products pp ON p.id = pp.product_id WHERE pp.player_id = $1',
+    `SELECT p.*, 
+      pp.product_id 
+      FROM products p 
+      JOIN player_products pp ON p.id = pp.product_id
+      WHERE pp.player_id = $1`,
     [playerId],
     'Failed to retrieve product info'
   );
@@ -130,6 +134,11 @@ const getActiveProduct = async (playerId) => {
     [playerId],
     'Failed to retrieve active purchase order'
   );
+
+  const hasBundlesTech = await playerHasTechnology(playerId, 'bundles');
+  if(hasBundlesTech) {
+    product.sales_price = product.sales_price * (hasBundlesTech ? hasBundlesTech : 1);
+  }
 
   const start_time = purchase_order && purchase_order.start_time ? new Date(purchase_order.start_time) : null;
   const elapsed_time = purchase_order ? purchase_order.elapsed_time : 0;
@@ -230,6 +239,9 @@ const startProductBuild = async (playerId) => {
   //   console.log('Player does not have enough money to build the product');
   //   return { error: 'You do not have enough money to build the product' };
   // }
+
+  // log everything important in one line
+  console.log('startProductBuild - playerId:', playerId, 'product:', activeProduct.name, 'quantity:', quantity, 'costToBuild:', activeProduct.cost_to_build, 'totalCost:', activeProduct.cost_to_build * quantity);
 
   const totalBuildCost = activeProduct.cost_to_build * quantity;
   // Deduct the money. 

@@ -64,6 +64,16 @@ const getAcquiredTechnologies = async (playerId) => {
   );
 };
 
+const getAllTechnologyWithState = async (playerId) => {
+  // Get all technologies and add a field for whether they are purchased by the player or not using acquired_technologies table
+  return await dbAll(
+    `SELECT t.*, at.id AS acquired_id FROM technologies t
+    LEFT JOIN acquired_technologies at ON t.id = at.tech_id AND at.player_id = $1`,
+    [playerId],
+    'Failed to retrieve all technologies with state'
+  );
+};
+
 const purchaseTechnology = async (playerId, techId) => {
   const player = await dbGet(
     'SELECT money FROM player WHERE id = $1',
@@ -115,14 +125,6 @@ const performOneTimeTechnologyEffect = async (playerId, techCode) => {
   );
 
   switch (techCode) {
-    case 'bundles':
-      // increase player products_per_order by the technology modifier value 
-      await dbRun(
-        'UPDATE player SET products_per_order = products_per_order + $1 WHERE id = $2',
-        [technology.modifier_value, playerId],
-        'Failed to update player products_per_order'
-      );
-      break;
     case 'example_tech_code_2':
       console.log(`Performing effect for technology: ${techCode}`);
       break;
@@ -146,5 +148,6 @@ module.exports = {
   initializeTechTree,
   getAvailableTechnologies,
   getAcquiredTechnologies,
-  purchaseTechnology
+  purchaseTechnology,
+  getAllTechnologyWithState
 };

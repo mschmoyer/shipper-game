@@ -6,7 +6,7 @@ const { client, pgSessionStore } = require('./database');
 const authRoutes = require('./auth');
 
 const { gameTick, handleTruckToWarehouseGameCompletion, handleFindTheProductHaystackGameCompletion } = require('./game_logic_files/game-logic');
-const { getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
+const { getAllTechnologyWithState, getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
 const { getPlayerInfo, expirePlayer, upgradeSkill, toggleBuildingAutomation } = require('./game_logic_files/player-logic'); // Import the upgradeSkill and toggleBuildingAutomation functions
@@ -48,6 +48,7 @@ app.get('/api/game-info', async (req, res) => {
 
   const available_technologies = await getAvailableTechnologies(req.session.playerId);
   const acquired_technologies = await getAcquiredTechnologies(req.session.playerId);
+  const technology = await getAllTechnologyWithState(req.session.playerId);
 
   const active_order = await getActiveOrder(req.session.playerId);
 
@@ -66,6 +67,7 @@ app.get('/api/game-info', async (req, res) => {
     active_order,
     game_active: player && player.active,
     game_status: gData.game_status,
+    minigames_enabled: false,
     player,
     progress,
     is_shipping,
@@ -74,11 +76,11 @@ app.get('/api/game-info', async (req, res) => {
     orders: gData.orders,
     secondsUntilNextOrder: gData.secondsUntilNextOrder,
     timeRemaining: Math.round(gData.timeRemainingSeconds),
-    available_technologies,
-    acquired_technologies,
     productsBuilt: gData.productsBuilt,
     ordersShipped: gData.ordersShipped,
-    minigames_enabled: false
+    available_technologies,
+    acquired_technologies,
+    technology
   });
 });
 

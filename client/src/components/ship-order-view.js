@@ -86,6 +86,7 @@ const ShipOrderView = ({
   };
 
   const firstItem = gameInfo.inventory[0];
+
   const totalProfit = Math.round((gameInfo.product.sales_price * gameInfo.player.products_per_order) - gameInfo.product.cost_to_build - shippingCost);
 
   return (

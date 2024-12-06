@@ -31,32 +31,19 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
       <p>{message.description}</p>
       <p>Here are your final stats:</p>
       <div className="stats-grid">
-        <div><strong>Money:</strong> 💰 ${formatMoney(player.final_money)}</div>
-        <div><strong>Tech Level:</strong> 🖥️ {player.final_tech_level}</div>
-        <div><strong>Orders:</strong> 📦 {player.final_orders_shipped}</div>
-        <div><strong>Reputation:</strong> {getReputationEmoji(player.final_reputation)} {player.final_reputation}</div>
+        <div>💰 ${formatMoney(player.final_money)}</div>
+        <div>🎓 Skill Points:{player.points_spent}</div>
+        <div>📦 Shipped: {player.final_orders_shipped}</div>
+        <div>{getReputationEmoji(player.final_reputation)} Reputation: {player.final_reputation}</div>
       </div>
       <h2>Acquired Technologies:</h2>
-      <div className="tech-table-container">
+      <div className="tech-grid-container">
         {gameInfo.acquired_technologies ? (
-          <table className="tech-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Cost</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gameInfo.acquired_technologies.map((tech, index) => (
-                <tr key={index}>
-                  <td>{tech.name}</td>
-                  <td>${formatMoney(tech.cost)}</td>
-                  <td>{tech.description}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          gameInfo.acquired_technologies.map((tech, index) => (
+            <div key={index} className="end-game-tech-tree-emoji" title={tech.name}>
+              {tech.emoji}
+            </div>
+          ))
         ) : (
           <p>No technologies acquired.</p>
         )}

@@ -1,0 +1,107 @@
+.technology-tree-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.tech-tree-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 225px;
+  border: 1px solid var(--default--border-color--10);
+  border-radius: 4px;
+  height: 240px;
+  max-width: 240px;
+  background-color: var(--default--background-color-22);
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  font-size: 12px;
+}
+
+.tech-tree-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tech-tree-emoji {
+  font-size: 24px;
+  background-color: #f0f0f0; /* Light grey background */
+  border-radius: 4px; /* Rounded corners */
+  padding: 2px 4px; /* Padding for better appearance */
+}
+
+.tech-tree-cost {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.tech-tree-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.tech-tree-description {
+  margin: 10px 0;
+}
+
+.tech-tree-effect {
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.tech-tree-purchase-button {
+  background: #ffffff; 
+  color: #297768;
+  border: 1px solid #297768;
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background 0.3s ease, transform 0.1s ease-in-out; /* Add background transition */
+  position: absolute;
+  bottom: 0; /* Stretch to the bottom */
+  left: 0; /* Stretch to the left */
+  right: 0; /* Stretch to the right */
+  width: calc(100% - 20px); /* Full width */
+  margin: 10px;
+}
+
+.tech-tree-purchase-button:hover {
+  background: #dbf2ee; /* Light green background on hover */
+}
+
+.tech-tree-purchase-button:active {
+  transform: scale(0.95);
+}
+
+.technology-tree-drawer {
+  /* Add any additional styles for the drawer if needed */
+}
+
+.technology-tree-drawer h2 {
+  margin-left: 20px;
+}
+
+@media (max-width: 600px) {
+  .tech-tree-card {
+    flex: 1 1 150px;
+    max-width: 150px;
+    height: 180px;
+  }
+
+  .tech-tree-title {
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+
+  .technology-tree-drawer h2 {
+    margin-top: 4px;
+    margin-left: 20px;
+    font-size: 16px;
+  }
+}

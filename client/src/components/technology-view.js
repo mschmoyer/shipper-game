@@ -3,7 +3,7 @@ import { purchaseTechnology } from '../api';
 import Drawer from './reusable/drawer';
 import './technology-view.css';
 
-const TechnologyView = ({ availableTechnologies, player, isOpen, onClose }) => {
+const TechnologyView = ({ gameInfo, isOpen, onClose }) => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [newsMessage, setNewsMessage] = useState('');
 
@@ -22,6 +22,9 @@ const TechnologyView = ({ availableTechnologies, player, isOpen, onClose }) => {
       setTimeout(() => setNewsMessage(''), 7000);
     }
   };
+
+  const player = gameInfo.player;
+  const availableTechnologies = gameInfo.available_technologies;
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Available Technologies" className="technology-drawer-container">

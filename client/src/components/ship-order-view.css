@@ -151,3 +151,22 @@
   text-decoration: none;
   cursor: pointer;
 }
+
+.ship-order-progress-bar-container {
+  width: calc(100% - 340px);
+  margin-bottom: 0px;
+}
+
+@media (max-width: 600px) {
+  .ship-order-container {
+    flex-direction: column;
+  }
+
+  .ship-order-progress-bar-container {
+    width: 100%;
+  }
+
+  .product-info {
+    margin-left: 0;
+  }
+}

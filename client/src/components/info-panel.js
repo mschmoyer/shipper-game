@@ -25,6 +25,7 @@ const formatTimeRemaining = (timeRemaining) => {
 };
 
 const isMobileMode = window.innerWidth <= 600;
+console.log('isMobileMode:', isMobileMode);
 
 const InfoPanel = ({ gameInfo }) => {
   const defaultPlayer = {

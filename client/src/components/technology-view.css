@@ -143,10 +143,6 @@
   text-decoration: underline;
 }
 
-.ship-order-progress-bar-container {
-  width: calc(100% - 340px);
-}
-
 @media (max-width: 600px) {
   .technology-drawer-container {
     height: 100%;
@@ -164,9 +160,5 @@
   .tech-card:nth-child(3) {
     --rotate-angle: 0; /* Tilt right */
     top: 0px;
-  }
-
-  .ship-order-progress-bar-container {
-    width: calc(100% - 20px);
   }
 }

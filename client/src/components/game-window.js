@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import './game-window.css';
+
 import TechnologyView from './technology-view';
+import TechnologyTree from './technology-tree';
+
 import ShipOrderView from './ship-order-view';
 import BuildProductView from './build-product-view';
 import SkillsView from './skills-view'; // Import the new SkillsView component
@@ -34,9 +37,8 @@ const GameWindow = ({ gameInfo }) => {
           )}
         </button>
       </div>
-      <TechnologyView
-        availableTechnologies={gameInfo.available_technologies}
-        player={gameInfo.player}
+      <TechnologyTree
+        gameInfo={gameInfo}
         isOpen={isTechViewVisible}
         onClose={() => setIsTechViewVisible(false)}
       />

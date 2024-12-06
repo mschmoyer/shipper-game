@@ -74,7 +74,7 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, existing
     new_orders_to_ship = 0;
   }
 
-  console.log('GenerateOrders - OrdersToGenerate:', orders_to_generate, 'OrdersToShip:', new_orders_to_ship, 'ExistingOrders:', existing_order_count);
+  // console.log('GenerateOrders - OrdersToGenerate:', orders_to_generate, 'OrdersToShip:', new_orders_to_ship, 'ExistingOrders:', existing_order_count);
 
   let ordersShipped = 0;
   if(new_orders_to_ship > 0) {
@@ -95,7 +95,7 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, existing
   }
 
   if( orders_to_generate > 0 || new_orders_to_ship > 0) {
-    console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${existing_order_count}`);
+    // console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${existing_order_count}`);
   }
   return ordersShipped;
 }
@@ -113,7 +113,8 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
   let totalOrdersShipped = 0;
   let available_stock = inventory[0].on_hand;
   let total_stock_to_deduct = 0;
-  const shippingData = await calculateShippingAndBuyLabel(player.id, 100);
+
+  const hasBundleTech = await playerHasTechnology(player.id, 'bundles');
 
   // loop through new_orders_to_ship and synthesize the orders
   for (let i = 0; i < new_orders_to_ship; i++) {
@@ -123,9 +124,11 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       totalOrdersShipped += player.products_per_order;
       const shippingCostPerMile = 0.05; // Cost per mile
       const distance = calculateDistance();
-      const revenue = (shippingData.sales_price - shippingData.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
+
+      const sales_price = product.sales_price * (hasBundleTech ? hasBundleTech : 1);
+      const revenue = (sales_price - product.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
       if(i == 0) {
-        console.log(`_synthesizeShippedOrders - Distance: ${distance}, Revenue: ${revenue}, SalesPrice: ${shippingData.sales_price}, CostToBuild: ${shippingData.cost_to_build}`);
+        console.log(`_synthesizeShippedOrders - Distance: ${distance}, Revenue: ${revenue}, SalesPrice: ${product.sales_price}`);
       }
       totalRevenue += revenue;
     } else {
@@ -133,16 +136,21 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
     }
   }
   totalRevenue = Math.round(totalRevenue);
-  if(totalOrdersShipped >= 0) {
+  // console.log(`totalRevenue: ${totalRevenue}, totalOrdersShipped: ${totalOrdersShipped}, total_stock_to_deduct: ${total_stock_to_deduct}`);
+  if(totalOrdersShipped > 0) {
     // update player orders_shipped and total_money_earned and money 
     const playerRow = await dbRun(
       `UPDATE player 
-        SET orders_shipped = orders_shipped + $1, total_money_earned = total_money_earned + $2, money = money + $2 
+        SET 
+          orders_shipped = orders_shipped + $1, 
+          total_money_earned = total_money_earned + $2, 
+          money = money + $2 
         WHERE id = $3
         RETURNING orders_shipped, total_money_earned, money`,
-      [totalOrdersShipped, Math.round(totalRevenue), player.id],
+      [totalOrdersShipped, totalRevenue, player.id],
       'Failed to update player orders_shipped, total_money_earned, and money'
     );
+    // console.log(playerRow[0]);
 
     // update inventory counts
     const invRow = await dbRun(
@@ -162,6 +170,9 @@ const _GenerateOrder = async (playerId, state = OrderStates.AwaitingShipment) =>
   const distance = calculateDistance();
 
   const due_by_time_seconds = BASE_ORDER_DUE_SECONDS;
+
+  // log eerything important in one line
+  console.log(`_GenerateOrder - PlayerId: ${playerId}, Distance: ${distance}, DueByTimeSeconds: ${due_by_time_seconds}, State: ${state}`);
 
   const order = await dbGet(
     `INSERT INTO orders (player_id, due_by_time, state, distance, product_quantity) 
@@ -226,6 +237,7 @@ const shipOrder = async (playerId) => {
 
   activeOrder = await getActiveOrder(playerId);
 
+  console.log('ShipOrder: deducting money from player');
   await dbRun(
     'UPDATE player SET money = money - $1, is_shipping = true, progress = 0 WHERE id = $2',
     [shippingData.total_cost, playerId],
@@ -237,7 +249,6 @@ const shipOrder = async (playerId) => {
     total_duration,
     shipping_steps,
     shipping_cost: shippingData.shipping_cost,
-    sales_price: shippingData.sales_price,
     order: activeOrder
   };
 };
@@ -303,12 +314,12 @@ const calculateShippingAndBuyLabel = async (playerId, distance) => {
 
   const discountedShippingModifier = await playerHasTechnology(playerId, 'discounted_shipping_rates');
   if (discountedShippingModifier) {
-    shipping_cost *= discountedShippingModifier;
+    shipping_cost *= (1 - discountedShippingModifier);
   }
 
   const total_cost = Math.round(shipping_cost + product.cost_to_build);
 
-  const data = { shipping_cost, sales_price: product.sales_price, cost_to_build: product.cost_to_build, total_cost };
+  const data = { shipping_cost, total_cost };
   return data;
 };
 
