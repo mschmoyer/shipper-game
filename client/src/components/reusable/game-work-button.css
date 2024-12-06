@@ -8,7 +8,6 @@
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s, transform 0.1s;
   appearance: button;
   border: solid transparent;
   border-radius: 8px;
@@ -20,7 +19,6 @@
   line-height: 20px;
   padding: 13px 16px;
   text-align: center;
-  touch-action: manipulation;
   vertical-align: middle;
   width: 120px;
 }
@@ -44,11 +42,6 @@
   user-select: auto;
 }
 
-.game-work-button:hover:not(:disabled) {
-  filter: brightness(1.1);
-  -webkit-filter: brightness(1.1);
-}
-
 .game-work-button:hover {
   background: #0b5a34;
 }
@@ -60,7 +53,10 @@
 
 .game-work-button:active {
   border-width: 4px 0 0;
-  background: none;
+  background: #0a5230; /* Darken the background color */
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2); /* Add inset shadow */
+  padding-top: 14px; /* Reduce top padding */
+  padding-bottom: 12px; /* Reduce bottom padding */
 }
 
 .game-work-button.auto-ship {

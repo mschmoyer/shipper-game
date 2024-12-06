@@ -44,7 +44,7 @@
     "tech_level_required": 1,
     "cost": 1000,
     "tech_code": "discounted_shipping_rates",
-    "modifier_value": 0.3,
+    "modifier_value": 0.5,
     "game_effect": "Decreases shipping costs by 30%.",
     "shipstation_kb_link": "https://www.shipstation.com/discounted-rates/",
     "acquirable": true,

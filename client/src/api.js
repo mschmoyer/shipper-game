@@ -96,10 +96,6 @@ export const upgradeSkill = (skill) => {
   });
 };
 
-export const fetchAdminStats = () => {
-  return apiCall(`${baseUrl}/admin-stats`);
-};
-
 export const toggleBuildingAutomation = () => {
   return apiCall(`${baseUrl}/toggle-building-automation`, {
     method: 'POST',

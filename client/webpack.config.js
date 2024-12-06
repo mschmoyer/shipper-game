@@ -4,7 +4,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   entry: {
     main: './src/index.js',
-    admin: './src/admin.js' // Add this line
   },
   output: {
     filename: '[name].bundle.js',
@@ -38,11 +37,6 @@ module.exports = {
       template: './src/index.html',
       chunks: ['main'],
       filename: 'index.html',
-    }),
-    new HtmlWebpackPlugin({
-      template: './src/admin.html', // Update this line
-      chunks: ['admin'],
-      filename: 'admin.html',
     }),
   ],
   devServer: {

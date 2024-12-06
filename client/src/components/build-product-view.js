@@ -27,7 +27,7 @@ const BuildProductView = ({
   };
 
   const handleBuildProduct = useCallback(async () => {
-    if (isRetrying || gameInfo.product.is_building) {
+    if (!gameInfo.game_active || isRetrying || gameInfo.product.is_building) {
       return;
     }
     gameInfo.product.is_building = true;
@@ -64,9 +64,6 @@ const BuildProductView = ({
       if (result.success) {
         setIsAutoBuildEnabled(result.building_automation_enabled);
       }
-      return;
-    }
-    if (isRetrying || gameInfo.product.is_building) {
       return;
     }
     handleBuildProduct();

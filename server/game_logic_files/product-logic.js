@@ -28,11 +28,7 @@ const productTick = async (player, product, inventory, elapsed_time) => {
   );
 
   for (const product of activeProducts) {
-    const elapsedTime = product.elapsed_time;
-
-    if (elapsedTime >= product.duration || product.start_time === null) {
-      totalProductsBuilt += await ProductCompleted(product.id, player.id);
-    }
+    await CheckProductState(product, player.id);
   }
 
   if (totalProductsBuilt > 0) {
@@ -41,6 +37,18 @@ const productTick = async (player, product, inventory, elapsed_time) => {
   
   return totalProductsBuilt;
 };
+
+const CheckProductState = async (product, playerId) => {
+  if (!product) {
+    return 0;
+  }
+  let totalProductsBuilt = 0;
+  const elapsedTime = product.elapsed_time;
+  if (elapsedTime >= product.duration || product.start_time === null) {
+    totalProductsBuilt += await ProductCompleted(product.id, playerId);
+  }
+  return totalProductsBuilt;
+}
 
 const _synthesizeBuiltProducts = async (player, product, inventory, products_to_build) => {
   if(products_to_build <= 0) {
@@ -53,9 +61,6 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
 
   // loop for each product to build. if there is enough money and remaining stock, incremeent the products_built counter
   for (let i = 0; i < products_to_build; i++) {
-    if(i === 0) {
-      console.log('_synthesizeBuiltProducts::for - player.money:', money);
-    }
     const cost_to_build = product.cost_to_build * player.products_per_build;
 
     // NOTE: i'm letting people go negative...
@@ -80,7 +85,7 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
     );
   }
 
-  console.log('_synthesizeBuiltProducts - productsToBuild:', products_to_build, 'productsBuilt:', totalProducts, 'costed:', totalCost);
+  // console.log('_synthesizeBuiltProducts - productsToBuild:', products_to_build, 'productsBuilt:', totalProducts, 'costed:', totalCost);
   return totalProducts;
 }
 
@@ -188,17 +193,21 @@ const ProductCompleted = async (purchaseOrderId, playerId) => {
   return purchaseOrder.quantity;
 };
 
-const startProductBuild = async (playerId) => {
-  let activeOrder = await dbGet(
-    `SELECT * FROM purchase_orders 
-     WHERE player_id = $1 
-     AND active = true`,
+const getActivePurchaseOrder = async (playerId) => {
+  return await dbGet(
+    'SELECT * FROM purchase_orders WHERE player_id = $1 AND active = true',
     [playerId],
-    'Failed to check active purchase orders'
+    'Failed to retrieve active purchase order'
   );
+}
 
-  if (activeOrder) {
-    console.log('An active purchase order is still in progress');
+const startProductBuild = async (playerId) => {
+  
+  let activeOrder = await getActivePurchaseOrder(playerId);
+
+  const builtOrders = await CheckProductState(activeOrder, playerId);
+
+  if (activeOrder && builtOrders === 0) {
     return { error: 'An active purchase order is still in progress' };
   }
 
@@ -223,9 +232,6 @@ const startProductBuild = async (playerId) => {
   // }
 
   const totalBuildCost = activeProduct.cost_to_build * quantity;
-  const building_speed = Math.max(player.building_speed, 100);
-  let product_build_ms = (player.building_speed < 1000 ? building_speed : (player.building_duration));
-
   // Deduct the money. 
   await dbRun(
     'UPDATE player SET money = money - $1 WHERE id = $2',
@@ -241,6 +247,8 @@ const startProductBuild = async (playerId) => {
     'Failed to start product build'
   );
 
+  const building_speed = Math.max(player.building_speed, 100);
+  let product_build_ms = (player.building_speed < 100 ? building_speed : (player.building_duration));
   if (product_build_ms > 0 && newPurchaseOrder && newPurchaseOrder.id) {
     await ProductCompleted(newPurchaseOrder.id, playerId);
   }

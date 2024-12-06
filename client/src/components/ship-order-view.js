@@ -25,6 +25,8 @@ const ShipOrderView = ({
     gameInfo.progress = 0;
     setShippingError('');
 
+    console.log('🚚 Shipping order...');
+
     setIsRetrying(false);
     const result = await startShipping()
       .then(data => {
@@ -104,7 +106,7 @@ const ShipOrderView = ({
           <h3>{gameInfo.active_order ? `Order #: ${gameInfo.active_order.id}` : 'Idle'}</h3>
           <div className="cost-info">
             <div className="shipping-info">
-              <p>📦 Quantity: {gameInfo.player.products_per_order}</p>
+              <p>📦 Order Items: {gameInfo.player.products_per_order}</p>
             </div>
             <div className="profit-info">
               <p>📏 Distance: {gameInfo.active_order ? gameInfo.active_order.distance : '--'} miles</p>

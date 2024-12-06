@@ -125,12 +125,14 @@ const increaseShippingSpeed = async (player) => {
   // console.log('Increasing shipping speed for player:', playerId);
 
   // if player's current shipping_speed is 1, do not decrease it further, instead increase the orders_per_ship
-  if(player.shipping_speed === 1) {
-    const query = `UPDATE player SET orders_per_ship = GREATEST(orders_per_ship + 1, 1) WHERE id = $1 RETURNING orders_per_ship`;
+  if(player.shipping_speed <= 10) {
+    const query = `UPDATE player SET shipping_speed=9, orders_per_ship = orders_per_ship + 1 WHERE id = $1 RETURNING orders_per_ship`;
     await dbRun(query, [player.id], 'Failed to increase products per order');
+    console.log('Increased products per order');
   } else {
-    const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 1) WHERE id = $2 RETURNING shipping_speed`;
+    const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 100) WHERE id = $2 RETURNING shipping_speed`;
     await dbRun(query, [SPEED_BOOST_FACTOR, player.id], 'Failed to increase shipping speed');
+    console.log('Increased shipping speed');
   }
   return;
 };
@@ -139,11 +141,11 @@ const increaseBuildingSpeed = async (player) => {
   // console.log('Increasing building speed for player:', playerId);
 
   // if player's current building_speed is 1, do not decrease it further, instead increase the products_per_build
-  if(player.building_speed === 1) {
-    const query = `UPDATE player SET products_per_build = GREATEST(products_per_build + 1, 1) WHERE id = $1 RETURNING products_per_build`;
+  if(player.building_speed <= 10) {
+    const query = `UPDATE player SET building_speed=9, products_per_build = products_per_build + 1 WHERE id = $1 RETURNING products_per_build`;
     await dbRun(query, [player.id], 'Failed to increase products per build');
   } else {
-    const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 1) WHERE id = $2 returning building_speed`;
+    const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 100) WHERE id = $2 returning building_speed`;
     await dbRun(query, [SPEED_BOOST_FACTOR, player.id], 'Failed to increase building speed');
   }
   return;
@@ -153,11 +155,11 @@ const increaseOrderSpawnRate = async (player) => {
   // console.log('Increasing order spawn rate for player:', playerId);
 
   // if player's current order_spawn_milliseconds is 1, do not decrease it further, instead increase the order_spawn_count
-  if(player.order_spawn_milliseconds === 1) {
-    const query = `UPDATE player SET order_spawn_count = GREATEST(order_spawn_count + 1, 1) WHERE id = $1 RETURNING order_spawn_count`;
+  if(player.order_spawn_milliseconds <= 100) {
+    const query = `UPDATE player SET order_spawn_milliseconds=99, order_spawn_count = order_spawn_count + 1 WHERE id = $1 RETURNING order_spawn_count`;
     await dbRun(query, [player.id], 'Failed to increase order spawn points');
   } else {
-    const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 1) WHERE id = $2 returning order_spawn_milliseconds`;
+    const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 100) WHERE id = $2 returning order_spawn_milliseconds`;
     await dbRun(query, [SPEED_BOOST_FACTOR * 10, player.id], 'Failed to increase order spawn rate');
   }
 }
@@ -187,7 +189,10 @@ const gainXP = async (player, new_xp) => {
 
 const calculateXPRequirement = (skillPoints) => {
   const BaseXP = 100; // Base XP value, adjust as needed
-  return Math.round(BaseXP * Math.pow(skillPoints, 1.5));
+  // return Math.round(BaseXP * Math.pow(skillPoints, 1.2));
+  
+  // baseXp * 1.2 ^ (skillPoints - 1)
+  return Math.min(5000000, Math.round(BASE_XP_FOR_SKILL_POINT * Math.pow(1.1, skillPoints)));
 };
 
 const upgradeSkill = async (playerId, skill) => {

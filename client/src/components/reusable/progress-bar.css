@@ -5,7 +5,6 @@
   background: linear-gradient(180deg, #696969, #afafaf, #696969);
   border-radius: 5px;
   border: 1px solid #000000;
-  width: calc(100% - 140px);
 }
 
 .progress-bar-container.error {
@@ -20,7 +19,7 @@
 }
 
 .progress-bar.smooth {
-  transition: width 1s linear;
+  transition: width linear; /* Remove fixed duration */
 }
 
 .progress-bar.automated {
