@@ -7,7 +7,7 @@ const GAME_DEBT_LIMIT = -1000000; // a player can go 1 million in debt before fa
 const GAME_SHIPPING_COST_PER_MILE = 0.7; // $0-$700
 
 const GAME_MIN_SHIPPING_DISTANCE = 5;
-const GAME_MAX_SHIPPING_DISTANCE = 450;
+const GAME_MAX_SHIPPING_DISTANCE = 550;
 
 const SPEED_BOOST_FACTOR = 200;
 

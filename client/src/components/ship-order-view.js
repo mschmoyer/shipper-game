@@ -33,6 +33,8 @@ const ShipOrderView = ({
         if (data.message === 'Shipping started successfully.') {
           console.log('🚀 Shipping initiated! Your products are on their way to greatness!');
           setShippingCost(data.shipping_cost);
+
+          // Mini-game logic
           const hasScanToVerifyTech = gameInfo.acquired_technologies && 
             gameInfo.acquired_technologies.some(tech => tech.tech_code === 'scan_to_verify');
           if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled) { // Check for scan_to_verify tech
@@ -45,7 +47,7 @@ const ShipOrderView = ({
           gameInfo.is_shipping = false;
           if (isAutoShipEnabled) {
             setIsRetrying(true);
-            setTimeout(handleShipOrder, 10000);
+            //setTimeout(handleShipOrder, 10000);
           }
         }
       })
@@ -55,27 +57,35 @@ const ShipOrderView = ({
       });
   }, [isRetrying, gameInfo, isAutoShipEnabled]);
 
-  // Check if the player has the hire_warehouse_worker tech
+  // Do updates when gameInfo arrives
   useEffect(() => {
     if (gameInfo) {
+      // Monitor if they have this tech
       const hasAutoShipTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_warehouse_worker');
       setIsAutoShipEnabled(hasAutoShipTech);
+
+      // // Do we have orders now? AutoShip? Fire back up!
+      // if (gameInfo.orders && gameInfo.orders.length > 0 && !gameInfo.active_order && isAutoShipEnabled) {
+      //   console.log('Starting new order automatically, autoShipEnabled:', isAutoShipEnabled);
+      //   handleShipOrder();
+      // }
     }
   }, [gameInfo]);
 
-  useEffect(() => {
-    if (!gameInfo.is_shipping && isAutoShipEnabled && !isRetrying) {
-      console.log('Starting new order automatically on mount, autoShipEnabled:', isAutoShipEnabled);
-      handleShipOrder();
-    }
-  }, [gameInfo.is_shipping, isAutoShipEnabled, isRetrying, handleShipOrder, isRetrying]);
+  // useEffect(() => {
+  //   // This should ensure autoShip is still working if user refreshes page. 
+  //   if (!gameInfo.active_order && isAutoShipEnabled && !isRetrying) {
+  //     console.log('Starting new order automatically on mount, autoShipEnabled:', isAutoShipEnabled);
+  //     handleShipOrder();
+  //   }
+  // }, [gameInfo.is_shipping, isAutoShipEnabled, isRetrying, handleShipOrder, isRetrying]);
 
   const getShippingStepName = () => {
     if (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps) {
       return gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name;
     }
-    return 'Waiting for an order...';
+    return 'Ship some orders!';
   };
 
   const getLabelText = () => {
@@ -85,9 +95,14 @@ const ShipOrderView = ({
     return getShippingStepName();
   };
 
+  const player = gameInfo.player;
+  const product = gameInfo.product;
   const firstItem = gameInfo.inventory[0];
 
-  const totalProfit = Math.round((gameInfo.product.sales_price * gameInfo.player.products_per_order) - gameInfo.product.cost_to_build - shippingCost);
+  const totalProfit = Math.round((product.sales_price * player.products_per_order) - product.cost_to_build - shippingCost);
+
+  const progPercent = (player.shipping_duration / 1000) * 100;
+  const progress = (!gameInfo.is_shipping && product.shipping_duration < 1000 ? progPercent : gameInfo.progress);
 
   return (
     <div className="ship-order-container">
@@ -107,7 +122,8 @@ const ShipOrderView = ({
           <h3>{gameInfo.active_order ? `Order #: ${gameInfo.active_order.id}` : 'Idle'}</h3>
           <div className="cost-info">
             <div className="shipping-info">
-              <p>📦 Order Items: {gameInfo.player.products_per_order}</p>
+              <p>📦 Order Items: {player.products_per_order}</p>
+              <p>📊 Batch Size: {player.orders_per_ship}</p>
             </div>
             <div className="profit-info">
               <p>📏 Distance: {gameInfo.active_order ? gameInfo.active_order.distance : '--'} miles</p>
@@ -115,7 +131,7 @@ const ShipOrderView = ({
             </div>
             {firstItem && (
               <div className="inventory-info">
-                <p>💰 Sale Price: ${gameInfo.product.sales_price}</p>
+                <p>💰 Sale Price: ${product.sales_price}</p>
                 <p>💵 Profit: ${totalProfit}</p>
               </div>
             )}
@@ -127,8 +143,8 @@ const ShipOrderView = ({
           isError={!!shippingError}
           isActive={gameInfo.is_shipping}
           labelText={getLabelText()}
-          progress={gameInfo.progress}
-          speed={gameInfo.player.shipping_speed}
+          progress={progress}
+          speed={player.shipping_speed}
           autoMode={isAutoShipEnabled}
         />
       </div>

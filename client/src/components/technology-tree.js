@@ -11,6 +11,10 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
   const availableTechnologies = technologies.filter(tech => tech.acquired_id === null);
   const activeTechnologies = technologies.filter(tech => tech.acquired_id !== null);
 
+  const formatCost = (cost) => {
+    return cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
   const handlePurchase = async (tech) => {
     try {
       const result = await purchaseTechnology(tech.id);
@@ -35,7 +39,7 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
           <div key={tech.id} className="tech-tree-card">
             <div className="tech-tree-card-header">
               <span className="tech-tree-emoji">{tech.emoji}</span>
-              <span className="tech-tree-cost">${tech.cost}</span>
+              <span className="tech-tree-cost">${formatCost(tech.cost)}</span>
             </div>
             <div className="tech-tree-title">
               <a href={tech.shipstation_kb_link} target="_blank" rel="noopener noreferrer">{tech.name}</a>
@@ -52,7 +56,7 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
           <div key={tech.id} className="tech-tree-card">
             <div className="tech-tree-card-header">
               <span className="tech-tree-emoji">{tech.emoji}</span>
-              <span className="tech-tree-cost">${tech.cost}</span>
+              <span className="tech-tree-cost">${formatCost(tech.cost)}</span>
             </div>
             <div className="tech-tree-title">
               <a href={tech.shipstation_kb_link} target="_blank" rel="noopener noreferrer">{tech.name}</a>

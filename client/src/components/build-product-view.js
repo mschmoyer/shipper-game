@@ -18,6 +18,8 @@ const BuildProductView = ({
   const [inventoryProgress, setInventoryProgress] = useState(0);
   const [showMinigame, setShowMinigame] = useState(false);
   const [showOnHandCount, setShowOnHandCount] = useState(true);
+  const [hasPurchaseOrderTech, setHasPurchaseOrderTech] = useState(false);
+
 
   const ON_HAND_VISIBLE_DURATION = 15000;
   const MINIGAME_SPAWN_CHANCE = 0.02; // Update spawn chance to 2%
@@ -39,7 +41,7 @@ const BuildProductView = ({
       .then(data => {
         if (data.message === 'Product build started successfully.') {
           console.log('🛠️ Building commenced! Your products are being crafted with love and code!');
-          if (Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled) { // 2% chance to show the minigame
+          if (Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled && !hasPurchaseOrderTech) { // 2% chance to show the minigame
             setShowMinigame(true);
           }
         } else {
@@ -48,7 +50,7 @@ const BuildProductView = ({
           gameInfo.product.is_building = false;
           if (isAutoBuildEnabled) {
             setIsRetrying(true);
-            setTimeout(handleBuildProduct, 10000); // Add a one-second delay before retrying
+            //setTimeout(handleBuildProduct, 10000); // Add a one-second delay before retrying
           }
         }
       })
@@ -62,6 +64,8 @@ const BuildProductView = ({
     if (isAutoBuildEnabled) {
       const result = await toggleBuildingAutomation();
       if (result.success) {
+        // TODO: this won't work
+        gameInfo.product.is_building = true;
         setIsAutoBuildEnabled(result.building_automation_enabled);
       }
       return;
@@ -99,14 +103,18 @@ const BuildProductView = ({
       const hasInventoryTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'inventory_management');
       setHasInventoryTech(hasInventoryTech);
+
+      const hasPurchaseOrderTech = gameInfo.acquired_technologies &&
+        gameInfo.acquired_technologies.some(tech => tech.tech_code === 'purchase_orders');
+      setHasPurchaseOrderTech(hasPurchaseOrderTech);
     }
   }, [gameInfo]);
 
-  useEffect(() => {
-    if (!gameInfo.product.is_building && isAutoBuildEnabled && !isRetrying) {
-      handleBuildProduct();
-    }
-  }, [gameInfo.product.is_building, isAutoBuildEnabled, isRetrying, handleBuildProduct]);
+  // useEffect(() => {
+  //   if (!gameInfo.product.is_building && isAutoBuildEnabled && !isRetrying) {
+  //     handleBuildProduct();
+  //   }
+  // }, [gameInfo.product.is_building, isAutoBuildEnabled, isRetrying, handleBuildProduct]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,6 +139,13 @@ const BuildProductView = ({
   const product = gameInfo.product;
   const player = gameInfo.player;
   const inventoryAuditProgressBarLabelText = `Manually auditing inventory for ${product.name}...`;
+
+  const progPercent = (product.building_duration / 1000) * 100;
+  const progress = (!product.is_building && product.building_duration < 1000 ? progPercent : product.progress);
+
+  const labelText = buildError || 
+    (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name}` 
+    : `Build some products!`);
 
   return (
     <div className="build-product-container">
@@ -213,8 +228,8 @@ const BuildProductView = ({
         <ProgressBar
           isError={!!buildError}
           isActive={product.is_building}
-          labelText={buildError || (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name} for ${product.name}` : `Waiting for a build...`)}
-          progress={product.progress}
+          labelText={labelText}
+          progress={progress}
           speed={player.building_speed}
           autoMode={isAutoBuildEnabled}
         />

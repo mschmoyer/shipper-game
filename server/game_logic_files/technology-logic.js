@@ -90,18 +90,16 @@ const purchaseTechnology = async (playerId, techId) => {
     return { success: false, message: 'Not enough money to purchase technology.' };
   }
   
-  if (technology.acquirable) {
-    await dbRun(
-      `INSERT INTO acquired_technologies 
-       (player_id, tech_id, acquired_date, acquired_cost) 
-       VALUES 
-       ($1, $2, NOW(), $3)`, // Corrected parameter index
-      [playerId, techId, technology.cost], // Corrected parameter list
-      'Failed to purchase technology'
-    );
-  } else {
-    await performOneTimeTechnologyEffect(playerId, technology.tech_code);
-  }
+  await dbRun(
+    `INSERT INTO acquired_technologies 
+      (player_id, tech_id, acquired_date, acquired_cost) 
+      VALUES 
+      ($1, $2, NOW(), $3)`, // Corrected parameter index
+    [playerId, techId, technology.cost], // Corrected parameter list
+    'Failed to purchase technology'
+  );
+  await performOneTimeTechnologyEffect(playerId, technology.tech_code);
+  
   await dbRun(
     'UPDATE player SET money = money - $1, tech_level = tech_level + 1 WHERE id = $2',
     [technology.cost, playerId],
@@ -123,10 +121,17 @@ const performOneTimeTechnologyEffect = async (playerId, techCode) => {
     [techCode],
     'Failed to retrieve technology info'
   );
+  console.log(`Performing effect for technology: ${techCode}`);
 
   switch (techCode) {
-    case 'example_tech_code_2':
-      console.log(`Performing effect for technology: ${techCode}`);
+    case 'exclusive_logistics':
+      // apply the exclusive_logistics_penalty_applied to all other active players
+      await dbRun(
+        `UPDATE player SET exclusive_logistics_penalty_applied = $1 WHERE id != $2 and active=true`,
+        [true, playerId],
+        'Failed to apply exclusive logistics penalty'
+      );
+
       break;
     // Add more cases as needed
     default:

@@ -15,7 +15,7 @@ const OrderTick = async (player, product, inventory, elapsed_time) => {
 
   let ordersShipped = await GenerateOrders(player, product, inventory, elapsed_time, orders.length);
   for (const order of orders) {
-    await CheckOrderState(order, player.id);
+    await CheckOrderState(order, player);
   }
 
   const lastOrder = await dbGet(
@@ -38,18 +38,26 @@ const OrderTick = async (player, product, inventory, elapsed_time) => {
     await gainXP(player, ordersShipped * XP_GAINED_PER_OPERATION);
   }
 
+  // if automation is enabled and we're not shipping an order, attempt to ship one
+  const hasHireWarehouseWorker = await playerHasTechnology(player.id, 'hire_warehouse_worker');
+  // console.log('OrderTick - hasHireWarehouseWorker:', hasHireWarehouseWorker, 'ordersShipped:', ordersShipped);
+  if (hasHireWarehouseWorker && ordersShipped > 0) {
+    console.log('OrderTick - Player is not shipping and automated, so attempting to ship order');
+    await shipOrder(player);
+  }
+
   return { orders, secondsUntilNextOrder, ordersShipped };
 }
 
-const CheckOrderState = async (order, playerId) => {
+const CheckOrderState = async (order, player) => {
   if (!order) {
     return 0;
   }
   let ordersShipped = 0;
   if (order.state === OrderStates.InProgress && order.elapsed_time >= order.duration) {
-    ordersShipped += await OrderCompleted(order.id, playerId);
+    ordersShipped += await OrderCompleted(order.id, player);
   } else if (order.state !== OrderStates.InProgress && order.delta_to_due_date <= 0) {
-    await OrderCanceled(order.id, playerId);
+    await OrderCanceled(order.id);
   }
   return ordersShipped;
 }
@@ -100,8 +108,13 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, existing
   return ordersShipped;
 }
 
-const calculateDistance = () => {
-  return Math.round(Math.random() * (GAME_MAX_SHIPPING_DISTANCE - GAME_MIN_SHIPPING_DISTANCE) + GAME_MIN_SHIPPING_DISTANCE);
+const calculateDistance = async (playerId) => {
+  const hasMultiWarehouseTech = await playerHasTechnology(playerId, 'multi_warehouse');
+  let shippingDistance = Math.round(Math.random() * (GAME_MAX_SHIPPING_DISTANCE - GAME_MIN_SHIPPING_DISTANCE) + GAME_MIN_SHIPPING_DISTANCE);
+  if (hasMultiWarehouseTech) {
+    shippingDistance = Math.round(shippingDistance * hasMultiWarehouseTech);
+  }
+  return shippingDistance;
 }
 
 const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inventory) => {
@@ -123,7 +136,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       total_stock_to_deduct += player.products_per_order;
       totalOrdersShipped += player.products_per_order;
       const shippingCostPerMile = 0.05; // Cost per mile
-      const distance = calculateDistance();
+      const distance = await calculateDistance();
 
       const sales_price = product.sales_price * (hasBundleTech ? hasBundleTech : 1);
       const revenue = (sales_price - product.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
@@ -167,12 +180,12 @@ const _GenerateOrder = async (playerId, state = OrderStates.AwaitingShipment) =>
   const player = await getPlayerInfo(playerId);
 
   // TODO: maybe shouldn't be random? 
-  const distance = calculateDistance();
+  const distance = await calculateDistance();
 
   const due_by_time_seconds = BASE_ORDER_DUE_SECONDS;
 
   // log eerything important in one line
-  console.log(`_GenerateOrder - PlayerId: ${playerId}, Distance: ${distance}, DueByTimeSeconds: ${due_by_time_seconds}, State: ${state}`);
+  // console.log(`_GenerateOrder - PlayerId: ${playerId}, Distance: ${distance}, DueByTimeSeconds: ${due_by_time_seconds}, State: ${state}`);
 
   const order = await dbGet(
     `INSERT INTO orders (player_id, due_by_time, state, distance, product_quantity) 
@@ -186,8 +199,8 @@ const _GenerateOrder = async (playerId, state = OrderStates.AwaitingShipment) =>
 };
 
 // The player has requested to ship an order
-const shipOrder = async (playerId) => {
-
+const shipOrder = async (player) => {
+  const playerId = player.id;
   let activeOrder = await getActiveOrder(playerId);
 
   const shippedOrders = await CheckOrderState(activeOrder, playerId);
@@ -216,8 +229,6 @@ const shipOrder = async (playerId) => {
 
   const inventory = await getInventoryInfo(playerId);
 
-  const player = await getPlayerInfo(playerId);
-
   // If the player has inventory management tech, prevent overselling / bad effetcts. 
   if (inventory[0].on_hand < player.products_per_order * player.orders_per_ship) {
     const hasInventoryManagementTech = await playerHasTechnology(playerId, 'inventory_management');
@@ -227,7 +238,7 @@ const shipOrder = async (playerId) => {
   }
 
   const { shipping_steps, total_duration } = await getShippingSteps(playerId);
-  const shippingData = await calculateShippingAndBuyLabel(playerId, activeOrder.distance);
+  const shippingData = await calculateShippingAndBuyLabel(player, activeOrder.distance);
 
   await dbRun(
     'UPDATE orders SET duration = $1, state = $2, start_time = NOW(), shipping_cost = $3, product_quantity = $4 WHERE id = $5',
@@ -301,8 +312,9 @@ const getActiveOrder = async (playerId) => {
   );
 };
 
-const calculateShippingAndBuyLabel = async (playerId, distance) => {
+const calculateShippingAndBuyLabel = async (player, distance) => {
 
+  const playerId = player.id;
   const product = await dbGet(
     'SELECT p.weight, p.cost_to_build, p.sales_price FROM products p JOIN player_products pp ON p.id = pp.product_id WHERE pp.player_id = $1',
     [playerId],
@@ -315,6 +327,10 @@ const calculateShippingAndBuyLabel = async (playerId, distance) => {
   const discountedShippingModifier = await playerHasTechnology(playerId, 'discounted_shipping_rates');
   if (discountedShippingModifier) {
     shipping_cost *= (1 - discountedShippingModifier);
+  }
+  //exclusive_logistics_penalty_applied
+  if (player.exclusive_logistics_penalty_applied) {
+    shipping_cost *= 1.5;
   }
 
   const total_cost = Math.round(shipping_cost + product.cost_to_build);
@@ -361,7 +377,8 @@ const getShippingSteps = async (playerId) => {
   return { shipping_steps, total_duration }; // Ensure return statement is always executed
 };
 
-const OrderCompleted = async (orderId, playerId) => {
+const OrderCompleted = async (orderId, player) => {
+  const playerId = player.id;
   const product = await getActiveProduct(playerId);
   const order = await getOrderById(orderId);
   const inventory = await getInventoryInfo(playerId);
@@ -369,11 +386,12 @@ const OrderCompleted = async (orderId, playerId) => {
   // log some useful info about this order in one line
   // console.log(`OrderCompleted - OrderId: ${orderId}, ProductId: ${product.id}, ProductQuantity: ${order.product_quantity}`);
 
-  let revenue = Math.round(product.sales_price) * order.product_quantity;
-  let orders_shipped = 1; 
+  let orders_shipped = player.orders_per_ship;
+  let revenue = Math.round(product.sales_price * order.product_quantity * player.orders_per_ship);
   let order_state = OrderStates.Shipped;
+  const productQuantity = order.product_quantity * player.orders_per_ship;
 
-  if (inventory[0].on_hand < order.product_quantity) {
+  if (inventory[0].on_hand < (productQuantity)) {
     // player did not have inventory to fulfill this order! PUNISH THEM!
     // console.log('OrderCompleted - Player did not have enough inventory to fulfill this order. OrderId:', orderId);
     revenue = 0;
@@ -385,7 +403,7 @@ const OrderCompleted = async (orderId, playerId) => {
     // Deduct stock from inventory
     await dbRun(
       'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 AND product_id = $3',
-      [order.product_quantity, playerId, product.id],
+      [productQuantity, playerId, product.id],
       'Failed to deduct stock from inventory'
     );
   }
@@ -409,7 +427,7 @@ const OrderCompleted = async (orderId, playerId) => {
   return 1;
 };
 
-const OrderCanceled = async (orderId, playerId) => {
+const OrderCanceled = async (orderId) => {
   // console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
   await dbRun(
     'UPDATE orders SET active=false, state = $1 WHERE id = $2',

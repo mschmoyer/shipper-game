@@ -33,6 +33,17 @@ const CreateNewPlayer = async (name, businessName) => {
   // const { assignRandomProductToPlayer } = require('./product-logic');
   // await assignRandomProductToPlayer(playerId);
   
+  // If player name is Schmo, give them a head start
+  if (name === 'Schmo') {
+    await addSkillPoints({ id: playerId }, 25);
+    // set money to 10000
+    await dbRun(
+      'UPDATE player SET money = 1000000 WHERE id = $1',
+      [playerId],
+      'Failed to update player money'
+    );
+  }
+
   return playerId;
 };
 
@@ -127,44 +138,47 @@ const getPlayerInfo = async (playerId) => {
 
 const increaseShippingSpeed = async (player) => {
   // console.log('Increasing shipping speed for player:', playerId);
-
+  const shippingBlazingSpeedFactor = 100;
   // if player's current shipping_speed is 1, do not decrease it further, instead increase the orders_per_ship
-  if(player.shipping_speed <= 10) {
-    const query = `UPDATE player SET shipping_speed=9, orders_per_ship = orders_per_ship + 1 WHERE id = $1 RETURNING orders_per_ship`;
-    await dbRun(query, [player.id], 'Failed to increase products per order');
+  if(player.shipping_speed <= shippingBlazingSpeedFactor) {
+    const query = `UPDATE player SET shipping_speed=$2, orders_per_ship = orders_per_ship + 1 WHERE id = $1 RETURNING orders_per_ship`;
+    await dbRun(query, [player.id, shippingBlazingSpeedFactor], 'Failed to increase products per order');
     console.log('Increased products per order');
   } else {
-    const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, 100) WHERE id = $2 RETURNING shipping_speed`;
-    await dbRun(query, [SPEED_BOOST_FACTOR, player.id], 'Failed to increase shipping speed');
+    const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, $3) WHERE id = $2 RETURNING shipping_speed`;
+    await dbRun(query, [SPEED_BOOST_FACTOR, player.id, shippingBlazingSpeedFactor], 'Failed to increase shipping speed');
     console.log('Increased shipping speed');
   }
   return;
 };
 
+
 const increaseBuildingSpeed = async (player) => {
   // console.log('Increasing building speed for player:', playerId);
+  const buildBlazingSpeedFactor = 100;
 
   // if player's current building_speed is 1, do not decrease it further, instead increase the products_per_build
-  if(player.building_speed <= 10) {
-    const query = `UPDATE player SET building_speed=9, products_per_build = products_per_build + 1 WHERE id = $1 RETURNING products_per_build`;
-    await dbRun(query, [player.id], 'Failed to increase products per build');
+  if(player.building_speed <= buildBlazingSpeedFactor) {
+    console.log('Increasing products per build');
+    const query = `UPDATE player SET building_speed=$2, products_per_build = products_per_build + 1 WHERE id = $1 RETURNING products_per_build`;
+    await dbRun(query, [player.id, buildBlazingSpeedFactor], 'Failed to increase products per build');
   } else {
-    const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, 100) WHERE id = $2 returning building_speed`;
-    await dbRun(query, [SPEED_BOOST_FACTOR, player.id], 'Failed to increase building speed');
+    const query = `UPDATE player SET building_speed = GREATEST(building_speed - $1, $3) WHERE id = $2 returning building_speed`;
+    await dbRun(query, [SPEED_BOOST_FACTOR, player.id, buildBlazingSpeedFactor], 'Failed to increase building speed');
   }
   return;
 };
 
 const increaseOrderSpawnRate = async (player) => {
   // console.log('Increasing order spawn rate for player:', playerId);
-
+  const orderSpawnBlazingSpeedFactor = 100;
   // if player's current order_spawn_milliseconds is 1, do not decrease it further, instead increase the order_spawn_count
-  if(player.order_spawn_milliseconds <= 100) {
-    const query = `UPDATE player SET order_spawn_milliseconds=99, order_spawn_count = order_spawn_count + 1 WHERE id = $1 RETURNING order_spawn_count`;
-    await dbRun(query, [player.id], 'Failed to increase order spawn points');
+  if(player.order_spawn_milliseconds <= orderSpawnBlazingSpeedFactor) {
+    const query = `UPDATE player SET order_spawn_milliseconds=$2, order_spawn_count = order_spawn_count + 1 WHERE id = $1 RETURNING order_spawn_count`;
+    await dbRun(query, [player.id, orderSpawnBlazingSpeedFactor], 'Failed to increase order spawn points');
   } else {
-    const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, 100) WHERE id = $2 returning order_spawn_milliseconds`;
-    await dbRun(query, [SPEED_BOOST_FACTOR * 10, player.id], 'Failed to increase order spawn rate');
+    const query = `UPDATE player SET order_spawn_milliseconds = GREATEST(order_spawn_milliseconds - $1, $3) WHERE id = $2 returning order_spawn_milliseconds`;
+    await dbRun(query, [SPEED_BOOST_FACTOR * 10, player.id, orderSpawnBlazingSpeedFactor], 'Failed to increase order spawn rate');
   }
 }
 
@@ -251,7 +265,6 @@ async function updateLastGameUpdate(playerId, last_game_update) {
 
 async function expirePlayer(player, reason = 'expired') {
   if(player.active === false) {
-    console.log(`Player ${player.id} is already expired`);
     return;
   }
 

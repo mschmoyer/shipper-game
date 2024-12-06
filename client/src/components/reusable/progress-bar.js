@@ -16,7 +16,7 @@ const ProgressBar = ({ isError, isActive, labelText, progress, speed, autoMode }
   const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
   const tooFastToSeeSpeed = 300;
-  const barWidth = autoMode || (speed < tooFastToSeeSpeed && isActive) ? 100 : isActive ? progress : 0;
+  const barWidth = (speed < tooFastToSeeSpeed && isActive) ? 100 : isActive ? progress : 0;
   const barModeClass = speed < tooFastToSeeSpeed && autoMode ? 'flash' : isActive ? 'smooth' : '';
   const automatedClass = autoMode ? 'automated' : '';
   return (

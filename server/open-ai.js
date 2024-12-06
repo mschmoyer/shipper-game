@@ -66,11 +66,16 @@ async function generateEndGameTextWithOpenAI(playerId) {
     return cache;
   }
 
+  const { getPlayerInfo } = require('./game_logic_files/player-logic');
+  const player = await getPlayerInfo(playerId);
+
+  if(player.orders_shipped === 0) {
+    return ['Alas, this business concept was abandoned before it could even set sail...'];
+  }
+
   // get acquired technologies for player and format the names into a comma separated list
   const acquiredTechnologies = await getAcquiredTechnologies(playerId);
   const acquiredTechNames = acquiredTechnologies.map(tech => tech.name).join(', ');
-  const { getPlayerInfo } = require('./game_logic_files/player-logic');
-  const player = await getPlayerInfo(playerId);
 
   let prompt = `Based on the following acquired technologies and player stats, craft an array of 4 concise and 
   insightful observations about the player's gameplay style and decision-making. Analyze their 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './game-window.css';
 
 import TechnologyView from './technology-view';
@@ -11,6 +11,12 @@ import SkillsView from './skills-view'; // Import the new SkillsView component
 const GameWindow = ({ gameInfo }) => {
   const [isTechViewVisible, setIsTechViewVisible] = useState(false);
   const [isSkillsViewVisible, setIsSkillsViewVisible] = useState(false); // Add state for skills view
+  const [affordableTechCount, setAffordableTechCount] = useState(0);
+
+  useEffect(() => {
+    const affordableCount = gameInfo.technology.filter(tech => tech.cost <= gameInfo.player.money && tech.acquired_id === null).length;
+    setAffordableTechCount(affordableCount);
+  }, [gameInfo]);
 
   const openTechView = () => {
     setIsTechViewVisible(true);
@@ -22,12 +28,20 @@ const GameWindow = ({ gameInfo }) => {
 
   return (
     <div className="game-window">
+
       <BuildProductView gameInfo={gameInfo} />
-      <ShipOrderView gameInfo={gameInfo} />
+
+      {gameInfo.player.products_built > 0 && (
+        <ShipOrderView gameInfo={gameInfo} />
+      )}
+
       <div className="thing-button-container">
         <button className="tech-button" onClick={openTechView}>
           🛠️
           <div className="tech-label">Technology</div>
+          {affordableTechCount > 0 && (
+            <div className="points-badge visible">{affordableTechCount}</div>
+          )}
         </button>
         <button className="tech-button" onClick={openSkillsView}> {/* Update onClick to openSkillsView */}
           🎓

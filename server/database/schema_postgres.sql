@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS player (
   tech_points INTEGER DEFAULT 0,
   tech_level INTEGER DEFAULT 1,
   orders_shipped INTEGER DEFAULT 0,
+  products_built INTEGER DEFAULT 0,
   total_money_earned INTEGER DEFAULT 0,  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   active BOOLEAN DEFAULT TRUE,
@@ -33,7 +34,8 @@ CREATE TABLE IF NOT EXISTS player (
   xp INTEGER DEFAULT 0,
   shipping_automation_enabled BOOLEAN DEFAULT TRUE,
   building_automation_enabled BOOLEAN DEFAULT TRUE,
-  expiration_reason TEXT
+  expiration_reason TEXT,
+  exclusive_logistics_penalty_applied BOOLEAN DEFAULT FALSE
 );
 
 -- Defines the global set of products that can be built

@@ -39,7 +39,7 @@ app.get('/api/game-info', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
 
-  const player = await getPlayerInfo(req.session.playerId);
+  let player = await getPlayerInfo(req.session.playerId);
   if(!player) {
     // kill the session if the player is not found
     // console.log('No player found for session:', req.session);
@@ -94,7 +94,8 @@ app.post('/api/ship-order', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
 
-  const result = await shipOrder(req.session.playerId);
+  const player = await getPlayerInfo(req.session.playerId);
+  const result = await shipOrder(player);
   if (result.error) {
     return res.status(200).json({ error: result.error });
   }

@@ -33,6 +33,18 @@ const productTick = async (player, product, inventory, elapsed_time) => {
 
   if (totalProductsBuilt > 0) {
     await gainXP(player, totalProductsBuilt * XP_GAINED_PER_OPERATION);
+
+    // update player products_built
+    await dbRun(
+      'UPDATE player SET products_built = products_built + $1 WHERE id = $2',
+      [totalProductsBuilt, player.id],
+      'Failed to update player products_built'
+    );
+  }
+
+  if(hasHireFabricator && !player.activeProducts) {
+    console.log('productTick - player automated and no build. Starting product build');
+    await startProductBuild(player.id);
   }
   
   return totalProductsBuilt;
