@@ -31,7 +31,7 @@ const OrderTick = async (player, product, inventory, elapsed_time) => {
   const secondsUntilNextOrder = Math.round(readyForNewOrder ? 0 : Math.max(0, spawnTime - lastOrder.seconds_since_creation));
   
   if(readyForNewOrder && orders.length < MAXIMUM_ORDER_QUEUE_SIZE) {
-    await _GenerateOrder(player.id);
+    ordersShipped += await _GenerateOrder(player.id);
   }
 
   if (ordersShipped > 0) {

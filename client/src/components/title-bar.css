@@ -127,7 +127,7 @@
 
 .modal-content .emoji {
   font-size: 50px;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
 }
 
 .modal-content h2 {
@@ -142,10 +142,23 @@
   }
 
   .title-bar h1 {
-    font-size: 20px;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .subtitle {
     font-size: 12px;
+  }
+
+  .title-bar-button {
+    width: 60px;
+    height: 60px;
+  }
+
+  .button-group {
+    margin-right: 5px;
+    gap: 0px;
   }
 }

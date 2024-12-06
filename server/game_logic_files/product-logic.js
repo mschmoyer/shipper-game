@@ -28,7 +28,7 @@ const productTick = async (player, product, inventory, elapsed_time) => {
   );
 
   for (const product of activeProducts) {
-    await CheckProductState(product, player.id);
+    totalProductsBuilt += await CheckProductState(product, player.id);
   }
 
   if (totalProductsBuilt > 0) {

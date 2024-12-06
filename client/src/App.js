@@ -6,7 +6,7 @@ import InitialView from './components/initial-view';
 import Leaderboard from './components/leaderboard';
 import HowToPlay from './components/how-to-play';
 import EndGameView from './components/end-game-view';
-import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer } from './api';
+import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer, endGame } from './api';
 import LeftWindow from './components/left-window';
 import TitleBar from './components/title-bar';
 import RightWindow from './components/right-window';
@@ -22,7 +22,7 @@ const App = () => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState({ ordersShipped: [], moneyEarned: [], techLevel: [] });
-  const [isGameActive, setIsGameActive] = useState(true);
+  const [isGameActive, setIsGameActive] = useState(false);
 
   // Check if the player is logged in
   useEffect(() => {
@@ -37,7 +37,7 @@ const App = () => {
 
   // The big Game Info fetcher loop
   useEffect(() => {
-    if (isLoggedIn && isGameActive) {
+    if (isLoggedIn && ((gameInfo && gameInfo.game_status === 'active' || !gameInfo))) {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
@@ -115,6 +115,18 @@ const App = () => {
     console.log('Settings button clicked');
   };
 
+  const handleEndGame = () => {
+    if (gameInfo && gameInfo.game_active) {
+      endGame()
+        .then(data => {
+          if (data.success) {
+            setIsGameActive(false);
+          }
+        })
+        .catch(error => console.error('Failed to end game:', error));
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="App">
@@ -122,10 +134,11 @@ const App = () => {
           <TitleBar 
             gameTitle={gameTitle}
             gameSubTitle={gameSubTitle}
-            onNewGame={handleNewGame} 
+            onEndGame={handleEndGame} 
             onToggleLeaderboard={toggleLeaderboard} 
             onHowToPlay={toggleHowToPlay} 
             onSettings={handleSettings} 
+            isGameActive={gameInfo && gameInfo.game_active}
           />
           <InitialView onAccountCreated={handleAccountCreated} />
 
@@ -143,13 +156,16 @@ const App = () => {
             <TitleBar 
               gameTitle={gameTitle}
               gameSubTitle={gameSubTitle}
-              onNewGame={handleNewGame} 
+              onEndGame={handleEndGame} 
               onToggleLeaderboard={toggleLeaderboard} 
               onHowToPlay={toggleHowToPlay} 
               onSettings={handleSettings} 
+              isGameActive={gameInfo && gameInfo.game_active}
             />
             <div className="content-wrapper">
-              <LeftWindow gameInfo={gameInfo} />
+              {gameInfo.game_active && 
+                <LeftWindow gameInfo={gameInfo} />
+              }
               <div className="main-content">
                 {gameInfo.game_active ? (
                   <GameWindow 

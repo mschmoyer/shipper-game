@@ -7,14 +7,15 @@
   padding: 20px;
 }
 
-.end-game-view h1 {
+.end-game-view h2 {
   font-size: 2em;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
+  margin-top: 0px;
 }
 
 .end-game-view p {
   font-size: 1.2em;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 .end-game-view ul {
@@ -123,7 +124,11 @@
     padding: 10px;
   }
 
-  .end-game-view h1 {
+  .end-game-view li {
+    font-size: 1em;
+  }
+
+  .end-game-view h2 {
     font-size: 1.5em;
   }
 

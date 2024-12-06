@@ -12,4 +12,8 @@ export const messages = {
     title: "Game Over!",
     description: "Your business has lost all credibility and is now bankrupt."
   },
+  walked_away: {
+    title: "Game Over!",
+    description: "You walked away from the business."
+  }
 };

@@ -28,7 +28,7 @@ const CreateNewPlayer = async (name, businessName) => {
   console.log('Created new player with id:', playerId);
   await initializeTechTree(playerId);
   
-  await generateProductForPlayer(playerId, businessName);
+  await generateProductForPlayer(playerId, businessName, name);
   
   // const { assignRandomProductToPlayer } = require('./product-logic');
   // await assignRandomProductToPlayer(playerId);
@@ -249,8 +249,13 @@ async function updateLastGameUpdate(playerId, last_game_update) {
   return row.elapsed_time * 1000;
 }
 
-async function expirePlayer(player) {
-  console.log(`Expiring player: ${player.id} - ${player.name} - ${player.business_name}`);
+async function expirePlayer(player, reason = 'expired') {
+  if(player.active === false) {
+    console.log(`Player ${player.id} is already expired`);
+    return;
+  }
+
+  console.log(`Expiring player: ${player.id} - ${player.name} - ${player.business_name} for reason: ${reason}`);
 
   // Calculate final fields
   const finalMoney = player.money;
@@ -260,8 +265,8 @@ async function expirePlayer(player) {
   const finalReputation = reputationData.score;
   // Set player to inactive and update final fields
   await dbRun(
-    'UPDATE player SET active = false, final_money = $1, final_tech_level = $2, final_orders_shipped = $3, final_reputation = $4 WHERE id = $5',
-    [finalMoney, finalTechLevel, finalOrdersShipped, finalReputation, player.id],
+    'UPDATE player SET active = false, final_money = $1, final_tech_level = $2, final_orders_shipped = $3, final_reputation = $4, expiration_reason = $5 WHERE id = $6',
+    [finalMoney, finalTechLevel, finalOrdersShipped, finalReputation, reason, player.id],
     'Failed to expire player'
   );
 }
@@ -278,7 +283,7 @@ const toggleBuildingAutomation = async (playerId) => {
   return player.rows[0].building_automation_enabled;
 };
 
-const generateProductForPlayer = async (playerId, businessName) => {
+const generateProductForPlayer = async (playerId, businessName, name) => {
   // Copy values from product.id=1
   const result = await dbRun(
     `INSERT INTO products (name, description, category, emoji, weight, cost_to_build, sales_price, image_url)
@@ -293,17 +298,15 @@ const generateProductForPlayer = async (playerId, businessName) => {
   const productId = result.rows[0].id;
 
   // Call OpenAI to generate product details
-  const prompt = GPT_PROMPT_FOR_DATA.replace('Whisky Shop', businessName); // Replace with actual business name if available
-  let productData = await generateProductDetailsWithOpenAI(prompt);
-
-  console.log('GPT Generated product details:', productData);
+  let productData = await generateProductDetailsWithOpenAI(playerId, businessName, name);
 
   productData.product_name = productData.product_name || 'Widget';
   productData.product_category = productData.product_category || 'Miscellaneous';
   productData.product_description = productData.product_description || 'A product that does something';
   productData.emoji = productData.emoji || '🚀';
 
-  console.log('Generated product details:', productData);
+  // log that a new player was created with name, businesname, and our gpt generated product details
+  console.log('Created new player with name:', name, 'businessName:', businessName, 'productData:', productData);
 
   // Update product with generated details
   await dbRun(
@@ -320,6 +323,12 @@ const generateProductForPlayer = async (playerId, businessName) => {
      VALUES ($1, $2)`,
     [playerId, productId],
     'Failed to insert into player_products'
+  );
+
+  await dbRun(
+    'INSERT INTO inventory (player_id, product_id, on_hand) VALUES ($1, $2, $3)',
+    [playerId, productId, 0],
+    'Failed to add initial stock to inventory'
   );
 
   return productId;

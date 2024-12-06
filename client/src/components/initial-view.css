@@ -55,7 +55,17 @@
   background-color: #218838; /* darker green on hover */
 }
 
+.create-account-button:disabled {
+  background-color: grey; /* grey color when disabled */
+  cursor: not-allowed;
+}
+
 .error-message {
   color: red;
+  margin-top: 10px;
+}
+
+.loading-message {
+  color: #007bff; /* blue color */
   margin-top: 10px;
 }

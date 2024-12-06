@@ -4,6 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const { client, pgSessionStore } = require('./database');
 const authRoutes = require('./auth');
+const { generateEndGameTextWithOpenAI } = require('./open-ai');
 
 const { gameTick, handleTruckToWarehouseGameCompletion, handleFindTheProductHaystackGameCompletion } = require('./game_logic_files/game-logic');
 const { getAllTechnologyWithState, getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
@@ -58,6 +59,10 @@ app.get('/api/game-info', async (req, res) => {
 
   // This moves the game along
   const gData = await gameTick(player, product, inventory);
+  if(player.active && gData.game_status !== 'active') {
+    // The game expired. refresh this data which won't be sent over yet. 
+    player.expiration_reason=gData.game_status;
+  }
   
   const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 100;
   
@@ -67,7 +72,7 @@ app.get('/api/game-info', async (req, res) => {
     active_order,
     game_active: player && player.active,
     game_status: gData.game_status,
-    minigames_enabled: false,
+    minigames_enabled: true,
     player,
     progress,
     is_shipping,
@@ -130,14 +135,25 @@ app.post('/api/reset-player', async (req, res) => {
     return res.status(401).json({ error: 'No player session' });
   }
 
-  const player = await getPlayerInfo(playerId);
-  await expirePlayer(player);
   req.session.destroy(err => {
     if (err) {
       return res.status(500).json({ error: 'Failed to reset player session' });
     }
     res.json({ success: true });
   });
+});
+
+app.post('/api/end-game', async (req, res) => {
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+
+  const player = await getPlayerInfo(req.session.playerId);
+  if (!player) {
+    return res.status(401).json({ error: 'No player found' });
+  }
+
+  await expirePlayer(player, 'walked_away');
 });
 
 app.post('/api/complete-truck-to-warehouse-game', async (req, res) => {
@@ -178,6 +194,19 @@ app.post('/api/toggle-building-automation', async (req, res) => {
 
   const result = await toggleBuildingAutomation(req.session.playerId);
   res.json({ new_value: result });
+});
+
+app.post('/api/generate-end-game-text', async (req, res) => {
+  if (!req.session.playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+
+  try {
+    const endGameText = await generateEndGameTextWithOpenAI(req.session.playerId);
+    res.json({ endGameText });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate end-game text' });
+  }
 });
 
 app.get('/api/leaderboard', async (req, res) => {

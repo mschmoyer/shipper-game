@@ -75,7 +75,7 @@ const ShipOrderView = ({
     if (gameInfo.is_shipping && gameInfo.active_order && gameInfo.active_order.shipping_steps) {
       return gameInfo.active_order.shipping_steps[Math.floor(gameInfo.progress / (100 / gameInfo.active_order.shipping_steps.length))].name;
     }
-    return 'Waiting for an order to ship...';
+    return 'Waiting for an order...';
   };
 
   const getLabelText = () => {

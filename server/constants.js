@@ -23,8 +23,6 @@ const OrderStates = Object.freeze({
   Returned: 'Returned'
 });
 
-const GPT_PROMPT_FOR_DATA = 'Based on the following business name, can you return a JSON object with "product_name", "product_category", "product_description", and "emoji". Emoji should be a single emoji. Make it comical and fun for an adult audience that could consist of software engineers, designers, salespeople, support, executives, and other office folks. The business name is "Whisky Shop". The product name should not exceed 32 characters.';
-
 module.exports = {  
   OrderStates,  
   BASE_ORDER_DUE_SECONDS,
@@ -36,6 +34,5 @@ module.exports = {
   GAME_MAX_SHIPPING_DISTANCE,
   SPEED_BOOST_FACTOR,
   XP_GAINED_PER_OPERATION,
-  BASE_XP_FOR_SKILL_POINT,
-  GPT_PROMPT_FOR_DATA
+  BASE_XP_FOR_SKILL_POINT
 };

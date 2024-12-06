@@ -145,11 +145,11 @@ const BuildProductView = ({
         />
         <div className="product-info">
           <h3 onClick={toggleModal}>{product.emoji} {product.name}</h3>
-          <p>{product.description}</p>
           {isModalOpen && (
             <div className="modal">
               <div className="modal-content">
                 <span className="close" onClick={toggleModal}>&times;</span>
+                <h3>{product.emoji} {product.name}</h3>
                 <p>📝 Description: {product.description}</p>
                 <p>⚖️ Weight: {product.weight} kg</p>
                 <p>💵 Cost: ${product.cost_to_build}</p>
@@ -213,7 +213,7 @@ const BuildProductView = ({
         <ProgressBar
           isError={!!buildError}
           isActive={product.is_building}
-          labelText={buildError || (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name} for ${product.name}` : `Waiting for a build of ${product.name}...`)}
+          labelText={buildError || (product.is_building ? `${product.building_steps[Math.floor(product.progress / (100 / product.building_steps.length))].name} for ${product.name}` : `Waiting for a build...`)}
           progress={product.progress}
           speed={player.building_speed}
           autoMode={isAutoBuildEnabled}

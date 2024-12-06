@@ -20,13 +20,13 @@ const gameTick = async (player, product, inventory) => {
   const timeRemainingSeconds = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsed_time, 0);
 
   if (timeRemainingSeconds <= 0) {
-    await expirePlayer(player);
+    await expirePlayer(player, 'time_expired');
     return { game_status: 'time_expired', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
   } else if (player.money < GAME_DEBT_LIMIT) {
-    await expirePlayer(player);
+    await expirePlayer(player, 'debt_limit_reached');
     return { game_status: 'debt_limit_reached', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
   } else if (player.reputation.score <= 0) {
-    await expirePlayer(player);
+    await expirePlayer(player, 'reputation_too_low');
     return { game_status: 'reputation_too_low', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
   } else {
     // Do builds and product completions

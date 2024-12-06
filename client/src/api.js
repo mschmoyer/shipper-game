@@ -101,3 +101,21 @@ export const toggleBuildingAutomation = () => {
     method: 'POST',
   });
 };
+
+export const generateEndGameText = (acquiredTechnologies) => {
+  return apiCall(`${baseUrl}/generate-end-game-text`, {
+    method: 'POST',
+    body: JSON.stringify({ acquiredTechnologies }),
+  });
+};
+
+export const endGame = () => {
+  return apiCall(`${baseUrl}/end-game`, {
+    method: 'POST',
+  }).then(response => {
+    if (response.success) {
+      localStorage.removeItem('playerId');
+    }
+    return response;
+  });
+};

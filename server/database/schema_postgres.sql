@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS player (
   last_game_update TIMESTAMP,
   xp INTEGER DEFAULT 0,
   shipping_automation_enabled BOOLEAN DEFAULT TRUE,
-  building_automation_enabled BOOLEAN DEFAULT TRUE
+  building_automation_enabled BOOLEAN DEFAULT TRUE,
+  expiration_reason TEXT
 );
 
 -- Defines the global set of products that can be built

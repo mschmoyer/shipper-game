@@ -78,3 +78,9 @@
     opacity: 0;
   }
 }
+
+@media (max-width: 600px) {
+  .info-panel p{
+    font-size: 12px;
+  }
+}

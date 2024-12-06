@@ -57,12 +57,14 @@
 
 .product-info {
   min-width: 500px;
+  max-width: 100%; /* Ensure the container does not stretch beyond its parent */
   margin-left: 20px;
   padding: 10px;
   background-color: #ffffff;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   cursor: pointer; /* Add cursor pointer for clickable product name */
+  word-wrap: break-word; /* Ensure long text wraps within the container */
 }
 
 .product-info h3 {
