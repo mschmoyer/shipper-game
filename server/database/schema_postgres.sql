@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   name TEXT,
   description TEXT,
+  category TEXT,
+  emoji TEXT,
   weight REAL,
   cost_to_build INTEGER,
   sales_price INTEGER,

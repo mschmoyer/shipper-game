@@ -144,7 +144,8 @@ const BuildProductView = ({
           hotkey="B"
         />
         <div className="product-info">
-          <h3 onClick={toggleModal}>{product.name}</h3>
+          <h3 onClick={toggleModal}>{product.emoji} {product.name}</h3>
+          <p>{product.description}</p>
           {isModalOpen && (
             <div className="modal">
               <div className="modal-content">

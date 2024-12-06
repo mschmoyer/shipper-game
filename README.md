@@ -5,17 +5,12 @@ Backend for Shipping Game
 
 ## NPM Commands
 
+```nvm install node```
+
 ### Start the server
 
 
 ## Local
-
-```export POSTGRES_USER=shipper_user
-export POSTGRES_PASSWORD=superHardPasswordToGuess
-export POSTGRES_DB=shipper_game
-export PORT=5050
-export DATABASE_URL=postgres://shipper_user:superHardPasswordToGuess@localhost:5432/shipper_game```
-
 ```node server.js```
 
 ```node scripts/resetDatabase.js``` 
@@ -35,6 +30,9 @@ Release the container
 
 Tail the logs
 ```heroku logs -t```
+
+Set an env var
+```heroku config:set```
 
 ### Commands: 
 

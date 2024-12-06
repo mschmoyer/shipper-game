@@ -2,6 +2,8 @@ const { dbRun, dbGet, dbAll } = require('../database');
 const { SPEED_BOOST_FACTOR, BASE_XP_FOR_SKILL_POINT } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { OrderStates } = require('../constants');
+const { generateProductDetailsWithOpenAI } = require('../open-ai');
+const { GPT_PROMPT_FOR_DATA } = require('../constants');
 
 let reputationCache = {};
 const CACHE_EXPIRATION_TIME = 60 * 1000;
@@ -26,8 +28,10 @@ const CreateNewPlayer = async (name, businessName) => {
   console.log('Created new player with id:', playerId);
   await initializeTechTree(playerId);
   
-  const { assignRandomProductToPlayer } = require('./product-logic');
-  await assignRandomProductToPlayer(playerId);
+  await generateProductForPlayer(playerId, businessName);
+  
+  // const { assignRandomProductToPlayer } = require('./product-logic');
+  // await assignRandomProductToPlayer(playerId);
   
   return playerId;
 };
@@ -274,6 +278,53 @@ const toggleBuildingAutomation = async (playerId) => {
   return player.rows[0].building_automation_enabled;
 };
 
+const generateProductForPlayer = async (playerId, businessName) => {
+  // Copy values from product.id=1
+  const result = await dbRun(
+    `INSERT INTO products (name, description, category, emoji, weight, cost_to_build, sales_price, image_url)
+     SELECT name, description, category, emoji, weight, cost_to_build, sales_price, image_url
+     FROM products
+     WHERE id = 1
+     RETURNING id`,
+    [],
+    'Failed to create product'
+  );
+
+  const productId = result.rows[0].id;
+
+  // Call OpenAI to generate product details
+  const prompt = GPT_PROMPT_FOR_DATA.replace('Whisky Shop', businessName); // Replace with actual business name if available
+  let productData = await generateProductDetailsWithOpenAI(prompt);
+
+  console.log('GPT Generated product details:', productData);
+
+  productData.product_name = productData.product_name || 'Widget';
+  productData.product_category = productData.product_category || 'Miscellaneous';
+  productData.product_description = productData.product_description || 'A product that does something';
+  productData.emoji = productData.emoji || '🚀';
+
+  console.log('Generated product details:', productData);
+
+  // Update product with generated details
+  await dbRun(
+    `UPDATE products
+     SET name = $1, category = $2, description = $3, emoji = $4
+     WHERE id = $5`,
+    [productData.product_name, productData.product_category, productData.product_description, productData.emoji, productId],
+    'Failed to update product with generated details'
+  );
+
+  // Insert into player_products
+  await dbRun(
+    `INSERT INTO player_products (player_id, product_id)
+     VALUES ($1, $2)`,
+    [playerId, productId],
+    'Failed to insert into player_products'
+  );
+
+  return productId;
+};
+
 module.exports = {
   getPlayerInfo,
   CreateNewPlayer,
@@ -282,5 +333,6 @@ module.exports = {
   expirePlayer,
   updateLastGameUpdate,
   gainXP,
-  toggleBuildingAutomation
+  toggleBuildingAutomation,
+  generateProductForPlayer
 };
