@@ -1,21 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const { dbGet } = require('./database');
-const { generateInitialGameState } = require('./game_logic_files/game-logic');
+const { GenerateBusinessName, CreateNewPlayer } = require('./game_logic_files/player-logic');
 
 router.post('/create-account', async (req, res) => {
   const { name, businessName } = req.body;
-  const existingPlayer = await dbGet(
-    'SELECT * FROM player WHERE business_name = $1',
-    [businessName],
-    'Failed to check existing player'
-  );
-  if (existingPlayer) {
-    console.log('Failed to create account. Business name already exists:', existingPlayer, ' Player name = ', name);
-    return res.status(200).json({ success: false, error: 'Business name already exists. Please try another.' });
+
+  const playerId = await CreateNewPlayer(name, businessName);
+  if (!playerId) {
+    console.log('Failed to create business with name:', businessName);
+    return res.status(200).json({ 
+      success: false, 
+      error: 'Copyright infringement! (fake). A business with that name already exists. If the AI assistant generated the name, please try again.' 
+    });
   }
-  console.log('Creating account with:', { name, businessName });
-  const playerId = await generateInitialGameState(name, businessName);
   
   req.session.playerId = playerId;
   req.session.save((err) => {

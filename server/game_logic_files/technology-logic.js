@@ -89,7 +89,12 @@ const purchaseTechnology = async (playerId, techId) => {
   if (player.money < technology.cost) {
     return { success: false, message: 'Not enough money to purchase technology.' };
   }
-  
+
+  const actionSuccessful = await performOneTimeTechnologyEffect(playerId, technology.tech_code);
+  if (!actionSuccessful) {
+    return { success: false, message: 'Failed to perform technology effect.' };
+  }
+
   await dbRun(
     `INSERT INTO acquired_technologies 
       (player_id, tech_id, acquired_date, acquired_cost) 
@@ -98,7 +103,6 @@ const purchaseTechnology = async (playerId, techId) => {
     [playerId, techId, technology.cost], // Corrected parameter list
     'Failed to purchase technology'
   );
-  await performOneTimeTechnologyEffect(playerId, technology.tech_code);
   
   await dbRun(
     'UPDATE player SET money = money - $1, tech_level = tech_level + 1 WHERE id = $2',
@@ -131,13 +135,59 @@ const performOneTimeTechnologyEffect = async (playerId, techCode) => {
         [true, playerId],
         'Failed to apply exclusive logistics penalty'
       );
-
-      break;
-    // Add more cases as needed
+      return true;
+    case 'hostile_takeover':
+      return hostileTakeoverAction(playerId);
     default:
       console.log(`No effect defined for technology: ${techCode}`);
+      return true;
   }
 };
+
+const hostileTakeoverAction = async (playerId) => {
+
+  // select up to 100 active players
+  const players = await dbAll(
+    'SELECT id FROM player WHERE id != $1 AND active=true LIMIT 100',
+    [playerId],
+    'Failed to retrieve active players'
+  );
+  // choose one at random
+  const targetPlayerId = players[Math.floor(Math.random() * players.length)].id;
+
+  if(!targetPlayerId || targetPlayerId === 1) {
+    console.log('No target player found for hostile takeover.');
+    return false;
+  }
+  console.log(`Player ${playerId} is taking over player ${targetPlayerId}`);
+
+  const { getPlayerInfo } = require('./player-logic');
+  const targetPlayer = await getPlayerInfo(targetPlayerId);
+  const sourcePlayer = await getPlayerInfo(playerId);
+  // expire that player with reason hostile_takeover_by_another_player
+  const { expirePlayer } = require('./player-logic');
+  await expirePlayer(targetPlayer, 'hostile_takeover_by_another_player');
+
+  // update the target player hostile_takeover_by_player_id
+  await dbRun(
+    'UPDATE player SET hostile_takeover_player_name = $1, orders_shipped=0 WHERE id = $2',
+    [sourcePlayer.name, targetPlayer.id],
+    'Failed to update player hostile takeover by player id'
+  );
+
+  // add to our player's orders shipped the target player's orders shipped
+  await dbRun(
+    'UPDATE player SET orders_shipped = orders_shipped + $1, money = money - $3 WHERE id = $2',
+    [targetPlayer.orders_shipped, playerId, targetPlayer.money],
+    'Failed to update player orders shipped'
+  );
+
+  // make a big bold console log 3 lines deep that lets us know someone did this huge action
+  console.log(` `);
+  console.log(`!!!  Player ${playerId} has taken over player ${targetPlayer.id}  !!!`);
+  console.log(` `);
+  return true;
+}
 
 const initializeTechTree = async (playerId, techLevel) => {
   for (let i = 0; i < 3; i++) {

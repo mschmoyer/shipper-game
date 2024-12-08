@@ -46,10 +46,11 @@
 
 .tech-tree-description {
   margin: 10px 0;
+  font-style: italic;
+  color:rgb(88, 88, 88);
 }
 
-.tech-tree-effect {
-  font-style: italic;
+.tech-tree-effect {  
   margin-bottom: 10px;
 }
 
@@ -103,5 +104,9 @@
     margin-top: 4px;
     margin-left: 20px;
     font-size: 16px;
+  }
+
+  .tech-tree-description {
+    display: none;
   }
 }

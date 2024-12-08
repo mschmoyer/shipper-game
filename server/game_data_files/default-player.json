@@ -11,7 +11,6 @@
         "products_per_order": 1,
         "products_per_build": 3,
         "progress": 0,
-        "is_shipping": false,
         "tech_points": 0,
         "tech_level": 1,
         "orders_shipped": 0,

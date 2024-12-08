@@ -154,5 +154,18 @@
     "acquirable": true,
     "category": "Shipping",
     "emoji": "🚢"
+  },
+  {
+    "name": "Hostile Takeover",
+    "description": "Acquire a competitor's business and integrate their operations into your own.",
+    "tech_level_required": 1,
+    "cost": 1000000,
+    "tech_code": "hostile_takeover",
+    "modifier_value": 1,
+    "game_effect": "Acquire a random player's business and exit them. Steal their orders shipped but pay out whatever their money was.",
+    "shipstation_kb_link": "",
+    "acquirable": true,
+    "category": "Business",
+    "emoji": "💀"
   }
 ]

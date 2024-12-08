@@ -24,7 +24,7 @@ const LeftWindow = ({ gameInfo }) => {
 
   return (
     <div className="left-window">
-      {sortedOrders.slice(0, 7).map((order, index) => {
+      {sortedOrders.slice(0, 9).map((order, index) => {
         const timeDelta = getTimeDelta(order.delta_to_due_date, order.id === activeOrderId);
         return (
           <div key={index} className={`order-card ${order.id === activeOrderId ? 'active' : ''} ${timeDelta.isUrgent ? 'urgent' : ''} ${timeDelta.isVeryUrgent ? 'very-urgent' : ''}`}>
@@ -34,8 +34,8 @@ const LeftWindow = ({ gameInfo }) => {
           </div>
         );
       })}
-      {orders.length > 7 && <p>({orders.length - 7} more)</p>}
-      {orders.length < 7 && Array.from({ length: 7 - orders.length }).map((_, index) => (
+      {orders.length > 9 && <p>({orders.length - 7} more)</p>}
+      {orders.length < 9 && Array.from({ length: 7 - orders.length }).map((_, index) => (
         <div key={`empty-${index}`} className="order-card empty">
           {index === 0 && secondsUntilNextOrder > 0 ? (
             <>

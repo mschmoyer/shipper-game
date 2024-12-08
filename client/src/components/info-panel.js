@@ -47,11 +47,12 @@ const InfoPanel = ({ gameInfo }) => {
         reputation: gameInfo.player.reputation.score - player.reputation.score,
       });
     }
-  }, [gameInfo, player]);
+  }, [gameInfo]);
 
   const getDeltaClass = (delta) => {
     if (delta > 0) return 'delta-positive';
     if (delta < 0) return 'delta-negative';
+    if(delta > 0  || delta < 0) return 'delta active!';
     return '';
   };
 

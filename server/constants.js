@@ -2,7 +2,7 @@
 const BASE_ORDER_DUE_SECONDS = 2 * 60;
 const MAXIMUM_ORDER_QUEUE_SIZE = 50;
 
-const GAME_TIME_LIMIT_SECONDS = 15 * 60;
+const GAME_TIME_LIMIT_SECONDS = 60 * 60;
 const GAME_DEBT_LIMIT = -1000000; // a player can go 1 million in debt before failing. 
 const GAME_SHIPPING_COST_PER_MILE = 0.7; // $0-$700
 

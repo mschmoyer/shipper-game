@@ -239,3 +239,8 @@
     filter: blur(5px);
   }
 }
+
+.low-inventory p {
+  color: red;
+  font-weight: bold;
+}

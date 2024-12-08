@@ -3,12 +3,28 @@ const { SPEED_BOOST_FACTOR, BASE_XP_FOR_SKILL_POINT } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { OrderStates } = require('../constants');
 const { generateProductDetailsWithOpenAI } = require('../open-ai');
-const { GPT_PROMPT_FOR_DATA } = require('../constants');
 
 let reputationCache = {};
 const CACHE_EXPIRATION_TIME = 60 * 1000;
 
 const CreateNewPlayer = async (name, businessName) => {
+
+  const aiData = await generateProductDetailsWithOpenAI(businessName, name);
+
+  if(!businessName) {
+    console.log('No business name provided. Using AI suggestion:', aiData.suggested_business_name);
+    businessName = aiData.suggested_business_name;
+  }
+  const existingPlayer = await dbGet(
+    'SELECT * FROM player WHERE business_name = $1',
+    [businessName],
+    'Failed to check existing player'
+  );
+  if (existingPlayer) {
+    console.log('Failed to create player. Business name already exists:', existingPlayer.name, ' Player name = ', name);
+    return;
+  }
+
   // insert a new player using the default values from player.id = 1
   const result = await dbRun(
     `INSERT INTO player (name, business_name, money, tech_points,
@@ -26,14 +42,13 @@ const CreateNewPlayer = async (name, businessName) => {
 
   const playerId = result.rows[0].id;
   console.log('Created new player with id:', playerId);
+
   await initializeTechTree(playerId);
+  await generateProductForPlayer(playerId, businessName, name, aiData);
   
-  await generateProductForPlayer(playerId, businessName, name);
-  
-  // const { assignRandomProductToPlayer } = require('./product-logic');
-  // await assignRandomProductToPlayer(playerId);
-  
-  // If player name is Schmo, give them a head start
+  // CHEAT CODE SECTION HERE
+  // If player name is Schmo, give them a head start (mostly for testing)
+  // Worth noting I also excluded Schmo from the leaderboard queries
   if (name === 'Schmo') {
     await addSkillPoints({ id: playerId }, 25);
     // set money to 10000
@@ -101,6 +116,8 @@ const CalculatePlayerReputation = async (playerId) => {
   return reputationData;
 };
 
+
+// Get all player info and calculate some other useful bits. 
 const getPlayerInfo = async (playerId) => {
   if (!playerId || playerId === 'null') {
     console.error('No playerId passed to getPlayerInfo');
@@ -111,25 +128,23 @@ const getPlayerInfo = async (playerId) => {
                   EXTRACT(EPOCH FROM (NOW() - created_at)) AS elapsed_time
                   FROM player 
                   WHERE id = $1`;
-  let row = await dbGet(query, [playerId]);
+  let player = await dbGet(query, [playerId]);
   
-  if(row) {
+  if(player) {
     const reputation = await CalculatePlayerReputation(playerId);
-    row.reputation = reputation; 
+    player.reputation = reputation; 
 
-    // Dynamically require getBuildingSteps and getShippingSteps to avoid circular dependency
     const { getBuildingSteps } = require('./product-logic');
     const { getShippingSteps } = require('./shipping-logic');
 
     // get shipping and building steps and return count of steps and duration for each
-    const { building_steps, building_duration } = await getBuildingSteps(playerId);
-    row.building_step_count = building_steps.length;
-    row.building_duration = building_duration;
-    const { shipping_steps, total_duration } = await getShippingSteps(playerId);
-    row.shipping_step_count = shipping_steps.length;
-    row.shipping_duration = total_duration;
+    player.building_steps = await getBuildingSteps(playerId);
+    player.building_duration = Math.round(player.building_steps.length * player.building_speed);
 
-    return row;
+    player.shipping_steps = await getShippingSteps(player.id);
+    player.shipping_duration = Math.round(player.shipping_steps.length * player.shipping_speed);
+
+    return player;
   } else {
     console.error('Failed to retrieve player info');
     return null;
@@ -296,7 +311,7 @@ const toggleBuildingAutomation = async (playerId) => {
   return player.rows[0].building_automation_enabled;
 };
 
-const generateProductForPlayer = async (playerId, businessName, name) => {
+const generateProductForPlayer = async (playerId, businessName, name, aiData) => {
   // Copy values from product.id=1
   const result = await dbRun(
     `INSERT INTO products (name, description, category, emoji, weight, cost_to_build, sales_price, image_url)
@@ -311,7 +326,7 @@ const generateProductForPlayer = async (playerId, businessName, name) => {
   const productId = result.rows[0].id;
 
   // Call OpenAI to generate product details
-  let productData = await generateProductDetailsWithOpenAI(playerId, businessName, name);
+  let productData = aiData;
 
   productData.product_name = productData.product_name || 'Widget';
   productData.product_category = productData.product_category || 'Miscellaneous';
@@ -319,7 +334,8 @@ const generateProductForPlayer = async (playerId, businessName, name) => {
   productData.emoji = productData.emoji || '🚀';
 
   // log that a new player was created with name, businesname, and our gpt generated product details
-  console.log('Created new player with name:', name, 'businessName:', businessName, 'productData:', productData);
+  console.log('Created new player with name:', name, 'businessName:', businessName)
+  console.log('AI Generated Data:', productData);
 
   // Update product with generated details
   await dbRun(

@@ -1,41 +1,44 @@
 const { dbRun, dbGet } = require('../database');
-const { GAME_TIME_LIMIT_SECONDS, GAME_DEBT_LIMIT } = require('../constants');
+
 const { productTick } = require('./product-logic');
 const { OrderTick } = require('./shipping-logic');
-const { CreateNewPlayer, expirePlayer, updateLastGameUpdate } = require('./player-logic');
+const { expirePlayer, updateLastGameUpdate } = require('./player-logic');
 
-const generateInitialGameState = async (name, businessName) => {
-  console.log('User started a new game! Details:', { name, businessName });
+const { GAME_TIME_LIMIT_SECONDS, GAME_DEBT_LIMIT } = require('../constants');
 
-  const playerId = await CreateNewPlayer(name, businessName);
-  // console.log('Generated playerId in generateInitialGameState:', playerId);
-  return playerId;
-};
-
-const gameTick = async (player, product, inventory) => {
+// This is the main game loop. Called once per second on each client. 
+const gameTick = async (player, product, inventory, active_order) => {
   
-  // define a const that compares player.last_game_update to current time
   const timeSinceLastUpdate = await updateLastGameUpdate(player.id, player.last_game_update);
 
-  const timeRemainingSeconds = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsed_time, 0);
-
-  if (timeRemainingSeconds <= 0) {
+  const secondsUntilGameExpired = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsed_time, 0);
+  
+  if (secondsUntilGameExpired <= 0) {
+    console.log(`Player ${player.id} has run out of time.`);
     await expirePlayer(player, 'time_expired');
-    return { game_status: 'time_expired', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
+    return { game_status: 'time_expired', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired };
+
   } else if (player.money < GAME_DEBT_LIMIT) {
     await expirePlayer(player, 'debt_limit_reached');
-    return { game_status: 'debt_limit_reached', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
+    return { game_status: 'debt_limit_reached', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired };
+
   } else if (player.reputation.score <= 0) {
     await expirePlayer(player, 'reputation_too_low');
-    return { game_status: 'reputation_too_low', orders: [], secondsUntilNextOrder: 0, timeRemainingSeconds };
+    return { game_status: 'reputation_too_low', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired };
   } else {
     // Do builds and product completions
     const productsBuilt = await productTick(player, product, inventory, timeSinceLastUpdate); 
 
     // Do order completions and new orders
-    const { orders, secondsUntilNextOrder, ordersShipped } = await OrderTick(player, product, inventory, timeSinceLastUpdate);
-
-    return { game_status: 'active', orders, secondsUntilNextOrder, timeRemainingSeconds };
+    const oData = await OrderTick(player, product, inventory, timeSinceLastUpdate, active_order);
+    
+    return { game_status: 'active', 
+             orders: oData.orders, 
+             secondsUntilNextOrder: oData.secondsUntilNextOrder, 
+             timeRemainingSeconds: secondsUntilGameExpired,
+             ordersShipped: oData.ordersShipped,
+             productsBuilt
+            };
   } 
 };
 
@@ -71,8 +74,7 @@ const handleFindTheProductHaystackGameCompletion = async (playerId, succeeded) =
   }
 };
 
-module.exports = { 
-  generateInitialGameState, 
+module.exports = {  
   gameTick,
   productTick,
   handleTruckToWarehouseGameCompletion,

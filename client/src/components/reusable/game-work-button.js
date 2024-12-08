@@ -23,7 +23,7 @@ const GameWorkButton = ({ autoShip, onClick, isWorkBeingDone, titleDefault, titl
       onClick={onClick}
       disabled={isWorkBeingDone}
     >
-      {autoShip ? 'Working...' : isWorkBeingDone ? titleWhenWorking : titleDefault}
+      {autoShip ? 'Auto: ON' : isWorkBeingDone ? titleWhenWorking : titleDefault}
       {hotkey && !isMobileMode && <div className="hotkey-info">Hotkey: {hotkey}</div>}
     </button>
   );

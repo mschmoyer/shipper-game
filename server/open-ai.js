@@ -5,26 +5,26 @@ const { getAcquiredTechnologies } = require('./game_logic_files/technology-logic
 const productDetailsCache = new Map();
 const endGameTextCache = new Map();
 
-const SYSTEM_PROMPT = "You are a small business analyst, critical thinker, and entertaining personality behind a web e-commerce shipping game.";
+const SYSTEM_PROMPT = "You are the AI game master behind a web e-commerce shipping game.";
 
-async function generateProductDetailsWithOpenAI(playerId, businessName, name) {
-  if (productDetailsCache.has(playerId)) {
-    console.log('Returning cached response for playerId:', playerId);
-    return productDetailsCache.get(playerId);
+async function generateProductDetailsWithOpenAI(businessName, name) {
+
+  let prompt = `Use the provided information to generate a fun, memorable 
+  product idea for an e-commerce business. A majority of the time you should generate
+  a completely random idea, but occasionally you can reach into cultural references
+  like movies, games, and shows for inspiration. Sometimes the business name can be 
+  wacky words or play on words. First, decide on which product you are going to create.
+  Then, think of the business name. Be sure to consider the marketability of it and 
+  the usefulness of e-commerce shipping to the business.`;
+
+  if (!businessName) {
+    prompt += `The business name is ${businessName}.`;
   }
 
-  let prompt = `Based on the following business and owner names, can you return a JSON object with 
-  "product_name", "product_category", "product_description", and "emoji". Emoji 
-  should be a single emoji. Make it comical and fun for an adult audience that 
-  could consist of software engineers, designers, salespeople, support, executives, 
-  and other office folks. The product name should not exceed 32 characters.`;
-
-  prompt += `The business name is ${businessName} and the business operator is ${name}.`;
-
-  console.log('Prompting OpenAI with:', prompt);
+  // console.log('Prompting OpenAI with:', prompt);
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4-turbo",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: prompt },
@@ -36,12 +36,15 @@ async function generateProductDetailsWithOpenAI(playerId, businessName, name) {
         parameters: {
           type: "object",
           properties: {
+            suggested_business_name: { type: "string" },
+            suggested_business_description: { type: "string" },
             product_name: { type: "string" },
             product_category: { type: "string" },
             product_description: { type: "string" },
             emoji: { type: "string" }
           },
-          required: ["product_name", "product_category", "product_description", "emoji"]
+          required: ["product_name", "product_category", "product_description", "emoji", 
+            "suggested_business_name", "suggested_business_description"]
         }
       }
     ],
@@ -50,8 +53,6 @@ async function generateProductDetailsWithOpenAI(playerId, businessName, name) {
 
   const functionResponse = completion.choices[0].message.function_call.arguments;
   const parsedResponse = JSON.parse(functionResponse);
-  productDetailsCache.set(playerId, parsedResponse);
-
   console.log('The product details are:', parsedResponse);
 
   return parsedResponse;
@@ -98,11 +99,11 @@ async function generateEndGameTextWithOpenAI(playerId) {
   prompt += `.\n\nPlayer stats:\n- 
     Money: $${player.final_money}\n- 
     Orders Shipped: ${player.final_orders_shipped}\n- 
-    Reputation: ${player.final_reputation}\n- 
+    Reputation: ${player.final_reputation} out of 100\n- 
     Skill Points: ${player.points_spent}\n-
     Reason game ended: ${player.expiration_reason}`;
 
-  console.log('Prompting OpenAI with:', prompt);
+  // console.log('Prompting OpenAI with:', prompt);
 
   try {
     const completion = await openai.chat.completions.create({

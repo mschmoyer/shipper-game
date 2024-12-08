@@ -42,13 +42,12 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
   };
 
   const player = gameInfo.player;
-  const gameStatus = gameInfo.game_status;
   const message = messages[player.expiration_reason] || messages.time_expired;
 
   return (
     <div className="end-game-view">
       <h2>{message.title}</h2>
-      <p>{message.description}</p>
+      <p>{player.expiration_reason === 'hostile_takeover_by_another_player' ? player.hostile_takeover_player_name : ''} {message.description}</p>
       <p>Here are your final stats:</p>
       <div className="stats-grid">
         <div>💰 ${formatMoney(player.final_money)}</div>

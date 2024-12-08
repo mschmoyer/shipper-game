@@ -36,13 +36,21 @@ const InitialView = ({ onAccountCreated }) => {
       <form className="account-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Give yourself a name:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input 
+            type="text" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            required />
         </div>
         <div className="form-group">
           <label>Your new enterprise is called (business name):</label>
-          <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required />
+          <input 
+            type="text" 
+            value={businessName} 
+            onChange={(e) => setBusinessName(e.target.value)} 
+            placeholder="(Leave blank to let AI assistant generate this)" />
         </div>
-        <button type="submit" className="create-account-button" style={{ backgroundColor: 'green' }} disabled={loading}>Found New Business</button>
+        <button type="submit" className="create-account-button" style={{ backgroundColor: 'green' }} disabled={loading}>Start New Business</button>
       </form>
       {loading && <p className="loading-message">Your AI assistant is generating some products to sell... 🤖</p>} {/* Display the loading message */}
       {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Display the error message */}

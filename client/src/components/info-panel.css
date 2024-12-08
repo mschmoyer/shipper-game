@@ -35,10 +35,11 @@
 .delta-label {
   position: absolute;
   animation: deltaAnimation 2s ease-in-out;
-  font-size: 40px;
+  font-size: 30px;
   font-weight: 700;
   margin-left: -50px;
-  margin-top: -30px;
+  margin-top: -20px;
+  opacity: .75;
   text-shadow: 1px 1px 2px #000000, -1px -1px 2px #000000, 1px -1px 2px #000000, -1px 1px 2px #000000;
 }
 
@@ -82,5 +83,10 @@
 @media (max-width: 600px) {
   .info-panel p{
     font-size: 12px;
+  }
+  .delta-label {
+    font-size: 18px;
+    margin-left: -40px;
+    margin-top: -10px;
   }
 }

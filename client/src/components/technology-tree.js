@@ -43,9 +43,9 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
             </div>
             <div className="tech-tree-title">
               <a href={tech.shipstation_kb_link} target="_blank" rel="noopener noreferrer">{tech.name}</a>
-            </div>
-            <div className="tech-tree-description">{tech.description}</div>
+            </div>            
             <div className="tech-tree-effect">{tech.game_effect}</div>
+            <div className="tech-tree-description">{tech.description}</div>
             <button className="tech-tree-purchase-button" onClick={() => setSelectedTech(tech)}>Purchase</button>
           </div>
         ))}

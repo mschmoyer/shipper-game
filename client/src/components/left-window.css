@@ -6,6 +6,8 @@
   padding: 10px;
   box-sizing: border-box;
   color: #000000;
+  max-height: calc(100vh - 150px); /* Adjust 150px to the actual height of the info-panel */
+  overflow-y: auto;
 }
 
 .order-card {

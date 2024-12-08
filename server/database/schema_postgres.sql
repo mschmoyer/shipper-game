@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS player (
   products_per_order INTEGER DEFAULT 1,
   products_per_build INTEGER DEFAULT 3,
   progress INTEGER DEFAULT 0,
-  is_shipping BOOLEAN DEFAULT FALSE,    
+  is_shipping BOOLEAN DEFAULT FALSE, --Deprecated
   tech_points INTEGER DEFAULT 0,
   tech_level INTEGER DEFAULT 1,
   orders_shipped INTEGER DEFAULT 0,
@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS player (
   shipping_automation_enabled BOOLEAN DEFAULT TRUE,
   building_automation_enabled BOOLEAN DEFAULT TRUE,
   expiration_reason TEXT,
-  exclusive_logistics_penalty_applied BOOLEAN DEFAULT FALSE
+  exclusive_logistics_penalty_applied BOOLEAN DEFAULT FALSE,
+  hostile_takeover_player_name TEXT
 );
 
 -- Defines the global set of products that can be built

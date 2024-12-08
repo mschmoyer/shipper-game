@@ -35,38 +35,35 @@ app.use('/api', authRoutes);
 
 app.get('/api/game-info', async (req, res) => {
   if (!req.session.playerId) {
-    // console.log('Unauthorized access to game-info');
     return res.status(401).json({ error: 'No player session' });
   }
 
   let player = await getPlayerInfo(req.session.playerId);
   if(!player) {
-    // kill the session if the player is not found
-    // console.log('No player found for session:', req.session);
     req.session.destroy();
     return res.status(401).json({ error: 'No player found' });
   }
 
+  console.log('');
+  console.log('');
+  console.log('GameTick for player:', player.id);
+
   const available_technologies = await getAvailableTechnologies(req.session.playerId);
   const acquired_technologies = await getAcquiredTechnologies(req.session.playerId);
   const technology = await getAllTechnologyWithState(req.session.playerId);
-
   const active_order = await getActiveOrder(req.session.playerId);
-
-  const product = await getActiveProduct(req.session.playerId);
-
+  const product = await getActiveProduct(player);
   const inventory = await getInventoryInfo(req.session.playerId);
 
   // This moves the game along
-  const gData = await gameTick(player, product, inventory);
+  const gData = await gameTick(player, product, inventory, active_order);
   if(player.active && gData.game_status !== 'active') {
     // The game expired. refresh this data which won't be sent over yet. 
     player.expiration_reason=gData.game_status;
   }
   
-  const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 100;
-  
-  const is_shipping = active_order ? progress < 100 : false;
+  // const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 0;
+  // const is_shipping = active_order ? progress < 100 : false;
 
   res.json({
     active_order,
@@ -74,8 +71,8 @@ app.get('/api/game-info', async (req, res) => {
     game_status: gData.game_status,
     minigames_enabled: true,
     player,
-    progress,
-    is_shipping,
+    // progress,
+    // is_shipping,
     product,
     inventory,
     orders: gData.orders,
@@ -93,7 +90,9 @@ app.post('/api/ship-order', async (req, res) => {
   if (!req.session.playerId) {
     return res.status(401).json({ error: 'No player session' });
   }
-
+  console.log('');
+  console.log('');
+  console.log('Shipping order for player:', req.session.playerId);
   const player = await getPlayerInfo(req.session.playerId);
   const result = await shipOrder(player);
   if (result.error) {

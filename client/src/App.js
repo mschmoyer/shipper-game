@@ -6,7 +6,7 @@ import InitialView from './components/initial-view';
 import Leaderboard from './components/leaderboard';
 import HowToPlay from './components/how-to-play';
 import EndGameView from './components/end-game-view';
-import { checkSession, fetchGameInfo, fetchLeaderboard, resetPlayer, endGame } from './api';
+import { checkSession, fetchGameInfo, resetPlayer, endGame } from './api';
 import LeftWindow from './components/left-window';
 import TitleBar from './components/title-bar';
 import RightWindow from './components/right-window';
@@ -21,7 +21,6 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
-  const [leaderboardData, setLeaderboardData] = useState({ ordersShipped: [], moneyEarned: [], techLevel: [] });
   const [isGameActive, setIsGameActive] = useState(false);
 
   // Check if the player is logged in
@@ -83,11 +82,6 @@ const App = () => {
   };
 
   const toggleLeaderboard = () => {
-    if (!isLeaderboardOpen) {
-      fetchLeaderboard()
-        .then(data => setLeaderboardData(data))
-        .catch(error => console.error('Failed to fetch leaderboard:', error));
-    }
     setIsLeaderboardOpen(!isLeaderboardOpen);
   };
 
@@ -180,9 +174,6 @@ const App = () => {
                 <Leaderboard
                   isOpen={isLeaderboardOpen}
                   onClose={toggleLeaderboard}
-                  ordersShipped={leaderboardData.ordersShipped}
-                  moneyEarned={leaderboardData.moneyEarned}
-                  techLevel={leaderboardData.techLevel}
                 />
                 <HowToPlay
                   isOpen={isHowToPlayOpen}

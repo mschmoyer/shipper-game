@@ -15,17 +15,21 @@ const ProgressBar = ({ isError, isActive, labelText, progress, speed, autoMode }
   ];  
   const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
-  const tooFastToSeeSpeed = 300;
-  const barWidth = (speed < tooFastToSeeSpeed && isActive) ? 100 : isActive ? progress : 0;
-  const barModeClass = speed < tooFastToSeeSpeed && autoMode ? 'flash' : isActive ? 'smooth' : '';
+  // Factor in about a ~1 second poll delay. 
+  const speedFactored = Math.max(speed - 100, 100);
+
+  const tooFastToSeeSpeed = 100;
+  const barWidth = (speed < tooFastToSeeSpeed && isActive) ? 100 : isActive ? 100 : 0;
+  const barModeClass = speed < tooFastToSeeSpeed && autoMode && barWidth > 99 ? 'flash' : isActive ? 'smooth' : '';
   const automatedClass = autoMode ? 'automated' : '';
+
   return (
     <div className={`progress-bar-container ${isError ? 'error' : ''}`}>
       <div 
         className={`progress-bar ${barModeClass} ${automatedClass}`} 
         style={{ 
           width: `${barWidth}%`,
-          transitionDuration: `${speed}ms` // Dynamic transition duration in milliseconds
+          transitionDuration: `${speedFactored}ms` // Dynamic transition duration in milliseconds
         }}
       ></div>
       <div className="progress-label">

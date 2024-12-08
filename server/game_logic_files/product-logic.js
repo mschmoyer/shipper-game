@@ -1,9 +1,32 @@
 const { dbRun, dbGet, dbAll } = require('../database');
 const fs = require('fs');
 const path = require('path');
-const { gainXP } = require('./player-logic');
+const { gainXP, getPlayerInfo } = require('./player-logic');
 const { playerHasTechnology } = require('./technology-logic');
 const { XP_GAINED_PER_OPERATION } = require('../constants');
+
+const DEFAULT_BUILDING_STEPS = [
+  {
+    "step_code": "gathering_components",
+    "name": "Gathering Components"
+  },
+  {
+    "step_code": "assembling",
+    "name": "Assembling"
+  },
+  {
+    "step_code": "creating_purchase_order",
+    "name": "Creating Purchase Order"
+  },
+  {
+    "step_code": "shipping_new_stock",
+    "name": "Shipping New Stock"
+  },
+  {
+    "step_code": "adding_stock_to_shelf",
+    "name": "Adding Stock to Shelf"
+  }
+];
 
 const productTick = async (player, product, inventory, elapsed_time) => {
   let building_speed = Math.max(player.building_speed, 10);
@@ -101,29 +124,9 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
   return totalProducts;
 }
 
-const assignRandomProductToPlayer = async (playerId) => {
-  const products = await dbAll(
-    'SELECT id FROM products LIMIT 1',
-    [],
-    'Failed to retrieve random product'
-  );
-  console.log('products:', products);
-  const productId = products[0].id;
-  const new_product = await dbRun(
-    'INSERT INTO player_products (player_id, product_id) VALUES ($1, $2) RETURNING *',
-    [playerId, productId],
-    'Failed to assign product to player'
-  );
-  await dbRun(
-    'INSERT INTO inventory (player_id, product_id, on_hand) VALUES ($1, $2, $3)',
-    [playerId, productId, 0],
-    'Failed to add initial stock to inventory'
-  );
-  return new_product;
-};
-
-const getActiveProduct = async (playerId) => {
-  let product = await dbGet(
+const getActiveProduct = async (player) => {
+  const playerId = player.id;
+  const productRow = await dbGet(
     `SELECT p.*, 
       pp.product_id 
       FROM products p 
@@ -133,9 +136,10 @@ const getActiveProduct = async (playerId) => {
     'Failed to retrieve product info'
   );
 
-  const { building_steps, building_duration } = await getBuildingSteps(playerId);
-  product.building_steps = building_steps;
-  product.building_duration = building_duration;
+  if(!productRow) {
+    console.error('getActiveProduct - no product found for player:', playerId);
+    return { error: 'No product found' };
+  }
 
   const purchase_order = await dbGet(
     `SELECT *, 
@@ -151,6 +155,16 @@ const getActiveProduct = async (playerId) => {
   if(hasBundlesTech) {
     product.sales_price = product.sales_price * (hasBundlesTech ? hasBundlesTech : 1);
   }
+
+  // console.log('productRow:', productRow);
+  // console.log('player 1:', player);
+  //const building_steps = await getBuildingSteps(player.id);
+  // console.log('player 2:', player);
+  // console.log('bsData:', bsData);
+
+  let product = productRow;
+  //product.building_steps = building_steps;
+  product.building_duration = player.building_duration;
 
   const start_time = purchase_order && purchase_order.start_time ? new Date(purchase_order.start_time) : null;
   const elapsed_time = purchase_order ? purchase_order.elapsed_time : 0;
@@ -175,21 +189,12 @@ const getInventoryInfo = async (playerId) => {
 };
 
 const getBuildingSteps = async (playerId) => {
-  const stepsPath = path.join(__dirname, '../game_data_files/building-steps.json');
-  let building_steps = JSON.parse(fs.readFileSync(stepsPath, 'utf8'));
-
-  const player = await dbGet(
-    'SELECT building_speed FROM player WHERE id = $1',
-    [playerId],
-    'Failed to retrieve player building speed'
-  );
-
-  const building_speed_seconds = player.building_speed / 1000;
-
-  building_steps = building_steps.map(step => ({ ...step, duration: step.duration * building_speed_seconds }));
-
-  const building_duration = Math.round((building_steps.length * building_speed_seconds) * 1000);
-  return { building_steps, building_duration };
+  if (!playerId) {
+    console.error('getBuildingSteps - player parameter missing!');
+    return { error: 'Player not found' };
+  }
+  building_steps = DEFAULT_BUILDING_STEPS.map(step => ({ ...step }));
+  return building_steps;
 };
 
 const ProductCompleted = async (purchaseOrderId, playerId) => {
@@ -223,6 +228,8 @@ const getActivePurchaseOrder = async (playerId) => {
 }
 
 const startProductBuild = async (playerId) => {
+
+  const player = await getPlayerInfo(playerId);
   
   let activeOrder = await getActivePurchaseOrder(playerId);
 
@@ -232,21 +239,14 @@ const startProductBuild = async (playerId) => {
     return { error: 'An active purchase order is still in progress' };
   }
 
-  const { building_steps, building_duration } = await getBuildingSteps(playerId);
+  console.log('startProductBuild - playerId:', player.id);
 
-  const activeProduct = await getActiveProduct(playerId);
-
-  // Check if the player has enough money to build the product. costToBuild * quantity
-  const player = await dbGet(
-    'SELECT * FROM player WHERE id = $1',
-    [playerId],
-    'Failed to retrieve player info'
-  );
+  const activeProduct = await getActiveProduct(player);
 
   const quantity = player.products_per_build || 1;
-  const hasEnoughMoney = player.money >= activeProduct.cost_to_build * quantity;
 
   // NOTE: i'm letting people go negative...
+  // const hasEnoughMoney = player.money >= activeProduct.cost_to_build * quantity;
   // if (!hasEnoughMoney) {
   //   console.log('Player does not have enough money to build the product');
   //   return { error: 'You do not have enough money to build the product' };
@@ -263,11 +263,13 @@ const startProductBuild = async (playerId) => {
     'Failed to deduct money from player'
   );
 
+  const building_steps = await getBuildingSteps(playerId);
+
   const newPurchaseOrder = await dbRun(
     `INSERT INTO purchase_orders (player_id, start_time, duration, active, quantity, product_id) 
     VALUES 
     ($1, NOW(), $2, true, $3, $4) RETURNING id`,
-    [playerId, building_duration, quantity, activeProduct.id],
+    [playerId, player.building_duration, quantity, activeProduct.id],
     'Failed to start product build'
   );
 
@@ -279,7 +281,7 @@ const startProductBuild = async (playerId) => {
 
   return { 
     message: 'Product build started successfully.',
-    building_duration,
+    building_duration: player.building_duration,
     building_steps,
     costToBuild: activeProduct.cost_to_build,
     quantity,
@@ -288,7 +290,6 @@ const startProductBuild = async (playerId) => {
 };
 
 module.exports = {
-  assignRandomProductToPlayer,
   getActiveProduct,
   getInventoryInfo,
   getBuildingSteps,
