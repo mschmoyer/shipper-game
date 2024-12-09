@@ -9,19 +9,16 @@ const SYSTEM_PROMPT = "You are the AI game master behind a web e-commerce shippi
 
 async function generateProductDetailsWithOpenAI(businessName, name) {
 
-  let prompt = `Use the provided information to generate a fun, memorable 
-  product idea for an e-commerce business. A majority of the time you should generate
-  a completely random idea, but occasionally you can reach into cultural references
-  like movies, games, and shows for inspiration. Sometimes the business name can be 
-  wacky words or play on words. First, decide on which product you are going to create.
-  Then, think of the business name. Be sure to consider the marketability of it and 
-  the usefulness of e-commerce shipping to the business.`;
+  let prompt = `Generate a memorable e-commerce business that is shipping a product. Your task is to use the following
+  seed word and a creative approach to generate this fun enterprise for your player. If no seed word is generated, 
+  then draw from cultural references or real-world scenarios to craft a unique business name and product description.
+  The product should be related to the business name you generate.`;
 
-  if (!businessName) {
-    prompt += `The business name is ${businessName}.`;
+  if (businessName) {
+    prompt += `The seed word is: ${businessName}.`;
   }
 
-  // console.log('Prompting OpenAI with:', prompt);
+  console.log('Prompting OpenAI with:', prompt);
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4-turbo",

@@ -146,7 +146,7 @@ const BuildProductView = ({
 
   const product = gameInfo.product;
   const player = gameInfo.player;
-  const inventoryAuditProgressBarLabelText = `Manually auditing inventory for ${product.name}...`;
+  const inventoryAuditProgressBarLabelText = `Manually auditing inventory...`;
 
   const progPercent = (product.building_duration / 1000) * 100;
   const progress = (!product.is_building && product.building_duration < 1000 ? progPercent : product.progress);

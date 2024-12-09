@@ -68,6 +68,11 @@ const ShipOrderView = ({
       // Monitor if they have this tech
       const hasAutoShipTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_warehouse_worker');
+      if(gameInfo.inventory[0].on_hand <= gameInfo.player.products_per_order) {
+        setShippingError('Out of products to ship.'); 
+      } else {
+        setShippingError('');
+      }
       setIsAutoShipEnabled(hasAutoShipTech);
       setIsProgressBarActive(gameInfo.active_order && gameInfo.active_order.is_shipping);
       setIsWorkBeingDone(gameInfo.active_order && gameInfo.active_order.is_shipping); // Update work being done status

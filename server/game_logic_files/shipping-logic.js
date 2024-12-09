@@ -107,7 +107,7 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, orders) 
   const spawnRateMs = Math.max(player.order_spawn_milliseconds, 10) || BASE_ORDER_SPAWN_MILLISECONDS;
   
   // We depend on steps * step_duration until its too fast, then we go with shipping_speed...
-  const shipRateMs = Math.min(player.shipping_speed, player.shipping_duration);
+  const shipRateMs = player.shipping_duration;
 
   console.log(`GenerateOrders - PlayerId: ${player.id}, SpawnRateMs: ${spawnRateMs}, ShipRateMs: ${shipRateMs}, ElapsedTime: ${elapsed_time}`);
 
@@ -161,7 +161,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
   let existing_orders_shipped = 0;
   const existing_orders_to_mark_shipped = Math.min(Math.min(orders.length, new_orders_to_ship),available_stock);
   for (let i = 0; i < existing_orders_to_mark_shipped; i++) {
-    existing_orders_shipped += OrderCompleted(orders[i].id, player);
+    existing_orders_shipped += await OrderCompleted(orders[i].id, player);
     // money and stock for this order are handled in OrderCompleted. 
   }
 
@@ -282,8 +282,6 @@ const shipOrder = async (player) => {
     return { error: 'No orders available for shipping' };
   }
 
-  console.log('activeOrder:', activeOrder);
-
   const inventory = await getInventoryInfo(player.id);
 
   // If the player has inventory management tech, prevent overselling / bad effetcts. 
@@ -353,7 +351,6 @@ const getOrder = async (whereClause, params) => {
   //   order.shipping_steps = shipping_steps;
   //   order.total_duration = total_duration;
   // }
-  console.log('getOrder - order:', order);
   order.progress = Math.min((order.elapsed_time / order.duration) * 100, 100);
   order.is_shipping = order.progress < 100 ? true : false;
 
@@ -464,8 +461,6 @@ const OrderCompleted = async (orderId, player) => {
   let revenue = Math.round(product.sales_price * order.product_quantity);
   let order_state = OrderStates.Shipped;
   const productQuantity = order.product_quantity;
-
-  console.log('inventory:', inventory);
 
   if (inventory[0].on_hand < (productQuantity)) {
     // player did not have inventory to fulfill this order! PUNISH THEM!

@@ -11,10 +11,12 @@ const CreateNewPlayer = async (name, businessName) => {
 
   const aiData = await generateProductDetailsWithOpenAI(businessName, name);
 
-  if(!businessName) {
-    console.log('No business name provided. Using AI suggestion:', aiData.suggested_business_name);
-    businessName = aiData.suggested_business_name;
-  }
+  // if(!businessName) {
+  //   console.log('No business name provided. Using AI suggestion:', aiData.suggested_business_name);
+  //   businessName = aiData.suggested_business_name;
+  // }
+  businessName = aiData.suggested_business_name;
+  
   const existingPlayer = await dbGet(
     'SELECT * FROM player WHERE business_name = $1',
     [businessName],
@@ -186,7 +188,7 @@ const increaseBuildingSpeed = async (player) => {
 
 const increaseOrderSpawnRate = async (player) => {
   // console.log('Increasing order spawn rate for player:', playerId);
-  const orderSpawnBlazingSpeedFactor = 100;
+  const orderSpawnBlazingSpeedFactor = 500;
   // if player's current order_spawn_milliseconds is 1, do not decrease it further, instead increase the order_spawn_count
   if(player.order_spawn_milliseconds <= orderSpawnBlazingSpeedFactor) {
     const query = `UPDATE player SET order_spawn_milliseconds=$2, order_spawn_count = order_spawn_count + 1 WHERE id = $1 RETURNING order_spawn_count`;

@@ -43,7 +43,7 @@ const InitialView = ({ onAccountCreated }) => {
             required />
         </div>
         <div className="form-group">
-          <label>Your new enterprise is called (business name):</label>
+          <label>Choose a word that describes your enterprise:</label>
           <input 
             type="text" 
             value={businessName} 

@@ -23,6 +23,10 @@ const ProgressBar = ({ isError, isActive, labelText, progress, speed, autoMode }
   const barModeClass = speed < tooFastToSeeSpeed && autoMode && barWidth > 99 ? 'flash' : isActive ? 'smooth' : '';
   const automatedClass = autoMode ? 'automated' : '';
 
+  // log all our props in one line
+  console.log('ProgressBar - isActive:', isActive, 'isError:', isError, 'labelText:', labelText, 'progress:', progress, 'speed:', speed, 'autoMode:', autoMode);
+  
+
   return (
     <div className={`progress-bar-container ${isError ? 'error' : ''}`}>
       <div 

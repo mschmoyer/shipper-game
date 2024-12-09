@@ -20,6 +20,20 @@ const SkillsView = ({ player, isOpen, onClose }) => {
       <div className="available-points">⭐ Available Points: {player.available_points}</div>
       <table>
         <tbody>
+        <tr>
+            <td>Manufacturing</td>
+            <td>{player.building_points}</td>
+            <td>
+              <button 
+                className="square-button" 
+                onClick={() => handleUpgrade('building_points')} 
+                disabled={disableUpgrade}
+              >+</button>
+            </td>
+          </tr>
+          <tr>
+            <td colSpan="3" className="skill-description">Build products faster.</td>
+          </tr>
           <tr>
             <td>Logistics</td>
             <td>{player.shipping_points}</td>
@@ -33,20 +47,6 @@ const SkillsView = ({ player, isOpen, onClose }) => {
           </tr>
           <tr>
             <td colSpan="3" className="skill-description">Ship orders faster.</td>
-          </tr>
-          <tr>
-            <td>Manufacturing</td>
-            <td>{player.building_points}</td>
-            <td>
-              <button 
-                className="square-button" 
-                onClick={() => handleUpgrade('building_points')} 
-                disabled={disableUpgrade}
-              >+</button>
-            </td>
-          </tr>
-          <tr>
-            <td colSpan="3" className="skill-description">Build products faster.</td>
           </tr>
           <tr>
             <td>Product Innovation</td>
@@ -68,15 +68,18 @@ const SkillsView = ({ player, isOpen, onClose }) => {
       <h3 className="centered">Statistics</h3>
       <table>
         <tbody>
-          <tr><td>Avg. Order Arrival</td><td>{formatSpeed(player.order_spawn_milliseconds)}s</td></tr>
-          <tr><td>Order Spawn Count</td><td>{player.order_spawn_count}</td></tr>
-          <tr><td>Shipping Speed</td><td>{formatSpeed(player.shipping_duration)}s</td></tr>
-          <tr><td>Shipping Steps</td><td>{player.shipping_steps.length}</td></tr>
           <tr><td>Building Speed</td><td>{formatSpeed(player.building_duration)}s</td></tr>
           <tr><td>Building Steps</td><td>{player.building_steps.length}</td></tr>
-          <tr><td>Products per Order</td><td>{player.products_per_order}</td></tr>
           <tr><td>Products per Build</td><td>{player.products_per_build}</td></tr>
-          <tr><td>XP</td><td>{player.xp}</td></tr>
+          <tr><td colspan="2">--</td></tr>
+          <tr><td>Shipping Speed</td><td>{formatSpeed(player.shipping_duration)}s</td></tr>
+          <tr><td>Shipping Steps</td><td>{player.shipping_steps.length}</td></tr>
+          <tr><td>Items per Order</td><td>{player.products_per_order}</td></tr>
+          <tr><td colspan="2">--</td></tr>
+          <tr><td>Avg. Order Arrival</td><td>{formatSpeed(player.order_spawn_milliseconds)}s</td></tr>
+          <tr><td>Order Spawn Count</td><td>{player.order_spawn_count}</td></tr>
+          <tr><td colspan="2">--</td></tr>
+          <tr><td>XP to next:</td><td>{player.xp}</td></tr>
         </tbody>
       </table>
     </Drawer>

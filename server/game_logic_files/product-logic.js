@@ -29,9 +29,11 @@ const DEFAULT_BUILDING_STEPS = [
 ];
 
 const productTick = async (player, product, inventory, elapsed_time) => {
-  let building_speed = Math.max(player.building_speed, 10);
 
-  const products_to_build = Math.floor(elapsed_time / building_speed);
+  const products_to_build = Math.floor(elapsed_time / player.building_duration);
+
+  // log elapsed time, building duration, and products to build in one line
+  console.log('productTick - playerId:', player.id, 'elapsedTime:', elapsed_time, 'buildingDuration:', player.building_duration, 'productsToBuild:', products_to_build);
 
   // check if player has technology hire_fabricator
   const hasHireFabricator = await playerHasTechnology(player.id, 'hire_fabricator');
@@ -87,7 +89,7 @@ const CheckProductState = async (product, playerId) => {
 
 const _synthesizeBuiltProducts = async (player, product, inventory, products_to_build) => {
   if(products_to_build <= 0) {
-    return;
+    return 0;
   }
 
   let money = player.money;
@@ -120,13 +122,13 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
     );
   }
 
-  // console.log('_synthesizeBuiltProducts - productsToBuild:', products_to_build, 'productsBuilt:', totalProducts, 'costed:', totalCost);
+  console.log('_synthesizeBuiltProducts - productsToBuild:', products_to_build, 'productsBuilt:', totalProducts, 'costed:', totalCost, 'player.products_per_build:', player.products_per_build);
   return totalProducts;
 }
 
 const getActiveProduct = async (player) => {
   const playerId = player.id;
-  const productRow = await dbGet(
+  const product = await dbGet(
     `SELECT p.*, 
       pp.product_id 
       FROM products p 
@@ -136,7 +138,7 @@ const getActiveProduct = async (player) => {
     'Failed to retrieve product info'
   );
 
-  if(!productRow) {
+  if(!product) {
     console.error('getActiveProduct - no product found for player:', playerId);
     return { error: 'No product found' };
   }
@@ -155,14 +157,7 @@ const getActiveProduct = async (player) => {
   if(hasBundlesTech) {
     product.sales_price = product.sales_price * (hasBundlesTech ? hasBundlesTech : 1);
   }
-
-  // console.log('productRow:', productRow);
-  // console.log('player 1:', player);
-  //const building_steps = await getBuildingSteps(player.id);
-  // console.log('player 2:', player);
-  // console.log('bsData:', bsData);
-
-  let product = productRow;
+  
   //product.building_steps = building_steps;
   product.building_duration = player.building_duration;
 
