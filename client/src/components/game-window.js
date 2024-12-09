@@ -7,10 +7,12 @@ import TechnologyTree from './technology-tree';
 import ShipOrderView from './ship-order-view';
 import BuildProductView from './build-product-view';
 import SkillsView from './skills-view'; // Import the new SkillsView component
+import NetworkView from './network-view'; // Import the new NetworkView component
 
 const GameWindow = ({ gameInfo }) => {
   const [isTechViewVisible, setIsTechViewVisible] = useState(false);
   const [isSkillsViewVisible, setIsSkillsViewVisible] = useState(false); // Add state for skills view
+  const [isNetworkViewVisible, setIsNetworkViewVisible] = useState(false); // Add state for network view
   const [affordableTechCount, setAffordableTechCount] = useState(0);
 
   useEffect(() => {
@@ -24,6 +26,10 @@ const GameWindow = ({ gameInfo }) => {
 
   const openSkillsView = () => {
     setIsSkillsViewVisible(true); // Function to open skills view
+  };
+
+  const openNetworkView = () => {
+    setIsNetworkViewVisible(true); // Function to open network view
   };
 
   return (
@@ -50,6 +56,10 @@ const GameWindow = ({ gameInfo }) => {
             <div className="points-badge visible">{gameInfo.player.available_points}</div>
           )}
         </button>
+        <button className="tech-button" onClick={openNetworkView}>
+          🌐
+          <div className="tech-label">Network</div>
+        </button>
       </div>
       <TechnologyTree
         gameInfo={gameInfo}
@@ -60,6 +70,10 @@ const GameWindow = ({ gameInfo }) => {
         player={gameInfo.player} // Pass player data to SkillsView
         isOpen={isSkillsViewVisible}
         onClose={() => setIsSkillsViewVisible(false)}
+      />
+      <NetworkView
+        isOpen={isNetworkViewVisible}
+        onClose={() => setIsNetworkViewVisible(false)}
       />
     </div>
   );

@@ -1,0 +1,50 @@
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 20px;
+}
+
+h3 {
+  margin: 0;
+}
+
+p {
+  margin: 5px 0;
+}
+
+.network-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.network-table th, .network-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.network-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.network-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.network-table tr:hover {
+  background-color: #ddd;
+}
+
+.network-table td div {
+  margin-bottom: 5px;
+}
+
+.business-name {
+  font-weight: bold;
+  font-size: 1.2em;
+}

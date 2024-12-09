@@ -55,18 +55,7 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
         <div>📦 Shipped: {player.final_orders_shipped}</div>
         <div>{getReputationEmoji(player.final_reputation)} Reputation: {player.final_reputation}</div>
       </div>
-      <h2>Acquired Technologies:</h2>
-      <div className="tech-grid-container">
-        {gameInfo.acquired_technologies ? (
-          gameInfo.acquired_technologies.map((tech, index) => (
-            <div key={index} className="end-game-tech-tree-emoji" title={tech.name}>
-              {tech.emoji}
-            </div>
-          ))
-        ) : (
-          <p>No technologies acquired.</p>
-        )}
-      </div>
+      <button className="new-game-button" onClick={onNewGame}>Start a New Business</button>
       <div className="banner-ad">
         <a href="https://www.shipstation.com" target="_blank" rel="noopener noreferrer" className="banner-link">
           <img src="https://www.shipstation.com/wp-content/uploads/2024/08/shipstation.svg" alt="ShipStation Logo" />
@@ -79,7 +68,19 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
         {(Array.isArray(endGameText) ? endGameText : []).map((text, index) => (
           <li key={index}>{text}</li>
         ))}
-      </ul>      
+      </ul>
+      <h2>Acquired Technologies:</h2>
+      <div className="tech-grid-container">
+        {gameInfo.acquired_technologies ? (
+          gameInfo.acquired_technologies.map((tech, index) => (
+            <div key={index} className="end-game-tech-tree-emoji" title={tech.name}>
+              {tech.emoji}
+            </div>
+          ))
+        ) : (
+          <p>No technologies acquired.</p>
+        )}
+      </div>  
       <button className="new-game-button" onClick={onNewGame}>Start a New Business</button>
     </div>
   );

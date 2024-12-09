@@ -119,3 +119,7 @@ export const endGame = () => {
     return response;
   });
 };
+
+export const fetchNetworkData = () => {
+  return apiCall(`${baseUrl}/network-data`);
+};

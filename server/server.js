@@ -10,7 +10,7 @@ const { gameTick, handleTruckToWarehouseGameCompletion, handleFindTheProductHays
 const { getAllTechnologyWithState, getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
 const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
 const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
-const { getPlayerInfo, expirePlayer, upgradeSkill, toggleBuildingAutomation } = require('./game_logic_files/player-logic'); // Import the upgradeSkill and toggleBuildingAutomation functions
+const { getPlayerInfo, expirePlayer, upgradeSkill, toggleBuildingAutomation, getNetworkData } = require('./game_logic_files/player-logic'); // Import the upgradeSkill and toggleBuildingAutomation functions
 const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
 
 const app = express();
@@ -215,6 +215,15 @@ app.get('/api/leaderboard', async (req, res) => {
     res.json(leaderboardData);
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve leaderboard data' });
+  }
+});
+
+app.get('/api/network-data', async (req, res) => {
+  try {
+    const networkData = await getNetworkData();
+    res.json(networkData);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve network data' });
   }
 });
 

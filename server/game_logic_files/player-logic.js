@@ -365,6 +365,43 @@ const generateProductForPlayer = async (playerId, businessName, name, aiData) =>
   return productId;
 };
 
+let networkDataCache = {
+  data: null,
+  timestamp: 0
+};
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+
+const getNetworkData = async () => {
+  const currentTime = Date.now();
+
+  if (networkDataCache.data && (currentTime - networkDataCache.timestamp < CACHE_DURATION)) {
+    return networkDataCache.data;
+  }
+
+  const query = `
+    SELECT p.id, p.name, p.business_name, p.orders_shipped, 
+           pr.emoji as product_emoji, pr.name AS product_name, pr.category AS product_category, pr.description AS product_description,
+           inv.on_hand AS inventory_on_hand,
+           COALESCE(STRING_AGG(t.emoji, ' '), 'None') AS technology_emojis
+    FROM player p
+    JOIN player_products pp ON p.id = pp.player_id
+    JOIN products pr ON pp.product_id = pr.id
+    JOIN inventory inv ON p.id = inv.player_id AND pr.id = inv.product_id
+    LEFT JOIN acquired_technologies at ON p.id = at.player_id
+    LEFT JOIN technologies t ON at.tech_id = t.id
+    WHERE p.active = true
+    GROUP BY pr.emoji, p.id, pr.name, pr.category, pr.description, inv.on_hand
+  `;
+  const data = await dbAll(query, [], 'Failed to retrieve network data');
+
+  networkDataCache = {
+    data,
+    timestamp: currentTime
+  };
+
+  return data;
+};
+
 module.exports = {
   getPlayerInfo,
   CreateNewPlayer,
@@ -374,5 +411,6 @@ module.exports = {
   updateLastGameUpdate,
   gainXP,
   toggleBuildingAutomation,
-  generateProductForPlayer
+  generateProductForPlayer,
+  getNetworkData,
 };
