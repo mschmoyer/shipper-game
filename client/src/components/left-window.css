@@ -8,6 +8,7 @@
   color: #000000;
   max-height: calc(100vh - 150px); /* Adjust 150px to the actual height of the info-panel */
   overflow-y: auto;
+  min-width: 85px; /* Ensure a minimum width */
 }
 
 .order-card {
@@ -64,6 +65,7 @@
     overflow-y: auto;
     background-color: #ffffff;
     max-width: 85px;
+    min-width: 85px; /* Ensure a minimum width */
   }
 
   .p {

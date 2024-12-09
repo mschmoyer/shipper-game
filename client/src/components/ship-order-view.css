@@ -54,35 +54,6 @@
   line-height: 30px; /* Align text vertically within the progress bar */
 }
 
-.product-info {
-  min-width: 500px;
-  margin-left: 20px; /* Add space between button and product info */
-  padding: 10px;
-  background-color: #ffffff;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  cursor: pointer; /* Add cursor pointer for clickable product name */
-}
-
-.product-info h3 {
-  margin-top: 0;
-  font-size: 16px;
-  color: #000000;
-}
-
-.product-info p {
-  margin: 5px 0;
-  font-size: 14px;
-  color: #555555;
-}
-
-.product-info img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 5px;
-  margin-top: 10px;
-}
-
 .cost-info {
   margin-top: 10px;
   font-size: 14px;
@@ -153,7 +124,7 @@
 }
 
 .ship-order-progress-bar-container {
-  width: calc(100% - 340px);
+  width: calc(100% - 260px);
   margin-bottom: 0px;
 }
 
@@ -163,7 +134,7 @@
   }
 
   .ship-order-progress-bar-container {
-    width: 100%;
+    width: calc(100% - 20px);
   }
 
   .product-info {

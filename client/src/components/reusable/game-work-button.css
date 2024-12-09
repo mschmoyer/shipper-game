@@ -1,6 +1,8 @@
 .game-work-button {
   width: 120px;
-  height: 100%;
+  height: 120px;
+  min-width: 120px;
+  min-height: 120px;
   border-radius: 8px; /* Rounded corners */
   border: none;
   background: #0d6e3f;
@@ -17,7 +19,7 @@
   font-size: 15px;
   font-weight: 700;
   line-height: 20px;
-  padding: 13px 16px;
+  padding: 10px 20px;
   text-align: center;
   vertical-align: middle;
   width: 120px;
@@ -76,7 +78,8 @@
 
 @media (max-width: 600px) {
   .game-work-button {
-    width: 80px;
+    min-width: 80px;
+    min-height: 80px;
     height: 80px;
     font-size: 14px;
   }

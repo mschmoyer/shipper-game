@@ -19,6 +19,7 @@
   max-width: 1200px;
   justify-content: space-between;
   border: 1px solid #acacac;
+  height: calc(100vh - 150px); /* Adjust 150px to the actual height of the info-panel */
 }
 
 .main-content {
@@ -28,7 +29,7 @@
   align-items: center;
   background-color: #f1f2f3;
   color: #000000;
-  
+  width: calc(100vh - 85vh);
 }
 
 .centered-container {
