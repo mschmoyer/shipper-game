@@ -7,7 +7,7 @@
   background-color: #f1f2f3;
   color: #000000;
   margin-top: 20px;
-  max-width: 600px;
+  min-width: 600px;
 }
 
 .thing-button-container {
@@ -124,6 +124,7 @@
 @media (max-width: 600px) {
   .game-window {
     margin-top: 0;
+    min-width: auto;
   }
   
   .tech-button {

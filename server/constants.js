@@ -12,7 +12,7 @@ const GAME_MAX_SHIPPING_DISTANCE = 550;
 const SPEED_BOOST_FACTOR = 200;
 
 const XP_GAINED_PER_OPERATION = 10;
-const BASE_XP_FOR_SKILL_POINT = 100;
+const BASE_XP_FOR_SKILL_POINT = 50;
 
 const OrderStates = Object.freeze({
   AwaitingShipment: 'AwaitingShipment',

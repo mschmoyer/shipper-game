@@ -2,18 +2,29 @@
   text-align: center;
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  background-color: #e0f2e9; /* light green background */
-  border-radius: 10px;
   max-width: 500px;
-  margin: 50px auto;
+  flex-grow: 1; /* Allow the component to grow and fill available space */
+}
+
+.login-box {
+  margin: 40px 10px 10px 10px;
+  padding: 10px;
+  background-color: #e6e6e6;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: fit-content;
+  border: 1px solid #a9a9a9; /* Medium gray border */
+  border-radius: 5px; /* Border radius */
 }
 
 /* Remove .game-title styles */
 .game-description {
   font-size: 1.2em;
   color: #666;
+  margin-bottom: 20px;
+}
+
+.initial-view-title-image {
+  width: 50%;
   margin-bottom: 20px;
 }
 
@@ -33,6 +44,8 @@
   font-size: 1em;
   color: #333;
   margin-bottom: 5px;
+  margin-left: 10px;
+  text-align: left; /* Left align the labels */
 }
 
 .form-group input {
@@ -70,4 +83,10 @@
 .loading-message {
   color: #007bff; /* blue color */
   margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+  .initial-view-title-image {
+    width: 70%;
+  }
 }

@@ -10,19 +10,18 @@ const Leaderboard = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isOpen) {
-      setLoading(true);
-      fetchLeaderboard()
-        .then(data => {
-          setLeaderboardData(data);
-          setLoading(false);
-        })
-        .catch(error => {
-          console.error('Failed to fetch leaderboard:', error);
-          setLoading(false);
-        });
-    }
-  }, [isOpen]);
+    setLoading(true);
+    fetchLeaderboard()
+      .then(data => {
+        console.log('Leaderboard data:', data);
+        setLeaderboardData(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to fetch leaderboard:', error);
+        setLoading(false);
+      });
+  }, []);
 
   if (loading) {
     return (

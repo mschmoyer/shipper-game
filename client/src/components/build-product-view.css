@@ -53,6 +53,7 @@
   flex-wrap: wrap; /* Allow items to wrap */
   margin-top: 10px;
   margin-bottom: 10px;
+  overflow-x: hidden;
 }
 
 .build-info p {

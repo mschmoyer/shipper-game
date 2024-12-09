@@ -74,7 +74,7 @@ const SkillsView = ({ player, isOpen, onClose }) => {
           <tr><td colspan="2">--</td></tr>
           <tr><td>Shipping Speed</td><td>{formatSpeed(player.shipping_duration)}s</td></tr>
           <tr><td>Shipping Steps</td><td>{player.shipping_steps.length}</td></tr>
-          <tr><td>Items per Order</td><td>{player.products_per_order}</td></tr>
+          <tr><td>Order Batch Size</td><td>{player.orders_per_ship}</td></tr>
           <tr><td colspan="2">--</td></tr>
           <tr><td>Avg. Order Arrival</td><td>{formatSpeed(player.order_spawn_milliseconds)}s</td></tr>
           <tr><td>Order Spawn Count</td><td>{player.order_spawn_count}</td></tr>

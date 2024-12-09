@@ -6,7 +6,7 @@ const HowToPlay = ({ isOpen, onClose, gameTitle }) => {
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="How To Play">
       <div className="how-to-play-content">
-        <p>Welcome to {gameTitle}! 🚢</p>
+        <p>Welcome to Ship & Click Tycoon! 🚢</p>
         <h3>Game Loop</h3>
         <p>1. Build products.</p>
         <p>2. Ship orders as quickly and efficiently as possible.</p>

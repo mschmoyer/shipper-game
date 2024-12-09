@@ -79,14 +79,6 @@ const App = () => {
       .catch(error => console.error('Failed to check session:', error));
   };
 
-  const toggleLeaderboard = () => {
-    setIsLeaderboardOpen(!isLeaderboardOpen);
-  };
-
-  const toggleHowToPlay = () => {
-    setIsHowToPlayOpen(!isHowToPlayOpen);
-  };
-
   const handleResetPlayer = () => {
     resetPlayer()
       .then(data => {
@@ -123,18 +115,13 @@ const App = () => {
     return (
       <div className="App">
         <div className="centered-container">
-          <TitleBar 
-            gameTitle={gameTitle}
-            gameSubTitle={gameSubTitle}
-            onEndGame={handleEndGame} 
-            onToggleLeaderboard={toggleLeaderboard} 
-            onHowToPlay={toggleHowToPlay} 
-            onSettings={handleSettings} 
-            isGameActive={gameInfo && gameInfo.game_active}
-          />
-          <InitialView onAccountCreated={handleAccountCreated} />
-
           <InfoPanel gameInfo={gameInfo} />
+          <InitialView onAccountCreated={handleAccountCreated} />
+          <TitleBar 
+            onEndGame={handleEndGame} 
+            isGameActive={gameInfo && gameInfo.game_active}
+            gameInfo={gameInfo}
+          />          
         </div>
       </div>
     );
@@ -161,29 +148,16 @@ const App = () => {
                     gameInfo={gameInfo} 
                     onNewGame={handleNewGame} 
                   />
-                )}
-                <Leaderboard
-                  isOpen={isLeaderboardOpen}
-                  onClose={toggleLeaderboard}
-                />
-                <HowToPlay
-                  isOpen={isHowToPlayOpen}
-                  onClose={toggleHowToPlay}
-                  gameTitle={gameTitle}
-                />
+                )}                
               </div>
               {false && 
                 <RightWindow />
               }
             </div>
             <TitleBar 
-              gameTitle={gameTitle}
-              gameSubTitle={gameSubTitle}
               onEndGame={handleEndGame} 
-              onToggleLeaderboard={toggleLeaderboard} 
-              onHowToPlay={toggleHowToPlay} 
-              onSettings={handleSettings} 
               isGameActive={gameInfo && gameInfo.game_active}
+              gameInfo={gameInfo}
             />
             
           </>

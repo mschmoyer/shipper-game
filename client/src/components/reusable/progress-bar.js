@@ -15,6 +15,10 @@ const ProgressBar = ({ isError, isActive, labelText, progress, speed, autoMode }
   ];  
   const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
+  // spit out all the props on one line
+  console.log('ProgressBar - isActive:', isActive, 'isError:', isError, 
+    'labelText:', labelText, 'progress:', progress, 'speed:', speed, 'autoMode');
+
   // Factor in about a ~1 second poll delay. 
   const speedFactored = Math.max(speed - 100, 100);
 
@@ -22,6 +26,7 @@ const ProgressBar = ({ isError, isActive, labelText, progress, speed, autoMode }
   const barWidth = (speed < tooFastToSeeSpeed && isActive) ? 100 : isActive ? 100 : 0;
   const barModeClass = speed < tooFastToSeeSpeed && autoMode && barWidth > 99 ? 'flash' : isActive ? 'smooth' : '';
   const automatedClass = autoMode ? 'automated' : '';
+  const shouldHide = barWidth === 0 ? 'hidden' : '';
 
   // log all our props in one line
   console.log('ProgressBar - isActive:', isActive, 'isError:', isError, 'labelText:', labelText, 'progress:', progress, 'speed:', speed, 'autoMode:', autoMode);
@@ -30,7 +35,7 @@ const ProgressBar = ({ isError, isActive, labelText, progress, speed, autoMode }
   return (
     <div className={`progress-bar-container ${isError ? 'error' : ''}`}>
       <div 
-        className={`progress-bar ${barModeClass} ${automatedClass}`} 
+        className={`progress-bar ${barModeClass} ${automatedClass} ${shouldHide}`} 
         style={{ 
           width: `${barWidth}%`,
           transitionDuration: `${speedFactored}ms` // Dynamic transition duration in milliseconds

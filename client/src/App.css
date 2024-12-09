@@ -6,20 +6,20 @@
   align-items: center;
   justify-content: center; /* Center horizontally */
   font-family: Arial, sans-serif;
-  overflow-x: hidden;
-  max-width: 1200px;
   margin: 0 auto; /* Center horizontally */
   background-color: #f1f2f3;
   border-radius: 10px;
+  height: 100vh; /* Make the App component fill the viewport height */
+  overflow-x: hidden; /* Prevents horizontal scrolling */
+  max-width: 100%;    /* Ensures the element doesn't exceed the viewport width */
+  box-sizing: border-box; /* Accounts for padding and borders within the element's width */
 }
 
 .content-wrapper {
   display: flex;
-  width: 100%;
   max-width: 1200px;
   justify-content: space-between;
-  border: 1px solid #acacac;
-  height: calc(100vh - 265px);
+  height: calc(100vh - 65px);
 }
 
 .main-content {
@@ -29,16 +29,13 @@
   align-items: center;
   background-color: #f1f2f3;
   color: #000000;
-  width: calc(100vh - 85vh);
 }
 
 .centered-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   height: 100%;
   width: 100%;
   margin: 0 auto; /* Center horizontally */
-  
 }

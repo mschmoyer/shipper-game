@@ -64,9 +64,12 @@
   display: flex; /* Add flex display */
   flex-wrap: wrap; /* Allow items to wrap */
   margin: 10px;
+  overflow-x: hidden;
 }
 
 .shipping-info p {
+  text-wrap:nowrap;
+  font-size: 14px;
   flex: 1 1 calc(50% - 20px); /* Flex items to take up half the container width minus the gap */
 }
 

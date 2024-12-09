@@ -49,12 +49,15 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
       <h2>{message.title}</h2>
       <p>{player.expiration_reason === 'hostile_takeover_by_another_player' ? player.hostile_takeover_player_name : ''} {message.description}</p>
 
-      <h3>End Game Summary:</h3>
+      <h3>🤖 Thoughts from AI Assistant:</h3>
       <ul>
         {(Array.isArray(endGameText) ? endGameText : []).map((text, index) => (
           <li key={index}>{text}</li>
         ))}
       </ul>
+
+      <button className="new-game-button" onClick={onNewGame}>Start another one!</button>
+
       <div className="banner-ad">
         <a href="https://www.shipstation.com" target="_blank" rel="noopener noreferrer" className="banner-link">
           <img src="https://www.shipstation.com/wp-content/uploads/2024/08/shipstation.svg" alt="ShipStation Logo" />
@@ -74,7 +77,6 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
           <p>No technologies acquired.</p>
         )}
       </div>  
-      <button className="new-game-button" onClick={onNewGame}>Start a New Business</button>
     </div>
   );
 };

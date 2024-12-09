@@ -6,6 +6,7 @@
   color: #000000;
   padding: 20px;
   overflow: overlay;
+  overflow-x: hidden;
 }
 
 .end-game-view p {
@@ -59,6 +60,7 @@
   cursor: pointer;
   transition: background 0.3s, transform 0.1s;
   margin: 20px;
+  animation: pulsate 1.5s infinite;
 }
 
 .new-game-button:hover {
@@ -117,6 +119,18 @@
   height: 50px;
   width: 50px;
   cursor: pointer;
+}
+
+@keyframes pulsate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @media (max-width: 600px) {

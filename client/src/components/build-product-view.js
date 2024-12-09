@@ -145,20 +145,29 @@ const BuildProductView = ({
   }, [showOnHandCount, inventoryProgress]);
 
   const product = gameInfo.product;
+  console.log('product:', product);
   const player = gameInfo.player;
   const inventoryAuditProgressBarLabelText = `Manually auditing inventory...`;
 
   const progPercent = (product.building_duration / 1000) * 100;
   const progress = (!product.is_building && product.building_duration < 1000 ? progPercent : product.progress);
 
+  let current_step = Math.floor(product.progress / (100 / player.building_steps.length));
+  current_step = Math.max(player.building_steps.length-1, current_step);
+  current_step = Math.min(0, current_step);
+  console.log('current_step:', current_step);
   const labelText = buildError || 
-    (product.is_building ? `${player.building_steps[Math.floor(product.progress / (100 / player.building_steps.length))].name}` 
+    (product.is_building ? `${player.building_steps[current_step].name}` 
     : `Build some products!`);
+
+  const isActiveForBar = product.is_building || isActive;
 
   return (
     <div className="build-product-container">        
       <div className="build-product-info">
-        <h3 onClick={toggleModal}><span className="build-product-emoji">{product.emoji}</span> {product.name}</h3>
+        <h3 onClick={toggleModal}>
+          <span className="build-product-emoji">{product.emoji}</span> {product.name}
+        </h3>
 
         {isModalOpen && (
           <div className="modal">

@@ -61,23 +61,30 @@ const InfoPanel = ({ gameInfo }) => {
     return <span className={`delta-label ${getDeltaClass(delta)}`}>{delta > 0 ? `+${delta}` : delta}</span>;
   };
 
+  const orders_shipped_value = player.orders_shipped ? player.orders_shipped : 0;
+  const inventory_value = gameInfo && gameInfo.inventory ? gameInfo.inventory[0].on_hand : 0;
+  const money_value = player.money ? player.money : 1000;
+  const reputation_value = player.reputation ? player.reputation.score : 100;
+
   return (
     <div className="info-panel">
       <div className="info-values">
-        <p>🌐 {player.business_name}</p>
-        <p className={player.money < 0 ? 'negative-money' : ''}>
-          💰 ${formatCurrency(player.money)}
-          {renderDelta(deltas.money)}
-        </p>
-        <p>
-          {isMobileMode ? '📦' : '📦 Shipped:'} {player.orders_shipped}
-          {renderDelta(deltas.orders_shipped)}
-        </p>
-        <p>
-          {getReputationEmoji(player.reputation.score)} {isMobileMode ? '' : 'Reputation: '}{player.reputation.score}
-          {renderDelta(deltas.reputation)}
-        </p>
-        <p>{isMobileMode ? '⏳' : '⏳ Time Remaining:'} {formatTimeRemaining(gameInfo && gameInfo.timeRemaining ? gameInfo.timeRemaining : 0)}</p>
+        <div className={money_value < 0 ? 'negative-money' : ''}>
+          <p className="info-values-emoji">💰</p>
+          <p>{!isMobileMode ? 'Funds: ' : ''}${formatCurrency(money_value)}{renderDelta(deltas.money)}</p>
+        </div>
+        <div>
+          <p className="info-values-emoji">📦</p>
+          <p>{!isMobileMode ? 'Shipped: ' : ''}{orders_shipped_value}{renderDelta(deltas.orders_shipped)}</p>
+        </div>
+        <div>
+          <p className="info-values-emoji">{getReputationEmoji(reputation_value)}</p>
+          <p>{!isMobileMode ? 'Reputation: ' : ''}{reputation_value}{renderDelta(deltas.reputation)}</p>
+        </div>
+        <div>
+          <p className="info-values-emoji">⏳</p>
+          <p>{!isMobileMode ? 'Time Left: ' : ''}{formatTimeRemaining(gameInfo && gameInfo.timeRemaining ? gameInfo.timeRemaining : 15 * 60)}</p>
+        </div>
       </div>
     </div>
   );

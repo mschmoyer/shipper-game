@@ -7,14 +7,18 @@
 }
 
 .info-panel h1 {
-  font-size: 24px;
+  font-size: 16px;
   margin-bottom: 10px;
 }
 
 .info-panel .info-values {
   display: flex;
   justify-content: space-around;
-  font-size: 20px;
+  font-size: 16px;
+}
+
+.info-panel .info-values div {
+  text-align: center;
 }
 
 .info-panel p {
@@ -27,13 +31,12 @@
 }
 
 .delta-negative {
-  animation: deltaUp 1s ease-in-out;
+  animation: deltaDown 1s ease-in-out;
   color: red;
 }
 
 .delta-label {
   position: absolute;
-  animation: deltaAnimation 2s ease-in-out;
   font-size: 30px;
   font-weight: 700;
   margin-left: -50px;
@@ -63,7 +66,7 @@
     opacity: 1;
   }
   100% {
-    transform: translateY(20px);
+    transform: translateY(30px);
     opacity: 0;
   }
 }
@@ -74,14 +77,14 @@
     opacity: 1;
   }
   100% {
-    transform: translateY(-20px);
+    transform: translateY(-30px);
     opacity: 0;
   }
 }
 
 @media (max-width: 600px) {
-  .info-panel p{
-    font-size: 12px;
+  .info-panel .info-values div p {
+    margin: 2px 0;
   }
   .delta-label {
     font-size: 18px;

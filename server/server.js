@@ -60,6 +60,12 @@ app.get('/api/game-info', async (req, res) => {
   
   // const progress = active_order ? Math.min((active_order.elapsed_time / active_order.duration) * 100, 100) : 0;
   // const is_shipping = active_order ? progress < 100 : false;
+  if(gData.productsBuilt > 0) {
+    product.is_building = true;
+  }
+  if(gData.ordersShipped > 0) {
+    active_order.is_shipping = true;
+  }
 
   res.json({
     active_order,

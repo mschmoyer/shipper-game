@@ -3,11 +3,11 @@
         "name": "default_player",
         "business_name": "default_business",
         "money": 1000,
-        "order_spawn_milliseconds": 15000,
+        "order_spawn_milliseconds": 12000,
         "order_spawn_count": 1,
         "orders_per_ship": 1,
-        "shipping_speed": 1600,
-        "building_speed": 2000,
+        "shipping_speed": 1000,
+        "building_speed": 1000,
         "products_per_order": 1,
         "products_per_build": 3,
         "progress": 0,
@@ -25,6 +25,6 @@
         "building_points": 0,
         "order_spawn_points": 0,
         "available_points": 3,
-        "xp": 100
+        "xp": 50
     }
 ]

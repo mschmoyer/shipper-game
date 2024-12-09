@@ -5,6 +5,7 @@
   background: linear-gradient(180deg, #a4a4a4, #f0f0f0, #a4a4a4);
   border-radius: 0 16px 16px 0;
   border: 1px solid #000000;
+  left: -2px;
 }
 
 .progress-bar-container.error {

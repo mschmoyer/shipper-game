@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import './title-bar.css';
+import gameTitleImage from '../images/game-title.png'; // Adjust the path if you move the image
+import Leaderboard from './leaderboard';
+import HowToPlay from './how-to-play';
 
-const TitleBar = ({ gameTitle, gameSubTitle, onEndGame, onToggleLeaderboard, onHowToPlay, isGameActive }) => {
+const TitleBar = ({ onEndGame, isGameActive, gameInfo }) => {
   const [showModal, setShowModal] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
 
   const handleEndGameClick = () => {
     setShowModal(true);
@@ -17,12 +22,25 @@ const TitleBar = ({ gameTitle, gameSubTitle, onEndGame, onToggleLeaderboard, onH
     setShowModal(false);
   };
 
+  const toggleLeaderboard = () => {
+    setIsLeaderboardOpen(!isLeaderboardOpen);
+  };
+
+  const toggleHowToPlay = () => {
+    setIsHowToPlayOpen(!isHowToPlayOpen);
+  };
+
   return (
     <div className="title-bar">
       <div>
-        <h1>{gameTitle}</h1>
-        <h2 className="subtitle">{gameSubTitle}</h2>
+        <img src={gameTitleImage} alt="Game Title" className="game-title-image" />
       </div>
+      {gameInfo && (
+        <div className="title-player-info">    
+          <p>{gameInfo.player.business_name}</p>
+          <p>Owner: {gameInfo.player.name}</p>
+        </div>
+      )}
       <div className="button-group">
         {isGameActive && (
           <button className="title-bar-button" onClick={handleEndGameClick}>
@@ -30,11 +48,11 @@ const TitleBar = ({ gameTitle, gameSubTitle, onEndGame, onToggleLeaderboard, onH
             <span>Abandon</span>
           </button>
         )}
-        <button className="title-bar-button" onClick={onToggleLeaderboard}>
+        <button className="title-bar-button" onClick={toggleLeaderboard}>
           <span role="img" aria-label="Leaderboard">📊</span>
           <span>Leaders</span>
         </button>
-        <button className="title-bar-button" onClick={onHowToPlay}>
+        <button className="title-bar-button" onClick={toggleHowToPlay}>
           <span role="img" aria-label="How To Play">📖</span>
           <span>Help</span>
         </button>
@@ -50,6 +68,14 @@ const TitleBar = ({ gameTitle, gameSubTitle, onEndGame, onToggleLeaderboard, onH
           </div>
         </div>
       )}
+      <Leaderboard
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+      />
+      <HowToPlay
+        isOpen={isHowToPlayOpen}
+        onClose={() => setIsHowToPlayOpen(false)}
+      />
     </div>
   );
 };

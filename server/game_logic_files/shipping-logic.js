@@ -17,7 +17,7 @@ const DEFAULT_SHIPPING_STEPS = [
   },
   {
     "step_code": "input_weights_dimensions",
-    "name": "Inputting Product Weights & Dimension"
+    "name": "Inputting Weights & Dimension"
   },
   {
     "step_code": "select_carrier",
@@ -29,7 +29,7 @@ const DEFAULT_SHIPPING_STEPS = [
   },
   {
     "step_code": "adjust_insurance_confirmation",
-    "name": "Adjusting Insurance and Confirmation"
+    "name": "Packing the box(s)"
   },
   {
     "step_code": "print_label",
@@ -37,10 +37,14 @@ const DEFAULT_SHIPPING_STEPS = [
   }
 ];
 
-
-
-
 const OrderTick = async (player, product, inventory, elapsed_time, active_order) => {
+
+  // console.log('order_shipped:', player.orders_shipped, 'products_built:', player.products_built);
+  if(player.orders_shipped === 0 && player.products_built === 0) {
+    // Player has not done anything yet, don't start generating orders. 
+    // console.log('OrderTick - Player has not done anything yet, not generating orders');
+    return { orders: [], secondsUntilNextOrder: 0, ordersShipped: 0 };
+  }
 
   const orders = await getOrderList(
     'player_id = $1 AND active = true',

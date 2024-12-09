@@ -34,7 +34,6 @@ const OrderView = ({ gameInfo }) => {
           </div>
         );
       })}
-      {orders.length > 10 && <p>({orders.length - 10} more)</p>}
       {orders.length < 10 && Array.from({ length: 10 - orders.length }).map((_, index) => (
         <div key={`empty-${index}`} className="order-card empty">
           {index === 0 && secondsUntilNextOrder > 0 ? (

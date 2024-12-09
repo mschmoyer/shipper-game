@@ -4,7 +4,7 @@
 export const messages = {
   debt_limit_reached: {
     title: "Game Over!",
-    description: "Your business has reached its debt limit and is now bankrupt."
+    description: "Your business has reached its debt limit and is now bankrupt. 💸"
   },
   time_expired: {
     title: "Congratulations!",
@@ -12,14 +12,14 @@ export const messages = {
   },
   reputation_too_low: {
     title: "Game Over!",
-    description: "Your business has lost all credibility and is now bankrupt."
+    description: "Your business has lost all credibility and is now bankrupt. 💀"
   },
   walked_away: {
     title: "Game Over!",
-    description: "You walked away from the business."
+    description: "You walked away from the business. 😔"
   },
   hostile_takeover_by_another_player: {
     title: "Hostile Takeover!",
-    description: " has wrested control of your business from you!"
+    description: " has wrested control of your business from you! 💀"
   }
 };
