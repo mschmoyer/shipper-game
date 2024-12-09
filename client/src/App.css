@@ -19,7 +19,7 @@
   max-width: 1200px;
   justify-content: space-between;
   border: 1px solid #acacac;
-  height: calc(100vh - 150px); /* Adjust 150px to the actual height of the info-panel */
+  height: calc(100vh - 265px);
 }
 
 .main-content {

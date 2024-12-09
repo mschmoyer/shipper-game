@@ -1,12 +1,13 @@
 .game-window {
   width: 100%;
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
   align-items: center;
   background-color: #f1f2f3;
   color: #000000;
-  flex-grow: 1;
   margin-top: 20px;
+  max-width: 600px;
 }
 
 .thing-button-container {
@@ -16,7 +17,6 @@
   background-color: #f1f2f3;
   color: #000000;
   flex-grow: 1;
-  margin-top: 20px;
 }
 
 .modal {
@@ -63,7 +63,8 @@
   position: relative; /* Add position relative to contain the badge */
   margin-top: auto;
   margin-right: 10px;
-  width: 150px; 
+  width: 30%;
+  max-width: 150px;
   height: 40px;
   border-radius: 10px 10px 0 0; /* Remove bottom left and bottom right corners */
   background: #0d6e3f;
@@ -126,7 +127,6 @@
   }
   
   .tech-button {
-    width: 120px;
     height: 35px;
     font-size: 14px;
   }

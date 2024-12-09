@@ -33,7 +33,7 @@ const productTick = async (player, product, inventory, elapsed_time) => {
   const products_to_build = Math.floor(elapsed_time / player.building_duration);
 
   // log elapsed time, building duration, and products to build in one line
-  console.log('productTick - playerId:', player.id, 'elapsedTime:', elapsed_time, 'buildingDuration:', player.building_duration, 'productsToBuild:', products_to_build);
+  // console.log('productTick - playerId:', player.id, 'elapsedTime:', elapsed_time, 'buildingDuration:', player.building_duration, 'productsToBuild:', products_to_build);
 
   // check if player has technology hire_fabricator
   const hasHireFabricator = await playerHasTechnology(player.id, 'hire_fabricator');
@@ -68,7 +68,7 @@ const productTick = async (player, product, inventory, elapsed_time) => {
   }
 
   if(hasHireFabricator && !player.activeProducts) {
-    console.log('productTick - player automated and no build. Starting product build');
+    // console.log('productTick - player automated and no build. Starting product build');
     await startProductBuild(player.id);
   }
   
@@ -122,7 +122,7 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
     );
   }
 
-  console.log('_synthesizeBuiltProducts - productsToBuild:', products_to_build, 'productsBuilt:', totalProducts, 'costed:', totalCost, 'player.products_per_build:', player.products_per_build);
+  // console.log('_synthesizeBuiltProducts - productsToBuild:', products_to_build, 'productsBuilt:', totalProducts, 'costed:', totalCost, 'player.products_per_build:', player.products_per_build);
   return totalProducts;
 }
 
@@ -234,7 +234,7 @@ const startProductBuild = async (playerId) => {
     return { error: 'An active purchase order is still in progress' };
   }
 
-  console.log('startProductBuild - playerId:', player.id);
+  // console.log('startProductBuild - playerId:', player.id);
 
   const activeProduct = await getActiveProduct(player);
 
@@ -248,7 +248,7 @@ const startProductBuild = async (playerId) => {
   // }
 
   // log everything important in one line
-  console.log('startProductBuild - playerId:', playerId, 'product:', activeProduct.name, 'quantity:', quantity, 'costToBuild:', activeProduct.cost_to_build, 'totalCost:', activeProduct.cost_to_build * quantity);
+  // console.log('startProductBuild - playerId:', playerId, 'product:', activeProduct.name, 'quantity:', quantity, 'costToBuild:', activeProduct.cost_to_build, 'totalCost:', activeProduct.cost_to_build * quantity);
 
   const totalBuildCost = activeProduct.cost_to_build * quantity;
   // Deduct the money. 

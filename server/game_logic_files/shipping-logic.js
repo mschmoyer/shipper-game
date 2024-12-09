@@ -109,12 +109,12 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, orders) 
   // We depend on steps * step_duration until its too fast, then we go with shipping_speed...
   const shipRateMs = player.shipping_duration;
 
-  console.log(`GenerateOrders - PlayerId: ${player.id}, SpawnRateMs: ${spawnRateMs}, ShipRateMs: ${shipRateMs}, ElapsedTime: ${elapsed_time}`);
+  // console.log(`GenerateOrders - PlayerId: ${player.id}, SpawnRateMs: ${spawnRateMs}, ShipRateMs: ${shipRateMs}, ElapsedTime: ${elapsed_time}`);
 
   // log the number of orders we are spawning and shipping per second, note that our variables are in milliseconds
   const spawnsPerSecond = 1000 / spawnRateMs;
   const shipsPerSecond = 1000 / shipRateMs;
-  console.log(`GenerateOrders - SpawnsPerSecond: ${spawnsPerSecond}, ShipsPerSecond: ${shipsPerSecond}`);
+  // console.log(`GenerateOrders - SpawnsPerSecond: ${spawnsPerSecond}, ShipsPerSecond: ${shipsPerSecond}`);
 
 
   let orders_to_generate = Math.max(0, Math.floor(elapsed_time / spawnRateMs)) * player.order_spawn_count;
@@ -124,7 +124,7 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, orders) 
   
   let ordersShipped = 0;
 
-  console.log('GenerateOrders - orders_to_generate:', orders_to_generate, 'new_orders_to_ship:', new_orders_to_ship, 'orders.length:', orders.length);
+  // console.log('GenerateOrders - orders_to_generate:', orders_to_generate, 'new_orders_to_ship:', new_orders_to_ship, 'orders.length:', orders.length);
   ordersShipped = await _synthesizeShippedOrders(player, new_orders_to_ship, product, inventory, orders);
 
   // only generate orders we didn't already ship within this game tick, up to MAXIMUM_ORDER_QUEUE_SIZE
@@ -137,9 +137,9 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, orders) 
     }
   }
 
-  if( orders_to_generate > 0 || new_orders_to_ship > 0) {
-    console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${orders.length}`);
-  }
+  // if( orders_to_generate > 0 || new_orders_to_ship > 0) {
+  //   console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${orders.length}`);
+  // }
   return ordersShipped;
 }
 
@@ -169,7 +169,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
   available_stock -= existing_orders_shipped * player.products_per_order;
   new_orders_to_ship -= existing_orders_shipped;
 
-  console.log(`_synthesizeShippedOrders - ExistingOrdersShipped: ${existing_orders_shipped}, NewOrdersToShip: ${new_orders_to_ship}`);
+  // console.log(`_synthesizeShippedOrders - ExistingOrdersShipped: ${existing_orders_shipped}, NewOrdersToShip: ${new_orders_to_ship}`);
 
   const hasBundleTech = await playerHasTechnology(player.id, 'bundles');
 
@@ -184,9 +184,9 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
 
       const sales_price = product.sales_price * (hasBundleTech ? hasBundleTech : 1);
       const revenue = (sales_price - product.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
-      if(i == 0) {
-        console.log(`_synthesizeShippedOrders - Distance: ${distance}, Revenue: ${revenue}, SalesPrice: ${product.sales_price}`);
-      }
+      // if(i == 0) {
+      //   console.log(`_synthesizeShippedOrders - Distance: ${distance}, Revenue: ${revenue}, SalesPrice: ${product.sales_price}`);
+      // }
       totalRevenue += revenue;
     } else {
       break;
@@ -207,7 +207,6 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       [totalOrdersShipped, totalRevenue, player.id],
       'Failed to update player orders_shipped, total_money_earned, and money'
     );
-    // console.log(playerRow[0]);
 
     // update inventory counts
     const invRow = await dbRun(
@@ -216,7 +215,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       'Failed to update inventory on_hand'
     );
   }
-  console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
+  // console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
   return totalOrdersShipped;
 }
 
@@ -258,7 +257,7 @@ const shipOrder = async (player) => {
   
   let activeOrder = await getActiveOrder(player.id);
   const shippedOrders = await CheckOrderState(activeOrder, player);
-  console.log('shipOrder - activeOrder:', activeOrder, 'shippedOrders:', shippedOrders);
+  // console.log('shipOrder - activeOrder:', activeOrder, 'shippedOrders:', shippedOrders);
   if (activeOrder && shippedOrders === 0) {
     // An order is already being shipped AND has not finished. 
     return { error: 'An active order is still in progress' };
@@ -302,7 +301,7 @@ const shipOrder = async (player) => {
   const total_products_shipped = Math.min(inventory[0].on_hand, player.products_per_order * player.orders_per_ship);
   const total_shipping_cost = Math.round(shippingData.shipping_cost * total_products_shipped);
 
-  console.log('ShipOrder - total_products_shipped:', total_products_shipped, 'total_shipping_cost:', total_shipping_cost);
+  // console.log('ShipOrder - total_products_shipped:', total_products_shipped, 'total_shipping_cost:', total_shipping_cost);
 
   await dbRun(
     `UPDATE orders 
@@ -315,7 +314,7 @@ const shipOrder = async (player) => {
 
   activeOrder = await getActiveOrder(player.id);
 
-  console.log('ShipOrder: deducting money from player');
+  // console.log('ShipOrder: deducting money from player');
   await dbRun(
     'UPDATE player SET money = money - $1, progress = 0 WHERE id = $2',
     [total_shipping_cost, player.id],

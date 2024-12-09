@@ -1,7 +1,7 @@
 import React from 'react';
-import './left-window.css';
+import './order-view.css';
 
-const LeftWindow = ({ gameInfo }) => {
+const OrderView = ({ gameInfo }) => {
   const { orders, active_order, secondsUntilNextOrder } = gameInfo;
   const isMobileMode = window.innerWidth <= 600;
 
@@ -23,24 +23,23 @@ const LeftWindow = ({ gameInfo }) => {
   const sortedOrders = [...orders].sort((a, b) => (a.id === activeOrderId ? -1 : b.id === activeOrderId ? 1 : 0));
 
   return (
-    <div className="left-window">
-      {sortedOrders.slice(0, 9).map((order, index) => {
+    <div className="order-view">
+      {sortedOrders.slice(0, 10).map((order, index) => {
         const timeDelta = getTimeDelta(order.delta_to_due_date, order.id === activeOrderId);
         return (
           <div key={index} className={`order-card ${order.id === activeOrderId ? 'active' : ''} ${timeDelta.isUrgent ? 'urgent' : ''} ${timeDelta.isVeryUrgent ? 'very-urgent' : ''}`}>
-            <p>{!isMobileMode ? 'Order' : ''} #{order.id} {order.id === activeOrderId && '🚚'}</p>
-            <p>Due: {isMobileMode ? timeDelta.text : `Due in ${timeDelta.text}`} {timeDelta.isVeryUrgent ? '🔥' : timeDelta.isUrgent && '⚠️'}</p>
-            <p>{!isMobileMode ? 'Dist: ' : ''} {order.distance} mi</p>
+            <p>Order: {timeDelta.isVeryUrgent ? '🔥' : timeDelta.isUrgent && '⚠️'}</p>
+            <p> {!isMobileMode ? '' : ''} #{order.id} {order.id === activeOrderId && '🚚'}</p>
+            <p>⏳ {isMobileMode ? timeDelta.text : `${timeDelta.text}`}</p>
           </div>
         );
       })}
-      {orders.length > 9 && <p>({orders.length - 7} more)</p>}
-      {orders.length < 9 && Array.from({ length: 7 - orders.length }).map((_, index) => (
+      {orders.length > 10 && <p>({orders.length - 10} more)</p>}
+      {orders.length < 10 && Array.from({ length: 10 - orders.length }).map((_, index) => (
         <div key={`empty-${index}`} className="order-card empty">
           {index === 0 && secondsUntilNextOrder > 0 ? (
             <>
               <p>{isMobileMode ? 'Next:' : 'New Order in:'} {secondsUntilNextOrder}s...</p>
-              <p>.</p>
               <p>🚚</p>
             </>
           ) : (
@@ -56,4 +55,4 @@ const LeftWindow = ({ gameInfo }) => {
   );
 };
 
-export default LeftWindow;
+export default OrderView;

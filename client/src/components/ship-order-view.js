@@ -99,7 +99,6 @@ const ShipOrderView = ({
 
   const player = gameInfo.player;
   const product = gameInfo.product;
-  const firstItem = gameInfo.inventory[0];
 
   const totalProfit = Math.round((product.sales_price * player.products_per_order) - product.cost_to_build - shippingCost);
 
@@ -112,7 +111,15 @@ const ShipOrderView = ({
       {showShipOrderProblemMinigame && 
         <FindTheProductHaystackGame onClose={() => setShowShipOrderProblemMinigame(false)} />
       } 
-      <div className="ship-button-container">
+      <div className="shipping-info">
+        <p>📦 Order Items: {player.products_per_order}</p>
+        <p>📊 Batch Size: {player.orders_per_ship}</p>
+        <p>📏 Distance: {gameInfo.active_order ? gameInfo.active_order.distance : '--'} miles</p>
+        <p>🚚 Shipping: ${gameInfo.active_order ? gameInfo.active_order.shipping_cost : '--'}</p>
+        <p>💰 Sale Price: ${product.sales_price}</p>
+        <p>💵 Profit: ${totalProfit}</p>
+      </div>
+      <div className="shipping-main-bar">
         <GameWorkButton
           autoShip={isAutoShipEnabled}
           onClick={handleShipOrder}
@@ -121,27 +128,6 @@ const ShipOrderView = ({
           titleWhenWorking="Shipping..."
           hotkey="S"
         />
-        <div className="product-info">
-          <h3>{gameInfo.active_order ? `Order #: ${gameInfo.active_order.id}` : 'Idle'}</h3>
-          <div className="cost-info">
-            <div className="shipping-info">
-              <p>📦 Order Items: {player.products_per_order}</p>
-              <p>📊 Batch Size: {player.orders_per_ship}</p>
-            </div>
-            <div className="profit-info">
-              <p>📏 Distance: {gameInfo.active_order ? gameInfo.active_order.distance : '--'} miles</p>
-              <p>🚚 Shipping: ${gameInfo.active_order ? gameInfo.active_order.shipping_cost : '--'}</p>
-            </div>
-            {firstItem && (
-              <div className="inventory-info">
-                <p>💰 Sale Price: ${product.sales_price}</p>
-                <p>💵 Profit: ${totalProfit}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="ship-order-progress-bar-container">
         <ProgressBar
           isError={!!shippingError}
           isActive={isProgressBarActive} // Use state variable for progress bar active status

@@ -11,10 +11,6 @@ const CreateNewPlayer = async (name, businessName) => {
 
   const aiData = await generateProductDetailsWithOpenAI(businessName, name);
 
-  // if(!businessName) {
-  //   console.log('No business name provided. Using AI suggestion:', aiData.suggested_business_name);
-  //   businessName = aiData.suggested_business_name;
-  // }
   businessName = aiData.suggested_business_name;
   
   const existingPlayer = await dbGet(
@@ -160,11 +156,9 @@ const increaseShippingSpeed = async (player) => {
   if(player.shipping_speed <= shippingBlazingSpeedFactor) {
     const query = `UPDATE player SET shipping_speed=$2, orders_per_ship = orders_per_ship + 1 WHERE id = $1 RETURNING orders_per_ship`;
     await dbRun(query, [player.id, shippingBlazingSpeedFactor], 'Failed to increase products per order');
-    console.log('Increased products per order');
   } else {
     const query = `UPDATE player SET shipping_speed = GREATEST(shipping_speed - $1, $3) WHERE id = $2 RETURNING shipping_speed`;
     await dbRun(query, [SPEED_BOOST_FACTOR, player.id, shippingBlazingSpeedFactor], 'Failed to increase shipping speed');
-    console.log('Increased shipping speed');
   }
   return;
 };
@@ -176,7 +170,6 @@ const increaseBuildingSpeed = async (player) => {
 
   // if player's current building_speed is 1, do not decrease it further, instead increase the products_per_build
   if(player.building_speed <= buildBlazingSpeedFactor) {
-    console.log('Increasing products per build');
     const query = `UPDATE player SET building_speed=$2, products_per_build = products_per_build + 1 WHERE id = $1 RETURNING products_per_build`;
     await dbRun(query, [player.id, buildBlazingSpeedFactor], 'Failed to increase products per build');
   } else {
@@ -187,7 +180,6 @@ const increaseBuildingSpeed = async (player) => {
 };
 
 const increaseOrderSpawnRate = async (player) => {
-  // console.log('Increasing order spawn rate for player:', playerId);
   const orderSpawnBlazingSpeedFactor = 500;
   // if player's current order_spawn_milliseconds is 1, do not decrease it further, instead increase the order_spawn_count
   if(player.order_spawn_milliseconds <= orderSpawnBlazingSpeedFactor) {
@@ -200,8 +192,6 @@ const increaseOrderSpawnRate = async (player) => {
 }
 
 const addSkillPoints = async (player, points) => {
-  // console.log('Adding skill points for player:', playerId);
-  console.log('Adding skill points:', points, ' for player:', player.name, ' (', player.id, ')');
   const query = `UPDATE player SET available_points = LEAST(available_points + $1, 999) WHERE id = $2`;
   await dbRun(query, [points, player.id], 'Failed to add skill points');
 }
@@ -254,8 +244,6 @@ const upgradeSkill = async (playerId, skill) => {
       return { success: false, error: 'Invalid skill' };
   }
 
-  console.log('upgradeSkill - playerId:', playerId, 'player.name:', player.name, 'skill:', skill);
-
   await dbRun(query, [playerId], 'Failed to upgrade skill');
   return { success: true };
 };
@@ -302,7 +290,6 @@ async function expirePlayer(player, reason = 'expired') {
 }
 
 const toggleBuildingAutomation = async (playerId) => {
-  console.log('Toggling building automation for player:', playerId);
   const player = await dbRun(
     'UPDATE player SET building_automation_enabled = NOT building_automation_enabled WHERE id = $1 RETURNING building_automation_enabled',
     [playerId],

@@ -19,8 +19,8 @@ const NetworkView = ({ isOpen, onClose }) => {
           <tr>
             <th>Business</th>
             <th>Inventory</th>
-            <th>Orders Shipped</th>
-            <th>Technologies Purchased</th>
+            <th>Shipped</th>
+            <th>Tech</th>
           </tr>
         </thead>
         <tbody>
@@ -29,8 +29,8 @@ const NetworkView = ({ isOpen, onClose }) => {
               <td>
                 <div className="business-name">{player.business_name}</div>
                 <div>Owner: {player.name}</div>
-                <div>Selling: {player.product_emoji} {player.product_name}s</div>
-                <div>Category: {player.product_category}</div>
+                <div>{player.product_emoji} {player.product_name}s</div>
+                <div><i>{player.product_category}</i></div>
               </td>
               <td>{player.inventory_on_hand}</td>
               <td>{player.orders_shipped}</td>

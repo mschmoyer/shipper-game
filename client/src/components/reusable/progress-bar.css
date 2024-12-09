@@ -2,8 +2,8 @@
   position: relative;
   width: 100%;
   height: 37px;
-  background: linear-gradient(180deg, #696969, #afafaf, #696969);
-  border-radius: 5px;
+  background: linear-gradient(180deg, #a4a4a4, #f0f0f0, #a4a4a4);
+  border-radius: 0 16px 16px 0;
   border: 1px solid #000000;
 }
 
@@ -14,6 +14,7 @@
 .progress-bar {
   height: 100%;
   background: linear-gradient(0deg, #0b5a34, #82d3ac,  #0b5a34);
+  border-radius: 0 16px 16px 0;
   border-right: 2px solid #000000;
   transition: none; /* Disable transition for instant reset */
 }

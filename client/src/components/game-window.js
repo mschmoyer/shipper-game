@@ -15,6 +15,8 @@ const GameWindow = ({ gameInfo }) => {
   const [isNetworkViewVisible, setIsNetworkViewVisible] = useState(false); // Add state for network view
   const [affordableTechCount, setAffordableTechCount] = useState(0);
 
+  const isMobileMode = window.innerWidth <= 600;
+
   useEffect(() => {
     const affordableCount = gameInfo.technology.filter(tech => tech.cost <= gameInfo.player.money && tech.acquired_id === null).length;
     setAffordableTechCount(affordableCount);
@@ -44,7 +46,7 @@ const GameWindow = ({ gameInfo }) => {
       <div className="thing-button-container">
         <button className="tech-button" onClick={openTechView}>
           🛠️
-          <div className="tech-label">Technology</div>
+          <div className="tech-label">{isMobileMode ? 'Tech' : 'Technology'}</div>
           {affordableTechCount > 0 && (
             <div className="points-badge visible">{affordableTechCount}</div>
           )}

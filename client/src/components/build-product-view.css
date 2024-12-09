@@ -1,47 +1,19 @@
 .build-product-container {
-  width: 100%;
-  display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 10px;
+  padding: 10px;
+  background-color: #ffffff;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
-.build-button-container {
+.build-main-bar {
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 10px;
-}
-
-.build-button {
-  width: 120px;
-  height: 120px;
-  border-radius: 15px; /* Rounded corners */
-  border: none;
-  background: #0d6e3f;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.1s;
-}
-
-.build-button:hover {
-  background: #0b5a34;
-  transform: scale(0.95); /* Push-in animation */
-}
-
-.build-button:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-}
-
-.build-button.auto-build {
-  background: linear-gradient(145deg, #ff8c00, #ff4500);
-}
-
-.build-button.auto-build:hover {
-  background: linear-gradient(145deg, #ff4500, #ff8c00);
+  justify-content: space-between;
+  width: 100%;
 }
 
 .building-state {
@@ -55,73 +27,46 @@
   line-height: 30px; /* Align text vertically within the progress bar */
 }
 
-.product-info {
-  min-width: 500px;
-  max-width: 100%; /* Ensure the container does not stretch beyond its parent */
-  margin-left: 20px;
-  background-color: #ffffff;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.build-product-info {
   cursor: pointer; /* Add cursor pointer for clickable product name */
   word-wrap: break-word; /* Ensure long text wraps within the container */
 }
 
-.product-info h3 {
-  margin-top: 0;
+.build-product-info h3 {
   font-size: 16px;
   color: #000000;
-  padding: 10px;
 }
 
-.product-info p {
+.build-product-info p {
   margin: 5px 0;
   font-size: 14px;
   color: #555555;
 }
 
-.product-info img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 5px;
-  margin-top: 10px;
-}
-
-.product-emoji {
+.build-product-emoji {
   font-size: 24px;
   margin-right: 10px;
 }
 
-.cost-info {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #000000;
-  text-align: left; /* Left-align text */
+.build-info {
   display: flex; /* Add flex display */
-  justify-content: space-between; /* Space between the three sections */
-  padding: 10px;
+  flex-wrap: wrap; /* Allow items to wrap */
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
-.cost-info p {
-  margin: 5px 0;
+.build-info p {
   cursor: pointer; /* Add cursor pointer for hoverable total cost */
+  flex: 1 1 calc(50% - 20px); /* Flex items to take up half the container width minus the gap */
 }
 
-.cost-info table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.cost-info td {
-  padding: 5px 10px;
-}
-
-.shipping-info, .profit-info, .inventory-info {
+.build-col1-info, .build-col2-info, .build-col3-info {
   width: 30%; /* Set width to make them side by side */
   display: flex; /* Add flex display */
   flex-direction: column; /* Ensure items stack vertically within each column */
 }
 
-.inventory-info button {
+.build-info button {
   background: #0d6e3f;
   color: white;
   border: none;
@@ -131,7 +76,7 @@
   transition: background 0.3s;
 }
 
-.inventory-info button:hover {
+.build-col3-info button:hover {
   background: #0b5a34;
 }
 
@@ -207,33 +152,7 @@
 
 @media (max-width: 600px) {
   .build-product-container {
-    margin-bottom: 4px;
-  }
-
-  .build-button-container {
-    margin-bottom: 4px;
-  }
-
-  .product-info {
-    min-width: 100%;
-    width: 80px;
-    padding: 2px;
-  }
-
-  .cost-info {
-    flex-direction: column;
-  }
-
-  .shipping-info, .profit-info, .inventory-info {
-    width: 100%;
-  }
-
-  .inventory-info button {
-    width: 150px;
-  }
-  
-  .build-product-progress-bar-container {
-    width: calc(100% - 20px);
+    width: auto;
   }
 }
 

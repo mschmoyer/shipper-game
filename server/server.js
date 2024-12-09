@@ -44,10 +44,6 @@ app.get('/api/game-info', async (req, res) => {
     return res.status(401).json({ error: 'No player found' });
   }
 
-  console.log('');
-  console.log('');
-  console.log('GameTick for player:', player.id);
-
   const available_technologies = await getAvailableTechnologies(req.session.playerId);
   const acquired_technologies = await getAcquiredTechnologies(req.session.playerId);
   const technology = await getAllTechnologyWithState(req.session.playerId);
@@ -90,9 +86,6 @@ app.post('/api/ship-order', async (req, res) => {
   if (!req.session.playerId) {
     return res.status(401).json({ error: 'No player session' });
   }
-  console.log('');
-  console.log('');
-  console.log('Shipping order for player:', req.session.playerId);
   const player = await getPlayerInfo(req.session.playerId);
   const result = await shipOrder(player);
   if (result.error) {
@@ -231,7 +224,6 @@ app.get('/api/network-data', async (req, res) => {
 app.use(express.static(path.join(__dirname, '../client/build')));
 
 app.get('*', (req, res) => {
-  console.log('Serving index.html');
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 

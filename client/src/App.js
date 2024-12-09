@@ -7,7 +7,7 @@ import Leaderboard from './components/leaderboard';
 import HowToPlay from './components/how-to-play';
 import EndGameView from './components/end-game-view';
 import { checkSession, fetchGameInfo, resetPlayer, endGame } from './api';
-import LeftWindow from './components/left-window';
+import OrderView from './components/order-view';
 import TitleBar from './components/title-bar';
 import RightWindow from './components/right-window';
 import Cookies from 'js-cookie';
@@ -36,7 +36,7 @@ const App = () => {
 
   // The big Game Info fetcher loop
   useEffect(() => {
-    if (isLoggedIn && ((gameInfo && gameInfo.game_status === 'active' || !gameInfo))) {
+    if (isLoggedIn && ((gameInfo && gameInfo.game_status === 'active') || !gameInfo)) {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
@@ -45,9 +45,7 @@ const App = () => {
               setGameInfo(null);
             } else {
               setGameInfo(data);
-              if (!data.game_active) {
-                setIsGameActive(false);
-              }
+              setIsGameActive(data.game_active);
             }
           })
           .catch(error => console.error('Failed to load game info:', error));
@@ -147,19 +145,12 @@ const App = () => {
       <div className="centered-container">
         {gameInfo && (
           <>
-            <TitleBar 
-              gameTitle={gameTitle}
-              gameSubTitle={gameSubTitle}
-              onEndGame={handleEndGame} 
-              onToggleLeaderboard={toggleLeaderboard} 
-              onHowToPlay={toggleHowToPlay} 
-              onSettings={handleSettings} 
-              isGameActive={gameInfo && gameInfo.game_active}
-            />
+            <InfoPanel gameInfo={gameInfo} />
+            {gameInfo.game_active && 
+              <OrderView gameInfo={gameInfo} />
+            }
             <div className="content-wrapper">
-              {gameInfo.game_active && 
-                <LeftWindow gameInfo={gameInfo} />
-              }
+              
               <div className="main-content">
                 {gameInfo.game_active ? (
                   <GameWindow 
@@ -184,8 +175,17 @@ const App = () => {
               {false && 
                 <RightWindow />
               }
-            </div>            
-            <InfoPanel gameInfo={gameInfo} />
+            </div>
+            <TitleBar 
+              gameTitle={gameTitle}
+              gameSubTitle={gameSubTitle}
+              onEndGame={handleEndGame} 
+              onToggleLeaderboard={toggleLeaderboard} 
+              onHowToPlay={toggleHowToPlay} 
+              onSettings={handleSettings} 
+              isGameActive={gameInfo && gameInfo.game_active}
+            />
+            
           </>
         )}
       </div>

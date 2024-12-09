@@ -5,17 +5,16 @@
   background-color: #f1f2f3;
   color: #000000;
   padding: 20px;
-}
-
-.end-game-view h2 {
-  font-size: 2em;
-  margin-bottom: 5px;
-  margin-top: 0px;
+  overflow: overlay;
 }
 
 .end-game-view p {
   font-size: 1.2em;
   margin-bottom: 5px;
+}
+
+.end-game-view h3 {
+  margin-top: 20px;
 }
 
 .end-game-view ul {
@@ -59,6 +58,7 @@
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.3s, transform 0.1s;
+  margin: 20px;
 }
 
 .new-game-button:hover {
@@ -82,7 +82,7 @@
   background-color: #ffffff;
   border: 1px solid #ddd;
   padding: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

@@ -9,6 +9,10 @@ const { GAME_TIME_LIMIT_SECONDS, GAME_DEBT_LIMIT } = require('../constants');
 // This is the main game loop. Called once per second on each client. 
 const gameTick = async (player, product, inventory, active_order) => {
   
+  if(!player.active) {
+    return { game_status: 'inactive', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired: 0 };
+  }
+
   const timeSinceLastUpdate = await updateLastGameUpdate(player.id, player.last_game_update);
 
   const secondsUntilGameExpired = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsed_time, 0);
@@ -43,12 +47,7 @@ const gameTick = async (player, product, inventory, active_order) => {
 };
 
 const handleTruckToWarehouseGameCompletion = async (playerId, succeeded) => {
-  if (succeeded) {
-    // Handle success logic, e.g., reward player
-    console.log(`Player ${playerId} succeeded in Truck to Warehouse game.`);
-  } else {
-    // Handle failure logic, e.g., penalize player
-    console.log(`Player ${playerId} failed in Truck to Warehouse game.`);
+  if (!succeeded) {
     await dbRun(
       'UPDATE inventory SET on_hand = 0 WHERE player_id = $1',
       [playerId],
@@ -58,12 +57,8 @@ const handleTruckToWarehouseGameCompletion = async (playerId, succeeded) => {
 };
 
 const handleFindTheProductHaystackGameCompletion = async (playerId, succeeded) => {
-  if (succeeded) {
-    // Handle success logic, e.g., reward player
-    console.log(`Player ${playerId} succeeded in Find the Product Haystack game.`);
-  } else {
+  if (!succeeded) {
     // Handle failure logic, e.g., penalize player
-    console.log(`Player ${playerId} failed in Find the Product Haystack game.`);
     const player = await dbGet('SELECT money FROM player WHERE id = $1', [playerId], 'Failed to retrieve player money');
     const deduction = Math.min(1000, player.money);
     await dbRun(

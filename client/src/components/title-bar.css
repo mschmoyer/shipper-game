@@ -146,10 +146,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-left: 10px;
   }
 
   .subtitle {
     font-size: 12px;
+    margin-left: 10px;
   }
 
   .title-bar-button {

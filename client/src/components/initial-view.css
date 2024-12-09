@@ -1,5 +1,7 @@
 .initial-view {
   text-align: center;
+  display: flex;
+  flex-direction: column;
   padding: 20px;
   background-color: #e0f2e9; /* light green background */
   border-radius: 10px;

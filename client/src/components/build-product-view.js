@@ -156,8 +156,41 @@ const BuildProductView = ({
     : `Build some products!`);
 
   return (
-    <div className="build-product-container">
-      <div className="build-button-container">
+    <div className="build-product-container">        
+      <div className="build-product-info">
+        <h3 onClick={toggleModal}><span className="build-product-emoji">{product.emoji}</span> {product.name}</h3>
+
+        {isModalOpen && (
+          <div className="modal">
+            <div className="modal-content">
+              <span className="close" onClick={toggleModal}>&times;</span>
+              <h3>{product.emoji} {product.name}</h3>
+              <p>📝 Description: {product.description}</p>
+              <p>⚖️ Weight: {product.weight} kg</p>
+              <p>💵 Cost: ${product.cost_to_build}</p>
+              <p>💲 Price: ${product.sales_price}</p>
+            </div>
+          </div>
+        )}
+        <div className="build-info">
+          <p>🔢 Built Qty: {gameInfo.player.products_per_build}</p>
+          <p>💰 Build Cost: ${product.cost_to_build}</p>
+          {hasInventoryTech ? (
+            <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+          ) : (
+            showOnHandCount ? (
+              <p className={!hasInventoryTech ? "blurred-value" : ""}>📦 {gameInfo.inventory[0].on_hand} on hand</p>
+            ) : (
+              inventoryProgress > 0 && inventoryProgress < 100 ? (
+                <p>Auditing...</p>
+              ) : (
+                <button onClick={handleCheckInventory}>Check Inventory</button>
+              )
+            )
+          )}
+        </div>
+      </div>
+      <div className="build-main-bar">
         <GameWorkButton
           autoShip={isAutoBuildEnabled}
           onClick={handleGameWorkButtonClick}
@@ -166,52 +199,14 @@ const BuildProductView = ({
           titleWhenWorking="Building..."
           hotkey="B"
         />
-        <div className="product-info">
-          <h3 onClick={toggleModal}><span className="product-emoji">{product.emoji}</span> {product.name}</h3>
-
-          {isModalOpen && (
-            <div className="modal">
-              <div className="modal-content">
-                <span className="close" onClick={toggleModal}>&times;</span>
-                <h3>{product.emoji} {product.name}</h3>
-                <p>📝 Description: {product.description}</p>
-                <p>⚖️ Weight: {product.weight} kg</p>
-                <p>💵 Cost: ${product.cost_to_build}</p>
-                <p>💲 Price: ${product.sales_price}</p>
-              </div>
-            </div>
-          )}
-          <div className="cost-info">
-            <div className="shipping-info">
-              <p>🔢 Built Qty: {gameInfo.player.products_per_build}</p>
-            </div>
-            <div className="profit-info">
-              <p>💰 Build Cost: ${product.cost_to_build}</p>
-            </div>
-            {gameInfo.inventory[0] && (
-              <div className={`inventory-info ${gameInfo.inventory[0].on_hand <= 0 ? 'low-inventory' : ''}`}>
-                {hasInventoryTech ? (
-                  <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
-                ) : (
-                  showOnHandCount ? (
-                    <p className={!hasInventoryTech ? "blurred-value" : ""}>📦 {gameInfo.inventory[0].on_hand} on hand</p>
-                  ) : (
-                    inventoryProgress > 0 && inventoryProgress < 100 ? (
-                      <ProgressBar 
-                        isActive={true} 
-                        progress={inventoryProgress} 
-                        labelText="Auditing..."
-                        speed={2000}
-                      />
-                    ) : (
-                      <button onClick={handleCheckInventory}>Check Inventory</button>
-                    )
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <ProgressBar
+          isError={!!buildError}
+          isActive={isActive}
+          labelText={labelText}
+          progress={progress}
+          speed={player.building_duration}
+          autoMode={isAutoBuildEnabled}
+        />
       </div>
       {isCheckInventoryModalOpen && (
         <div className="check-inventory-modal">
@@ -233,18 +228,7 @@ const BuildProductView = ({
       )}
       {showMinigame && (
         <TruckToWarehouseGame onClose={() => setShowMinigame(false)} />
-      )}
-      <div className='build-product-progress-bar-container'>
-        <ProgressBar
-          isError={!!buildError}
-          isActive={isActive}
-          labelText={labelText}
-          progress={progress}
-          speed={player.building_duration}
-          autoMode={isAutoBuildEnabled}
-        />
-      </div>
-      
+      )}    
     </div>
   );
 };
