@@ -159,7 +159,7 @@
     "name": "Hostile Takeover",
     "description": "Acquire a competitor's business and integrate their operations into your own.",
     "tech_level_required": 1,
-    "cost": 1000000,
+    "cost": 10000000,
     "tech_code": "hostile_takeover",
     "modifier_value": 1,
     "game_effect": "Acquire a random player's business and exit them. Steal their orders shipped but pay out whatever their money was.",
@@ -169,6 +169,16 @@
     "emoji": "💀"
   },
   {
-    
+    "name": "Advertising Campaign",
+    "description": "Launch an advertising campaign to increase brand awareness and drive traffic to your store.",
+    "tech_level_required": 1,
+    "cost": 50000,
+    "tech_code": "advertising_campaign",
+    "modifier_value": 1,
+    "game_effect": "Increase your order volume by 50% for 2 minutes.",
+    "shipstation_kb_link": "",
+    "acquirable": true,
+    "category": "Marketing",
+    "emoji": "📈"
   }
 ]

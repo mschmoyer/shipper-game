@@ -89,7 +89,7 @@ const TruckToWarehouseGame = ({ onClose }) => {
         completeTruckToWarehouseGame(false); // Call API with failure
         setGameCompleted(true);
         completed = true;
-        setTimeout(onClose, 2000);
+        setTimeout(onClose, 4000);
       }
     } else if (Math.abs(truckPosition.x - 85) < 5 && Math.abs(truckPosition.y - 50) < 5) {
       if (!completed) {
@@ -97,7 +97,7 @@ const TruckToWarehouseGame = ({ onClose }) => {
         completeTruckToWarehouseGame(true); // Call API with success
         setGameCompleted(true);
         completed = true;
-        setTimeout(onClose, 2000);
+        setTimeout(onClose, 4000);
       }
     } else {
       obstacles.forEach(obstacle => {
@@ -107,7 +107,7 @@ const TruckToWarehouseGame = ({ onClose }) => {
             completeTruckToWarehouseGame(false); // Call API with failure
             setGameCompleted(true);
             completed = true;
-            setTimeout(onClose, 2000);
+            setTimeout(onClose, 4000);
           }
         }
       });

@@ -20,7 +20,6 @@ const BuildProductView = ({
   const [showOnHandCount, setShowOnHandCount] = useState(true);
   const [hasPurchaseOrderTech, setHasPurchaseOrderTech] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  const [isWorkBeingDone, setIsWorkBeingDone] = useState(false);
 
   const ON_HAND_VISIBLE_DURATION = 15000;
   const MINIGAME_SPAWN_CHANCE = 0.02; // Update spawn chance to 2%
@@ -37,7 +36,6 @@ const BuildProductView = ({
     gameInfo.product.progress = 0;
     setBuildError('');
     setIsActive(true);
-    setIsWorkBeingDone(true);
 
     setIsRetrying(false);
     const result = await startProductBuild()
@@ -72,7 +70,6 @@ const BuildProductView = ({
         setIsAutoBuildEnabled(result.building_automation_enabled);
       }
       setIsActive(true);
-      setIsWorkBeingDone(true);
       return;
     }
     handleBuildProduct();
@@ -113,17 +110,12 @@ const BuildProductView = ({
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'purchase_orders');
       setHasPurchaseOrderTech(hasPurchaseOrderTech);
 
-      setIsActive(gameInfo.product.is_building 
-        || (gameInfo.products_built && gameInfo.productsBuilt > 0));
-      setIsWorkBeingDone(gameInfo.product.is_building);
+      const showActive = gameInfo.product.is_building 
+      || (gameInfo.player.products_built && gameInfo.player.products_built > 0 && hasAutoBuildTech);
+
+      setIsActive(showActive);
     }
   }, [gameInfo]);
-
-  // useEffect(() => {
-  //   if (!gameInfo.product.is_building && isAutoBuildEnabled && !isRetrying) {
-  //     handleBuildProduct();
-  //   }
-  // }, [gameInfo.product.is_building, isAutoBuildEnabled, isRetrying, handleBuildProduct]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -151,17 +143,15 @@ const BuildProductView = ({
   const inventoryAuditProgressBarLabelText = `Manually auditing inventory...`;
 
   const progPercent = (product.building_duration / 1000) * 100;
-  const progress = (!product.is_building && product.building_duration < 1000 ? progPercent : product.progress);
+  const progress = progPercent || 0;
 
   let current_step = Math.floor(product.progress / (100 / player.building_steps.length));
   current_step = Math.max(player.building_steps.length-1, current_step);
   current_step = Math.min(0, current_step);
-  console.log('current_step:', current_step);
+
   const labelText = buildError || 
     (product.is_building ? `${player.building_steps[current_step].name}` 
     : `Build some products!`);
-
-  const isActiveForBar = product.is_building || isActive;
 
   return (
     <div className="build-product-container">        
@@ -204,7 +194,7 @@ const BuildProductView = ({
         <GameWorkButton
           autoShip={isAutoBuildEnabled}
           onClick={handleGameWorkButtonClick}
-          isWorkBeingDone={isWorkBeingDone}
+          isWorkBeingDone={isActive}
           titleDefault="Build"
           titleWhenWorking="Building..."
           hotkey="B"

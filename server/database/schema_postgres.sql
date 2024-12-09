@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS player (
   building_automation_enabled BOOLEAN DEFAULT TRUE,
   expiration_reason TEXT,
   exclusive_logistics_penalty_applied BOOLEAN DEFAULT FALSE,
-  hostile_takeover_player_name TEXT
+  hostile_takeover_player_name TEXT,
+  advertising_campaign_start_time TIMESTAMP,
 );
 
 -- Defines the global set of products that can be built

@@ -17,6 +17,9 @@ async function generateProductDetailsWithOpenAI(businessName, name) {
   if (businessName) {
     prompt += `The seed word is: ${businessName}.`;
   }
+  if (name) {
+    prompt += `The business owner is: ${name}.`;
+  }
 
   console.log('Prompting OpenAI with:', prompt);
 
@@ -152,8 +155,8 @@ async function generateEndGameTextWithOpenAI(playerId) {
       function_call: { name: "generateEndGameText" }
     });
 
-    console.log('completion:', completion);
-    console.log('message:', completion.choices[0].message);
+    // console.log('completion:', completion);
+    // console.log('message:', completion.choices[0].message);
 
     const functionResponse = completion.choices[0].message.function_call.arguments;
     const parsedResponse = JSON.parse(functionResponse);

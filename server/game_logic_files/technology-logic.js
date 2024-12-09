@@ -136,6 +136,14 @@ const performOneTimeTechnologyEffect = async (playerId, techCode) => {
         'Failed to apply exclusive logistics penalty'
       );
       return true;
+    case 'advertising_campaign':
+      // set the advertising_campaign_start_time
+      await dbRun(
+        'UPDATE player SET advertising_campaign_start_time = NOW() WHERE id = $1',
+        [playerId],
+        'Failed to set advertising campaign start time'
+      );
+      return true;
     case 'hostile_takeover':
       return hostileTakeoverAction(playerId);
     default:

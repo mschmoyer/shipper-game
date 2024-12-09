@@ -42,7 +42,7 @@ const CreateNewPlayer = async (name, businessName) => {
   console.log('Created new player with id:', playerId);
 
   await initializeTechTree(playerId);
-  await generateProductForPlayer(playerId, businessName, name, aiData);
+  const newProduct = await generateProductForPlayer(playerId, businessName, name, aiData);
   
   // CHEAT CODE SECTION HERE
   // If player name is Schmo, give them a head start (mostly for testing)
@@ -57,7 +57,16 @@ const CreateNewPlayer = async (name, businessName) => {
     );
   }
 
-  return playerId;
+  const returnData = {
+    player_id: playerId,
+    business_name: businessName,
+    product_name: aiData.product_name,
+    product_description: aiData.product_description,
+    product_category: aiData.product_category,
+    business_description: aiData.suggested_business_description,
+    product_emoji: aiData.emoji
+  }
+  return returnData;
 };
 
 // Calculate the player's reputation score based on their recent order history

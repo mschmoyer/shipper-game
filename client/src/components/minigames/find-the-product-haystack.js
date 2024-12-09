@@ -15,7 +15,7 @@ const FindTheProductHaystackGame = ({ onClose }) => {
         setFoundProduct(true);
         completeFindTheProductHaystackGame(true); // Call API with success
         gameCompleted.current = true;
-        setTimeout(onClose, 2000);
+        setTimeout(onClose, 4000);
       } else {
         setClickedIndexes([...clickedIndexes, index]);
         setRemainingSearches((prev) => prev - 1);
@@ -28,7 +28,7 @@ const FindTheProductHaystackGame = ({ onClose }) => {
       if (!gameCompleted.current) {
         completeFindTheProductHaystackGame(false); // Call API with failure
         gameCompleted.current = true;
-        setTimeout(onClose, 2000);
+        setTimeout(onClose, 4000);
       }
     }
   }, [remainingSearches, foundProduct, onClose]);

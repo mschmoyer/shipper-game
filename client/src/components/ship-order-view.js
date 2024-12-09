@@ -14,8 +14,7 @@ const ShipOrderView = ({
   const [isAutoShipEnabled, setIsAutoShipEnabled] = useState(autoShipEnabled);
   const [isRetrying, setIsRetrying] = useState(false);
   const [showShipOrderProblemMinigame, setShowShipOrderProblemMinigame] = useState(false); // State to show/hide PackageGrid
-  const [isProgressBarActive, setIsProgressBarActive] = useState(false); // New state variable for progress bar
-  const [isWorkBeingDone, setIsWorkBeingDone] = useState(false); // New state variable for work being done
+  const [isActive, setIsActive] = useState(false);
   
   const MINIGAME_SPAWN_CHANCE = 0.02;
 
@@ -30,8 +29,7 @@ const ShipOrderView = ({
     setIsRetrying(false);
     if(gameInfo.inventory[0].on_hand >= gameInfo.player.products_per_order && 
        !gameInfo.active_order && gameInfo.orders.length > 0) {
-      setIsProgressBarActive(true); // Set progress bar active when shipping starts
-      setIsWorkBeingDone(true); // Set work being done when shipping starts
+      setIsActive(true); // Set work being done when shipping starts
 
       const result = await startShipping()
       .then(data => {
@@ -42,7 +40,8 @@ const ShipOrderView = ({
           // Mini-game logic
           const hasScanToVerifyTech = gameInfo.acquired_technologies && 
             gameInfo.acquired_technologies.some(tech => tech.tech_code === 'scan_to_verify');
-          if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled) { // Check for scan_to_verify tech
+          if (!hasScanToVerifyTech && Math.random() < MINIGAME_SPAWN_CHANCE 
+              && gameInfo.minigames_enabled) {
             setShowShipOrderProblemMinigame(true);
             return;
           }
@@ -73,10 +72,15 @@ const ShipOrderView = ({
       } else {
         setShippingError('');
       }
+
+      const showActive = (gameInfo.active_order && gameInfo.active_order.is_shipping)
+        || (gameInfo.ordersShipped && gameInfo.ordersShipped > 0 && hasAutoShipTech)
+        && gameInfo.inventory[0].on_hand >= gameInfo.player.products_per_order
+        ** gameInfo.orders.length > 0;
+
+      console.log('gameInfo.ordersShipped:', gameInfo.ordersShipped, 'hasAutoShipTech:', hasAutoShipTech);
       setIsAutoShipEnabled(hasAutoShipTech);
-      setIsProgressBarActive(gameInfo.active_order && gameInfo.active_order.is_shipping 
-        || (gameInfo.orders_shipped && gameInfo.orders_shipped > 0)); // Update progress bar active status
-      setIsWorkBeingDone(gameInfo.active_order && gameInfo.active_order.is_shipping); // Update work being done status
+      setIsActive(showActive);
     }
   }, [gameInfo]);
 
@@ -103,9 +107,9 @@ const ShipOrderView = ({
 
   const totalProfit = Math.round((product.sales_price * player.products_per_order) - product.cost_to_build - shippingCost);
 
-  //const progPercent = (player.shipping_duration / 1000) * 100;
+  const progPercent = (player.shipping_duration / 1000) * 100;
   //const progress = (!gameInfo.is_shipping && product.shipping_duration < 1000 ? progPercent : gameInfo.active_order.progress);
-  const progress = gameInfo.active_order ? gameInfo.active_order.progress : 0;
+  const progress = progPercent || 0;
 
   return (
     <div className="ship-order-container">
@@ -124,14 +128,14 @@ const ShipOrderView = ({
         <GameWorkButton
           autoShip={isAutoShipEnabled}
           onClick={handleShipOrder}
-          isWorkBeingDone={isWorkBeingDone} // Use state variable for work being done status
+          isWorkBeingDone={isActive} // Use state variable for work being done status
           titleDefault="Ship"
           titleWhenWorking="Shipping..."
           hotkey="S"
         />
         <ProgressBar
           isError={!!shippingError}
-          isActive={isProgressBarActive} // Use state variable for progress bar active status
+          isActive={isActive} // Use state variable for progress bar active status
           labelText={getLabelText()}
           progress={progress}
           speed={player.shipping_duration}

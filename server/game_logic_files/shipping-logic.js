@@ -75,6 +75,9 @@ const OrderTick = async (player, product, inventory, elapsed_time, active_order)
   // This is where we manifest incoming orders. 
   if(readyForNewOrder && orders.length < MAXIMUM_ORDER_QUEUE_SIZE) {
     ordersShipped += await _GenerateOrder(player.id);
+    if( await isAdvertisingCampaignActive(player) ) {
+      ordersShipped += await _GenerateOrder(player.id);
+    }
   }
 
   if (ordersShipped > 0) {
@@ -106,6 +109,33 @@ const CheckOrderState = async (order, player, product) => {
   return ordersShipped;
 }
 
+const isAdvertisingCampaignActive = async (player) => {
+  const hasAdvertisingTech = await playerHasTechnology(player.id, 'advertising_campaign');
+  // console.log('hasAdvertisingTech:', hasAdvertisingTech, 'player.advertising_campaign_start_time:', player.advertising_campaign_start_time);
+  if (hasAdvertisingTech && player.advertising_campaign_start_time) {
+    // check player.advertising_campaign_start_time. if 2 minutes have passed, expire it. 
+    const hasExpired = new Date() - player.advertising_campaign_start_time > 120000;
+    if(hasExpired) {
+      console.log('GenerateOrders - Player has advertising campaign that has expired. Cancelling.');
+      await dbRun(
+        'UPDATE player SET advertising_campaign_start_time = NULL WHERE id = $1',
+        [player.id],
+        'Failed to cancel advertising campaign'
+      );
+      // Unset the advertising from the player's acquired_technologies
+      await dbRun(
+        'DELETE FROM acquired_technologies WHERE player_id = $1 AND tech_code = $2',
+        [player.id, 'advertising_campaign'],
+        'Failed to remove advertising campaign from acquired technologies'
+      );
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+
 const GenerateOrders = async (player, product, inventory, elapsed_time, orders) => {
 
   const spawnRateMs = Math.max(player.order_spawn_milliseconds, 10) || BASE_ORDER_SPAWN_MILLISECONDS;
@@ -120,8 +150,11 @@ const GenerateOrders = async (player, product, inventory, elapsed_time, orders) 
   const shipsPerSecond = 1000 / shipRateMs;
   // console.log(`GenerateOrders - SpawnsPerSecond: ${spawnsPerSecond}, ShipsPerSecond: ${shipsPerSecond}`);
 
-
   let orders_to_generate = Math.max(0, Math.floor(elapsed_time / spawnRateMs)) * player.order_spawn_count;
+
+  if( await isAdvertisingCampaignActive(player) ) {
+    orders_to_generate *= 2;
+  }
 
   // using elapsed_time, orders, and player.shipping_speed (milliseconds), calculate how many orders were shipped in this time period
   let new_orders_to_ship = Math.floor(elapsed_time / shipRateMs) * player.orders_per_ship;
@@ -164,10 +197,15 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
   // First, try to ship any existing orders that are awaiting shipment
   let existing_orders_shipped = 0;
   const existing_orders_to_mark_shipped = Math.min(Math.min(orders.length, new_orders_to_ship),available_stock);
+  console.log('existing_orders_to_mark_shipped:', existing_orders_to_mark_shipped, 'new_orders_to_ship:', new_orders_to_ship, 'available_stock:', available_stock);
+  
   for (let i = 0; i < existing_orders_to_mark_shipped; i++) {
-    existing_orders_shipped += await OrderCompleted(orders[i].id, player);
+    let orders_completed = await OrderCompleted(orders[i].id, player);
+    existing_orders_shipped += orders_completed / player.orders_per_ship;
+    totalOrdersShipped += orders_completed;
     // money and stock for this order are handled in OrderCompleted. 
   }
+  console.log('existing_orders_shipped:', existing_orders_shipped);
 
   // OrderCompleted handles money and stock, but we need to track here...
   available_stock -= existing_orders_shipped * player.products_per_order;
@@ -219,7 +257,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       'Failed to update inventory on_hand'
     );
   }
-  // console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
+  console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
   return totalOrdersShipped;
 }
 
@@ -229,7 +267,7 @@ const calculateDistance = async (playerId) => {
   let shippingDistance = 300;
   if (hasMultiWarehouseTech) {
     // Probably halves it...
-    shippingDistance = Math.round(shippingDistance * hasMultiWarehouseTech);
+    shippingDistance = shippingDistance / 2;
   }
   return shippingDistance;
 }
@@ -253,7 +291,7 @@ const _GenerateOrder = async (playerId) => {
     [playerId, due_by_time_seconds, OrderStates.AwaitingShipment, distance, player.products_per_order],
     'Failed to generate order'
   );
-  return order;
+  return 1;
 };
 
 // The player has requested to ship an order
@@ -498,7 +536,7 @@ const OrderCompleted = async (orderId, player) => {
   );
 
   // log revenue, orders_shipped, and order_state
-  // console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
+  console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
   return orders_shipped;
 };
 
