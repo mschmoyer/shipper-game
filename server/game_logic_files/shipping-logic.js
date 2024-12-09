@@ -264,7 +264,7 @@ const shipOrder = async (player) => {
   // console.log('shipOrder - activeOrder:', activeOrder, 'shippedOrders:', shippedOrders);
   if (activeOrder && shippedOrders === 0) {
     // An order is already being shipped AND has not finished. 
-    return { error: 'An active order is still in progress' };
+    return { error: 'You are busy shipping.' };
 
   } else {
     const hasOrderGridFilters = await playerHasTechnology(player.id, 'order_grid_filters');

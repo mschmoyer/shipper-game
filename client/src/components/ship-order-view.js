@@ -74,7 +74,8 @@ const ShipOrderView = ({
         setShippingError('');
       }
       setIsAutoShipEnabled(hasAutoShipTech);
-      setIsProgressBarActive(gameInfo.active_order && gameInfo.active_order.is_shipping);
+      setIsProgressBarActive(gameInfo.active_order && gameInfo.active_order.is_shipping 
+        || (gameInfo.orders_shipped && gameInfo.orders_shipped > 0)); // Update progress bar active status
       setIsWorkBeingDone(gameInfo.active_order && gameInfo.active_order.is_shipping); // Update work being done status
     }
   }, [gameInfo]);

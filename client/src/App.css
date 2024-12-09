@@ -4,14 +4,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* Center horizontally */
   font-family: Arial, sans-serif;
   margin: 0 auto; /* Center horizontally */
-  background-color: #f1f2f3;
-  border-radius: 10px;
+  background-color: #00331c;
   height: 100vh; /* Make the App component fill the viewport height */
   overflow-x: hidden; /* Prevents horizontal scrolling */
-  max-width: 100%;    /* Ensures the element doesn't exceed the viewport width */
+  max-width: 800px;    /* Ensures the element doesn't exceed the viewport width */
   box-sizing: border-box; /* Accounts for padding and borders within the element's width */
 }
 
@@ -32,10 +30,17 @@
 }
 
 .centered-container {
+  background: #f1f2f3;
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100%;
   width: 100%;
   margin: 0 auto; /* Center horizontally */
+}
+
+@media (max-width: 600px) {
+  .centered-container {
+    height: calc(100vh - 30px);
+  }
 }

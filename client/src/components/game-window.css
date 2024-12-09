@@ -8,6 +8,7 @@
   color: #000000;
   margin-top: 20px;
   min-width: 600px;
+  max-width: 600px;
 }
 
 .thing-button-container {

@@ -113,7 +113,8 @@ const BuildProductView = ({
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'purchase_orders');
       setHasPurchaseOrderTech(hasPurchaseOrderTech);
 
-      setIsActive(gameInfo.product.is_building);
+      setIsActive(gameInfo.product.is_building 
+        || (gameInfo.products_built && gameInfo.productsBuilt > 0));
       setIsWorkBeingDone(gameInfo.product.is_building);
     }
   }, [gameInfo]);
