@@ -15,27 +15,41 @@ const ShipOrderView = ({
   const [isRetrying, setIsRetrying] = useState(false);
   const [showShipOrderProblemMinigame, setShowShipOrderProblemMinigame] = useState(false); // State to show/hide PackageGrid
   const [isActive, setIsActive] = useState(false);
+  const [lastShipTimestamp, setLastShipTimestamp] = useState(0);
   
   const MINIGAME_SPAWN_CHANCE = 0.02;
+
+  // function to re-enable the button after the shipping duration
+  const reEnableButton = () => {
+    setIsActive(false);
+  }
 
   const handleShipOrder = useCallback(async () => {
     if (isRetrying || (gameInfo.active_order && gameInfo.active_order.is_shipping)) {
       return;
     }
-    setShippingError('');
+    //setShippingError('');
 
     console.log('🚚 Shipping order...');
 
-    setIsRetrying(false);
-    if(gameInfo.inventory[0].on_hand >= gameInfo.player.products_per_order && 
-       !gameInfo.active_order && gameInfo.orders.length > 0) {
+    //setIsRetrying(false);
+
+    const did_shipping_duration_elapse = Date.now() - lastShipTimestamp > gameInfo.player.shipping_duration;
+
+    if((gameInfo.inventory[0].on_hand >= gameInfo.player.products_per_order && 
+      !gameInfo.active_order && gameInfo.orders.length > 0) 
+      || (!shippingError && did_shipping_duration_elapse)) {
       setIsActive(true); // Set work being done when shipping starts
+      
+      // setTimeout to set isActive to false after shipping duration
+      setTimeout(reEnableButton, gameInfo.player.shipping_duration);
 
       const result = await startShipping()
       .then(data => {
         if (data.message === 'Shipping started successfully.') {
           console.log('🚀 Shipping initiated! Your products are on their way to greatness!');
           setShippingCost(data.shipping_cost);
+          setLastShipTimestamp(Date.now()); 
 
           // Mini-game logic
           const hasScanToVerifyTech = gameInfo.acquired_technologies && 
@@ -104,8 +118,15 @@ const ShipOrderView = ({
 
   const player = gameInfo.player;
   const product = gameInfo.product;
+  const order = gameInfo.active_order;
+  
+  const total_shipping_cost = player.shipping_cost_per_mile * player.shipping_distance;
 
-  const totalProfit = Math.round((product.sales_price * player.products_per_order) - product.cost_to_build - shippingCost);
+  const totalProfit = Math.round((product.sales_price * player.products_per_order) 
+        - (product.cost_to_build * player.products_per_order) 
+        - total_shipping_cost);
+
+  const isHighShippingCost = total_shipping_cost >= 0.4 * totalProfit;
 
   const progPercent = (player.shipping_duration / 1000) * 100;
   //const progress = (!gameInfo.is_shipping && product.shipping_duration < 1000 ? progPercent : gameInfo.active_order.progress);
@@ -113,35 +134,47 @@ const ShipOrderView = ({
 
   return (
     <div className="ship-order-container">
-      {showShipOrderProblemMinigame && 
-        <FindTheProductHaystackGame onClose={() => setShowShipOrderProblemMinigame(false)} />
-      } 
-      <div className="shipping-info">
-        <p>📦 Order Items: {player.products_per_order}</p>
-        <p>📊 Batch Size: {player.orders_per_ship}</p>
-        <p>📏 Distance: {gameInfo.active_order ? gameInfo.active_order.distance : '--'} miles</p>
-        <p>🚚 Shipping: ${gameInfo.active_order ? gameInfo.active_order.shipping_cost : '--'}</p>
-        <p>💰 Sale Price: ${product.sales_price}</p>
-        <p>💵 Profit: ${totalProfit}</p>
-      </div>
-      <div className="shipping-main-bar">
-        <GameWorkButton
-          autoShip={isAutoShipEnabled}
-          onClick={handleShipOrder}
-          isWorkBeingDone={isActive} // Use state variable for work being done status
-          titleDefault="Ship"
-          titleWhenWorking="Shipping..."
-          hotkey="S"
-        />
-        <ProgressBar
-          isError={!!shippingError}
-          isActive={isActive} // Use state variable for progress bar active status
-          labelText={getLabelText()}
-          progress={progress}
-          speed={player.shipping_duration}
-          autoMode={isAutoShipEnabled}
-        />
-      </div>
+      {player.products_built < 10 ? (
+        <div className="initial-state-box">
+          Build 10 products to begin shipping
+        </div>
+      ) : (
+        <>
+          {showShipOrderProblemMinigame && 
+            <FindTheProductHaystackGame onClose={() => setShowShipOrderProblemMinigame(false)} />
+          } 
+          <div className="shipping-info">
+            <p>📦 Order Items: {player.products_per_order}</p>
+            <p>📊 Batch Size: {player.orders_per_ship}</p>
+            <p>📫 Distance: {player.shipping_distance} miles</p>
+            <p className={isHighShippingCost ? 'high-shipping-cost' : ''}>
+              🚚 Shipping: ${total_shipping_cost}
+              {isHighShippingCost && <span className="freaked-out-emoji">😱</span>}
+              {!isHighShippingCost && <span className="freaked-out-emoji">😄</span>}
+            </p>
+            <p>💰 Sale Price: ${product.sales_price}</p>
+            <p>💵 Profit: ${totalProfit}</p>
+          </div>
+          <div className="shipping-main-bar">
+            <GameWorkButton
+              autoShip={isAutoShipEnabled}
+              onClick={handleShipOrder}
+              isWorkBeingDone={isActive} // Use state variable for work being done status
+              titleDefault="Ship"
+              titleWhenWorking="Shipping..."
+              hotkey="S"
+            />
+            <ProgressBar
+              isError={!!shippingError}
+              isActive={isActive} // Use state variable for progress bar active status
+              labelText={getLabelText()}
+              progress={progress}
+              speed={player.shipping_duration}
+              autoMode={isAutoShipEnabled}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

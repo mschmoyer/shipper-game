@@ -1,5 +1,19 @@
 [
   {
+    "name": "ShipStation",
+    "description": "Software with discounted shipping rates, automation, and more. The core software needed to run your business.",
+    "tech_level_required": 1,
+    "cost": 500,
+    "tech_code": "shipstation",
+    "modifier_value": 0.50,
+    "game_effect": "Decreases shipping costs by up to 88%! (but usually 50%!)",
+    "shipstation_kb_link": "https://www.shipstation.com",
+    "acquirable": true,
+    "category": "Shipping",
+    "emoji": "🚚",
+    "required": ""
+  },
+  {
     "name": "Hire Fulfillment Specialist",
     "description": "Hire a fulfillment specialist to manage order processing and shipping.",
     "tech_level_required": 1,
@@ -37,19 +51,6 @@
     "acquirable": true,
     "category": "Staffing",
     "emoji": "🔧"
-  },
-  {
-    "name": "Discounted Shipping Rates",
-    "description": "Negotiate discounted shipping rates with carriers to reduce shipping costs and increase profit margins.",
-    "tech_level_required": 1,
-    "cost": 500,
-    "tech_code": "discounted_shipping_rates",
-    "modifier_value": 0.50,
-    "game_effect": "Decreases shipping costs by up to 88%! (but usually 50%!)",
-    "shipstation_kb_link": "https://www.shipstation.com/discounted-rates/",
-    "acquirable": true,
-    "category": "Shipping",
-    "emoji": "🚚"
   },
   {
     "name": "ShipSense AI",

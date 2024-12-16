@@ -58,6 +58,7 @@ const InitialView = ({ onAccountCreated }) => {
       <div className="login-box">
         {accountCreated ? (
           <div className="account-info">
+            <img src={gameTitleImage} alt="Game Title" className="initial-view-title-image" />
             <p>Your new business name is:</p>
             <h3>{productInfo.businessName}</h3>
             <p className="descriptive-block">{productInfo.businessDescription}</p>
@@ -93,7 +94,7 @@ const InitialView = ({ onAccountCreated }) => {
                   type="text" 
                   value={businessName} 
                   onChange={(e) => setBusinessName(e.target.value)} 
-                  placeholder="(Leave blank to let AI assistant generate it)" />
+                  placeholder="" />
               </div>
               <button type="submit" className="create-account-button" style={{ backgroundColor: 'green' }} disabled={loading}>Start New Business</button>
             </form>

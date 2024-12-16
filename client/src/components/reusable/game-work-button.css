@@ -26,7 +26,7 @@
 }
 
 .game-work-button:disabled {
-  background: grey;
+  background: #083f24;
   cursor: not-allowed;
 }
 

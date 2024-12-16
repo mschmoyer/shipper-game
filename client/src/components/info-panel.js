@@ -74,6 +74,10 @@ const InfoPanel = ({ gameInfo }) => {
           <p>{!isMobileMode ? 'Funds: ' : ''}${formatCurrency(money_value)}{renderDelta(deltas.money)}</p>
         </div>
         <div>
+          <p className="info-values-emoji">Order</p>
+          <p>{!isMobileMode ? 'Orders: ' : ''}{player.orders ? player.orders.length : 0}</p>
+        </div>
+        <div>
           <p className="info-values-emoji">📦</p>
           <p>{!isMobileMode ? 'Shipped: ' : ''}{orders_shipped_value}{renderDelta(deltas.orders_shipped)}</p>
         </div>

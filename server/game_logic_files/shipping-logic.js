@@ -3,12 +3,12 @@ const fs = require('fs');
 const path = require('path');
 
 const { XP_GAINED_PER_OPERATION, BASE_ORDER_DUE_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, 
-  GAME_SHIPPING_COST_PER_MILE, GAME_MIN_SHIPPING_DISTANCE, GAME_MAX_SHIPPING_DISTANCE, 
-  OrderStates } = require('../constants');
+  GAME_SHIPPING_COST_PER_MILE, OrderStates } = require('../constants');
 
 const { playerHasTechnology } = require('./technology-logic');
 const { getInventoryInfo, getActiveProduct } = require('./product-logic');
 const { gainXP, getPlayerInfo } = require('./player-logic');
+const { get } = require('http');
 
 const DEFAULT_SHIPPING_STEPS = [
   {
@@ -193,19 +193,7 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
   let totalOrdersShipped = 0;
   let available_stock = inventory[0].on_hand;
   let total_stock_to_deduct = 0;
-
-  // First, try to ship any existing orders that are awaiting shipment
   let existing_orders_shipped = 0;
-  const existing_orders_to_mark_shipped = Math.min(Math.min(orders.length, new_orders_to_ship),available_stock);
-  console.log('existing_orders_to_mark_shipped:', existing_orders_to_mark_shipped, 'new_orders_to_ship:', new_orders_to_ship, 'available_stock:', available_stock);
-  
-  for (let i = 0; i < existing_orders_to_mark_shipped; i++) {
-    let orders_completed = await OrderCompleted(orders[i].id, player);
-    existing_orders_shipped += orders_completed / player.orders_per_ship;
-    totalOrdersShipped += orders_completed;
-    // money and stock for this order are handled in OrderCompleted. 
-  }
-  console.log('existing_orders_shipped:', existing_orders_shipped);
 
   // OrderCompleted handles money and stock, but we need to track here...
   available_stock -= existing_orders_shipped * player.products_per_order;
@@ -221,8 +209,8 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       available_stock -= player.products_per_order;
       total_stock_to_deduct += player.products_per_order;
       totalOrdersShipped += player.products_per_order;
-      const shippingCostPerMile = 0.05; // Cost per mile
-      const distance = await calculateDistance();
+      const shippingCostPerMile = await getShippingCostPerMile(player);
+      const distance = await calculateDistance(player.id);
 
       const sales_price = product.sales_price * (hasBundleTech ? hasBundleTech : 1);
       const revenue = (sales_price - product.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
@@ -257,7 +245,18 @@ const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inv
       'Failed to update inventory on_hand'
     );
   }
-  console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
+
+  new_orders_to_ship -= totalOrdersShipped;
+  const existing_orders_to_mark_shipped = Math.min(Math.min(orders.length, new_orders_to_ship),available_stock);
+  
+  for (let i = 0; i < existing_orders_to_mark_shipped; i++) {
+    let orders_completed = await OrderCompleted(orders[i].id, player);
+    existing_orders_shipped += orders_completed / player.orders_per_ship;
+    totalOrdersShipped += orders_completed;
+    // money and stock for this order are handled in OrderCompleted. 
+  }
+
+  // console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
   return totalOrdersShipped;
 }
 
@@ -267,6 +266,8 @@ const calculateDistance = async (playerId) => {
   let shippingDistance = 300;
   if (hasMultiWarehouseTech) {
     // Probably halves it...
+    // console.log('calculateDistance - Player has multi_warehouse tech, halving shipping distance');
+    // console.log('shippingDistance:', shippingDistance);
     shippingDistance = shippingDistance / 2;
   }
   return shippingDistance;
@@ -276,7 +277,7 @@ const _GenerateOrder = async (playerId) => {
   const player = await getPlayerInfo(playerId);
 
   // TODO: maybe shouldn't be random? 
-  const distance = await calculateDistance();
+  const distance = await calculateDistance(playerId);
 
   const due_by_time_seconds = BASE_ORDER_DUE_SECONDS;
 
@@ -337,7 +338,7 @@ const shipOrder = async (player) => {
   }
 
   // const { shipping_steps, total_duration } = await getShippingSteps(player);
-  const total_duration = Math.round(player.shipping_steps.length * player.shipping_speed);
+  const total_duration = Math.round(player.shipping_duration);
   const shippingData = await calculateShippingAndBuyLabel(player, activeOrder.distance);
 
   const total_products_shipped = Math.min(inventory[0].on_hand, player.products_per_order * player.orders_per_ship);
@@ -426,6 +427,19 @@ const getActiveOrder = async (playerId) => {
   );
 };
 
+const getShippingCostPerMile = async (player) => {
+  const hasShipstationTech = await playerHasTechnology(player.id, 'shipstation');
+  const shipping_cost = GAME_SHIPPING_COST_PER_MILE;
+  if (hasShipstationTech) {
+    shipping_cost *= 0.5;
+  }
+  //exclusive_logistics_penalty_applied
+  if (player.exclusive_logistics_penalty_applied) {
+    shipping_cost *= 1.5;
+  }
+  return shipping_cost;
+}
+
 const calculateShippingAndBuyLabel = async (player, distance) => {
 
   const playerId = player.id;
@@ -435,17 +449,8 @@ const calculateShippingAndBuyLabel = async (player, distance) => {
     'Failed to retrieve product info'
   );
 
-  const shippingCostPerMile = GAME_SHIPPING_COST_PER_MILE;
-  let shipping_cost = distance * shippingCostPerMile;
-
-  const discountedShippingModifier = await playerHasTechnology(playerId, 'discounted_shipping_rates');
-  if (discountedShippingModifier) {
-    shipping_cost *= (1 - discountedShippingModifier);
-  }
-  //exclusive_logistics_penalty_applied
-  if (player.exclusive_logistics_penalty_applied) {
-    shipping_cost *= 1.5;
-  }
+  const shipping_cost_per_mile = await getShippingCostPerMile(player);
+  let shipping_cost = distance * shipping_cost_per_mile;
 
   const total_cost = Math.round(shipping_cost + product.cost_to_build);
 
@@ -536,7 +541,7 @@ const OrderCompleted = async (orderId, player) => {
   );
 
   // log revenue, orders_shipped, and order_state
-  console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
+  // console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
   return orders_shipped;
 };
 
@@ -559,5 +564,7 @@ module.exports = {
   shipOrder,
   getActiveOrder,
   getOrder,
-  getOrderList // Export the new function
+  getOrderList,
+  calculateDistance,
+  getShippingCostPerMile
 };

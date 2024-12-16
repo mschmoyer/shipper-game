@@ -26,6 +26,7 @@
 .initial-view-title-image {
   width: 50%;
   margin-bottom: 20px;
+  animation: sway 2s infinite ease-in-out;
 }
 
 .account-form {
@@ -145,6 +146,18 @@
   text-align: justify;
   text-justify:newspaper;
   font-style:italic;
+}
+
+@keyframes sway {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 @media (max-width: 600px) {

@@ -39,9 +39,7 @@ const GameWindow = ({ gameInfo }) => {
 
       <BuildProductView gameInfo={gameInfo} />
 
-      {gameInfo.player.products_built > 0 && (
-        <ShipOrderView gameInfo={gameInfo} />
-      )}
+      <ShipOrderView gameInfo={gameInfo} />
 
       <div className="thing-button-container">
         <button className="tech-button" onClick={openTechView}>

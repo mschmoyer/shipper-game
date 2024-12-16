@@ -19,7 +19,7 @@
   max-height: 90%;
   position: relative;
   animation: slideIn 0.3s ease-out;
-  max-width: 750px;
+  max-width: 820px;
 }
 
 @keyframes slideIn {
@@ -68,7 +68,7 @@
   .drawer-container {
     width: 100%;
     height: 100%;
-    max-height: 95%;
+    max-height: 90%;
   }
 
   .drawer-title {

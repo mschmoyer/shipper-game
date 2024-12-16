@@ -9,10 +9,10 @@ const GAME_SHIPPING_COST_PER_MILE = 0.7; // $0-$700
 const GAME_MIN_SHIPPING_DISTANCE = 5;
 const GAME_MAX_SHIPPING_DISTANCE = 550;
 
-const SPEED_BOOST_FACTOR = 200;
+const SPEED_BOOST_FACTOR = 150;
 
 const XP_GAINED_PER_OPERATION = 10;
-const BASE_XP_FOR_SKILL_POINT = 50;
+const BASE_XP_FOR_SKILL_POINT = 70;
 
 const OrderStates = Object.freeze({
   AwaitingShipment: 'AwaitingShipment',

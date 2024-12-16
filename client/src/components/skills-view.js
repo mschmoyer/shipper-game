@@ -17,11 +17,13 @@ const SkillsView = ({ player, isOpen, onClose }) => {
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Player Skills" className="skill-drawer-container">
-      <div className="available-points">⭐ Available Points: {player.available_points}</div>
+      <div className="available-points">
+        ⭐ Available Points: <span className="points-bubble">{player.available_points}</span>
+      </div>
       <table>
         <tbody>
         <tr>
-            <td>Manufacturing</td>
+            <td>⚒️ Manufacturing</td>
             <td>{player.building_points}</td>
             <td>
               <button 
@@ -35,7 +37,7 @@ const SkillsView = ({ player, isOpen, onClose }) => {
             <td colSpan="3" className="skill-description">Build products faster.</td>
           </tr>
           <tr>
-            <td>Logistics</td>
+            <td>📦 Logistics</td>
             <td>{player.shipping_points}</td>
             <td>
               <button 
@@ -49,7 +51,7 @@ const SkillsView = ({ player, isOpen, onClose }) => {
             <td colSpan="3" className="skill-description">Ship orders faster.</td>
           </tr>
           <tr>
-            <td>Product Innovation</td>
+            <td>💡 Product Innovation</td>
             <td>{player.order_spawn_points}</td>
             <td>
               <button 

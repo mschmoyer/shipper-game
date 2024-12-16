@@ -2,7 +2,10 @@ const { dbRun, dbGet, dbAll } = require('../database');
 
 const playerHasTechnology = async (playerId, techCode) => {
   const technology = await dbGet(
-    'SELECT t.modifier_value FROM acquired_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.player_id = $1 AND t.tech_code = $2',
+    `SELECT t.modifier_value 
+    FROM acquired_technologies at 
+    JOIN technologies t ON at.tech_id = t.id 
+    WHERE at.player_id = $1 AND t.tech_code = $2`,
     [playerId, techCode],
     'Failed to check player technology'
   );

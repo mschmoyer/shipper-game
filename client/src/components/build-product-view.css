@@ -83,7 +83,7 @@
 
 .blurred-value {
   filter: blur(5px);
-  animation: blurAnimation 30s forwards;
+  animation: blurAnimation 120s forwards;
 }
 
 .check-inventory-modal {

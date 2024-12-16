@@ -118,6 +118,29 @@
   margin-bottom: 0px;
 }
 
+.high-shipping-cost {
+  color: red;
+  font-weight: bold;
+}
+
+.freaked-out-emoji {
+  margin-left: 5px;
+}
+
+.initial-state-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 148px;
+  background-color: #f0f0f0;
+  color: #888;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 600px) {
   .ship-order-container {
     width: auto;

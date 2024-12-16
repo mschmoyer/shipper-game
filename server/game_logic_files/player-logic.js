@@ -1,5 +1,5 @@
 const { dbRun, dbGet, dbAll } = require('../database');
-const { SPEED_BOOST_FACTOR, BASE_XP_FOR_SKILL_POINT } = require('../constants');
+const { SPEED_BOOST_FACTOR, BASE_XP_FOR_SKILL_POINT, GAME_SHIPPING_COST_PER_MILE } = require('../constants');
 const { initializeTechTree } = require('./technology-logic');
 const { OrderStates } = require('../constants');
 const { generateProductDetailsWithOpenAI } = require('../open-ai');
@@ -142,14 +142,21 @@ const getPlayerInfo = async (playerId) => {
     player.reputation = reputation; 
 
     const { getBuildingSteps } = require('./product-logic');
-    const { getShippingSteps } = require('./shipping-logic');
+    const { getShippingSteps, getShippingCostPerMile } = require('./shipping-logic');
 
     // get shipping and building steps and return count of steps and duration for each
     player.building_steps = await getBuildingSteps(playerId);
     player.building_duration = Math.round(player.building_steps.length * player.building_speed);
+    //player.building_duration = player.building_speed;
 
     player.shipping_steps = await getShippingSteps(player.id);
     player.shipping_duration = Math.round(player.shipping_steps.length * player.shipping_speed);
+    //player.shipping_duration = player.shipping_speed;
+
+    player.shipping_cost_per_mile = await getShippingCostPerMile(player) || GAME_SHIPPING_COST_PER_MILE;
+
+    const {calculateDistance} = require('./shipping-logic');
+    player.shipping_distance = await calculateDistance(playerId);
 
     return player;
   } else {

@@ -7,9 +7,20 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [newsMessage, setNewsMessage] = useState('');
   const technologies = gameInfo?.technology || [];
+  const playerFunds = gameInfo?.player.money || 0;
 
-  const availableTechnologies = technologies.filter(tech => tech.acquired_id === null);
+  let availableTechnologies = technologies.filter(tech => tech.acquired_id === null);
+
+  // sort availableTechnologies by tech_level_required, then cost
+  availableTechnologies = availableTechnologies.sort((a, b) => {
+    if (a.tech_level_required === b.tech_level_required) {
+      return a.cost - b.cost;
+    }
+    return a.tech_level_required - b.tech_level_required;
+  });
+
   const activeTechnologies = technologies.filter(tech => tech.acquired_id !== null);
+
 
   const formatCost = (cost) => {
     return cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -35,20 +46,29 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
     <Drawer isOpen={isOpen} onClose={onClose} title="Technology" className="technology-tree-drawer">
       <h2>Available Technologies</h2>
       <div className="technology-tree-container">        
-        {availableTechnologies.map(tech => (
-          <div key={tech.id} className="tech-tree-card">
-            <div className="tech-tree-card-header">
-              <span className="tech-tree-emoji">{tech.emoji}</span>
-              <span className="tech-tree-cost">${formatCost(tech.cost)}</span>
+        {availableTechnologies.map(tech => {
+          const isUnaffordable = tech.cost > playerFunds;
+          return (
+            <div key={tech.id} className={`tech-tree-card ${isUnaffordable ? 'unaffordable' : ''}`}>
+              <div className="tech-tree-card-header">
+                <span className="tech-tree-emoji">{tech.emoji}</span>
+                <span className={`tech-tree-cost ${isUnaffordable ? 'unaffordable-cost' : ''}`}>${formatCost(tech.cost)}</span>
+              </div>
+              <div className="tech-tree-title">
+                <a href={tech.shipstation_kb_link} target="_blank" rel="noopener noreferrer">{tech.name}</a>
+              </div>            
+              <div className="tech-tree-effect">{tech.game_effect}</div>
+              <div className="tech-tree-description">{tech.description}</div>
+              <button 
+                className="tech-tree-purchase-button" 
+                onClick={() => setSelectedTech(tech)} 
+                disabled={isUnaffordable}
+              >
+                Purchase
+              </button>
             </div>
-            <div className="tech-tree-title">
-              <a href={tech.shipstation_kb_link} target="_blank" rel="noopener noreferrer">{tech.name}</a>
-            </div>            
-            <div className="tech-tree-effect">{tech.game_effect}</div>
-            <div className="tech-tree-description">{tech.description}</div>
-            <button className="tech-tree-purchase-button" onClick={() => setSelectedTech(tech)}>Purchase</button>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <h2>Active Technologies</h2>
       <div className="technology-tree-container">        

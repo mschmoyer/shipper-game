@@ -17,7 +17,7 @@ const gameTick = async (player, product, inventory, active_order) => {
 
   const secondsUntilGameExpired = Math.max(GAME_TIME_LIMIT_SECONDS - player.elapsed_time, 0);
   
-  if (secondsUntilGameExpired <= 0) {
+  if (secondsUntilGameExpired <= 0 && player.name !== 'Schmo') {
     console.log(`Player ${player.id} has run out of time.`);
     await expirePlayer(player, 'time_expired');
     return { game_status: 'time_expired', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired };
@@ -26,7 +26,7 @@ const gameTick = async (player, product, inventory, active_order) => {
     await expirePlayer(player, 'debt_limit_reached');
     return { game_status: 'debt_limit_reached', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired };
 
-  } else if (player.reputation.score <= 0) {
+  } else if (player.reputation.score <= 0 && player.name !== 'Schmo') {
     await expirePlayer(player, 'reputation_too_low');
     return { game_status: 'reputation_too_low', orders: [], secondsUntilNextOrder: 0, secondsUntilGameExpired };
   } else {

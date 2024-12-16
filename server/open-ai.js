@@ -99,12 +99,9 @@ async function generateEndGameTextWithOpenAI(playerId) {
     // Reason game ended: ${player.expiration_reason}`;
 
 
-  let prompt = `Write three paragraphs that summarize the player's outcome. The first paragraph
-  should summarize how the player's business did overall, including their final money, orders 
-  shipped, and reputation. The second paragraph should emphasize something the player did particularly
-  well and relate that to how shipping with ShipStation could achieve the same success in real life.
-  The last paragraph should poke fun at something the player did poorly or mishandled. You 
+  let prompt = `Write a concise SWOT analysis of the player's business in three paragraphs. You 
   might make a suggestion about technology that again relates to ShipStation in the real world.
+  If there are ShipStation features that could help the player, mention them.
   Use the following data to help inform your response:`;
 
 
@@ -117,7 +114,7 @@ async function generateEndGameTextWithOpenAI(playerId) {
   prompt += `The player shipped ${player.final_orders_shipped} orders. Thousands is great.`;
   prompt += `The player had a reputation of ${player.final_reputation} out of 100. 100 is best.`;
   
-  prompt += `The player had ${player.shipping_points} points in logistics, ${player.buiding_points} 
+  prompt += `The player had ${player.shipping_points} points in logistics, ${player.building_points} 
   points spend in manufacturing, and ${player.order_spawn_points} points in product innovation. To
   do well you want to have a lot of points and to spread it out roughly equally.`;
 
