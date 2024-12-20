@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import './initial-view.css';
 import { createAccount } from '../api';
-import gameTitleImage from '../images/game-title.png'; // Adjust the path if you move the image
+import gameTitleImage from '../images/game-title.png';
 
 const InitialView = ({ onAccountCreated }) => {
   const [name, setName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [accountCreated, setAccountCreated] = useState(false); // Add state for account creation
+  const [accountCreated, setAccountCreated] = useState(false);
   const [productInfo, setProductInfo] = useState({});
 
   const handleSubmit = (e) => {

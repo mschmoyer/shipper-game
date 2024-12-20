@@ -17,7 +17,15 @@ const getReputationEmoji = (reputation) => {
 
 const formatCurrency = (amount) => {
   if (amount === null) return 'N/A';
+  if (amount >= 1e6) return `${(amount / 1e6).toFixed(1)}M`;
+  if (amount >= 1e3) return `${(amount / 1e3).toFixed(1)}k`;
   return amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
+};
+
+const formatDataValue = (orders) => {
+  if (orders >= 1e6) return `${(orders / 1e6).toFixed(1)}M`;
+  if (orders >= 1e3) return `${(orders / 1e3).toFixed(1)}k`;
+  return orders;
 };
 
 const formatTimeRemaining = (timeRemaining) => {
@@ -58,11 +66,11 @@ const InfoPanel = ({ gameInfo }) => {
 
   const renderDelta = (delta) => {
     if (delta === 0) return null;
-    return <span className={`delta-label ${getDeltaClass(delta)}`}>{delta > 0 ? `+${delta}` : delta}</span>;
+    let smallDelta = formatDataValue(Math.abs(delta));
+    return <span className={`delta-label ${getDeltaClass(delta)}`}>{delta > 0 ? `+${formatDataValue(smallDelta)}` : formatDataValue(smallDelta)}</span>;
   };
 
   const orders_shipped_value = player.orders_shipped ? player.orders_shipped : 0;
-  const inventory_value = gameInfo && gameInfo.inventory ? gameInfo.inventory[0].on_hand : 0;
   const money_value = player.money ? player.money : 1000;
   const reputation_value = player.reputation ? player.reputation.score : 100;
 
@@ -74,12 +82,16 @@ const InfoPanel = ({ gameInfo }) => {
           <p>{!isMobileMode ? 'Funds: ' : ''}${formatCurrency(money_value)}{renderDelta(deltas.money)}</p>
         </div>
         <div>
-          <p className="info-values-emoji">Order</p>
-          <p>{!isMobileMode ? 'Orders: ' : ''}{player.orders ? player.orders.length : 0}</p>
+          <p className="info-values-emoji">🛒</p>
+          <p>{!isMobileMode ? 'Orders: ' : ''}{formatDataValue(gameInfo && gameInfo.orders ? gameInfo.orders.length : 0)}</p>
         </div>
         <div>
           <p className="info-values-emoji">📦</p>
-          <p>{!isMobileMode ? 'Shipped: ' : ''}{orders_shipped_value}{renderDelta(deltas.orders_shipped)}</p>
+          <p>{!isMobileMode ? 'Inventory: ' : ''}{formatDataValue(gameInfo && gameInfo.inventory && gameInfo.inventory[0] ? gameInfo.inventory[0].on_hand : 0)}</p>
+        </div>
+        <div>
+          <p className="info-values-emoji">🚚</p>
+          <p>{!isMobileMode ? 'Shipped: ' : ''}{formatDataValue(orders_shipped_value)}{renderDelta(deltas.orders_shipped)}</p>
         </div>
         <div>
           <p className="info-values-emoji">{getReputationEmoji(reputation_value)}</p>

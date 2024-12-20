@@ -19,12 +19,11 @@ const getReputationEmoji = (reputation) => {
 
 const EndGameView = ({ gameInfo, onNewGame }) => {
   const [endGameText, setEndGameText] = useState([]);
-  const [hasFetched, setHasFetched] = useState(false); // Add a boolean flag
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     const fetchEndGameText = async () => {
-      console.log('endGameText:', endGameText);
-      setEndGameText([]); // Set to an empty array as a default
+      setEndGameText([]);
       if(!hasFetched && (!endGameText || endGameText.length === 0)) {
         setEndGameText(['Analyzing behaviors...']);
         const response = await generateEndGameText(gameInfo.acquired_technologies);
@@ -32,22 +31,19 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
       }
     };
     if (gameInfo.acquired_technologies && !hasFetched) {
-      setHasFetched(true); // Set the flag to true after fetching
-      fetchEndGameText(); // Ensure the async function is awaited      
+      setHasFetched(true);
+      fetchEndGameText();
     }
   }, [gameInfo.acquired_technologies, hasFetched]);
 
-  const formatMoney = (money) => {
-    return money.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-
   const player = gameInfo.player;
   const message = messages[player.expiration_reason] || messages.time_expired;
+  const namePrefix = player.expiration_reason === 'hostile_takeover_by_another_player' ? player.hostile_takeover_player_name : '';
 
   return (
     <div className="end-game-view">
       <h2>{message.title}</h2>
-      <p>{player.expiration_reason === 'hostile_takeover_by_another_player' ? player.hostile_takeover_player_name : ''} {message.description}</p>
+      <p>{namePrefix} {message.description}</p>
 
       <h3>🤖 Thoughts from AI Assistant:</h3>
       <ul>

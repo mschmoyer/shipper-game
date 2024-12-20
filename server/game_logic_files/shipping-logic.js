@@ -1,6 +1,4 @@
 const { dbRun, dbGet, dbAll } = require('../database');
-const fs = require('fs');
-const path = require('path');
 
 const { XP_GAINED_PER_OPERATION, BASE_ORDER_DUE_SECONDS, MAXIMUM_ORDER_QUEUE_SIZE, 
   GAME_SHIPPING_COST_PER_MILE, OrderStates } = require('../constants');
@@ -8,7 +6,6 @@ const { XP_GAINED_PER_OPERATION, BASE_ORDER_DUE_SECONDS, MAXIMUM_ORDER_QUEUE_SIZ
 const { playerHasTechnology } = require('./technology-logic');
 const { getInventoryInfo, getActiveProduct } = require('./product-logic');
 const { gainXP, getPlayerInfo } = require('./player-logic');
-const { get } = require('http');
 
 const DEFAULT_SHIPPING_STEPS = [
   {
@@ -39,26 +36,19 @@ const DEFAULT_SHIPPING_STEPS = [
 
 const OrderTick = async (player, product, inventory, elapsed_time, active_order) => {
 
-  // console.log('order_shipped:', player.orders_shipped, 'products_built:', player.products_built);
   if(player.orders_shipped === 0 && player.products_built === 0) {
-    // Player has not done anything yet, don't start generating orders. 
-    // console.log('OrderTick - Player has not done anything yet, not generating orders');
     return { orders: [], secondsUntilNextOrder: 0, ordersShipped: 0 };
   }
-
   const orders = await getOrderList(
     'player_id = $1 AND active = true',
     [player.id]
   );
-
-  // First, check on our active orders. 
   for (const order of orders) {
     await CheckOrderState(order, player, product);
   }
 
   let ordersShipped = await GenerateOrders(player, product, inventory, elapsed_time, orders);
 
-  // TODO: use getOrder() for this. 
   const lastOrder = await dbGet(
     `SELECT *,
       EXTRACT(EPOCH FROM (NOW() - created_at)) AS seconds_since_creation
@@ -72,8 +62,7 @@ const OrderTick = async (player, product, inventory, elapsed_time, active_order)
   const readyForNewOrder = (!lastOrder || lastOrder.seconds_since_creation >= spawnTime);
   const secondsUntilNextOrder = Math.round(readyForNewOrder ? 0 : Math.max(0, spawnTime - lastOrder.seconds_since_creation));
   
-  // This is where we manifest incoming orders. 
-  if(readyForNewOrder && orders.length < MAXIMUM_ORDER_QUEUE_SIZE) {
+  if(ordersShipped <= 0 && readyForNewOrder && orders.length < MAXIMUM_ORDER_QUEUE_SIZE) {
     ordersShipped += await _GenerateOrder(player.id);
     if( await isAdvertisingCampaignActive(player) ) {
       ordersShipped += await _GenerateOrder(player.id);
@@ -84,11 +73,8 @@ const OrderTick = async (player, product, inventory, elapsed_time, active_order)
     await gainXP(player, ordersShipped * XP_GAINED_PER_OPERATION);
   }
 
-  // if automation is enabled and we're not shipping an order, attempt to ship one
   const hasHireWarehouseWorker = await playerHasTechnology(player.id, 'hire_warehouse_worker');
-  // console.log('OrderTick - hasHireWarehouseWorker:', hasHireWarehouseWorker, 'active_order:', active_order);
-  if (hasHireWarehouseWorker && !active_order) {
-    // console.log('OrderTick - Player is not shipping and automated, so attempting to ship order');
+  if (hasHireWarehouseWorker && (!active_order && ordersShipped < 2)) {
     await shipOrder(player);
   }
 
@@ -111,18 +97,14 @@ const CheckOrderState = async (order, player, product) => {
 
 const isAdvertisingCampaignActive = async (player) => {
   const hasAdvertisingTech = await playerHasTechnology(player.id, 'advertising_campaign');
-  // console.log('hasAdvertisingTech:', hasAdvertisingTech, 'player.advertising_campaign_start_time:', player.advertising_campaign_start_time);
   if (hasAdvertisingTech && player.advertising_campaign_start_time) {
-    // check player.advertising_campaign_start_time. if 2 minutes have passed, expire it. 
     const hasExpired = new Date() - player.advertising_campaign_start_time > 120000;
     if(hasExpired) {
-      console.log('GenerateOrders - Player has advertising campaign that has expired. Cancelling.');
       await dbRun(
         'UPDATE player SET advertising_campaign_start_time = NULL WHERE id = $1',
         [player.id],
         'Failed to cancel advertising campaign'
       );
-      // Unset the advertising from the player's acquired_technologies
       await dbRun(
         'DELETE FROM acquired_technologies WHERE player_id = $1 AND tech_code = $2',
         [player.id, 'advertising_campaign'],
@@ -135,139 +117,119 @@ const isAdvertisingCampaignActive = async (player) => {
   return false;
 }
 
-
 const GenerateOrders = async (player, product, inventory, elapsed_time, orders) => {
 
   const spawnRateMs = Math.max(player.order_spawn_milliseconds, 10) || BASE_ORDER_SPAWN_MILLISECONDS;
-  
-  // We depend on steps * step_duration until its too fast, then we go with shipping_speed...
   const shipRateMs = player.shipping_duration;
 
-  // console.log(`GenerateOrders - PlayerId: ${player.id}, SpawnRateMs: ${spawnRateMs}, ShipRateMs: ${shipRateMs}, ElapsedTime: ${elapsed_time}`);
-
-  // log the number of orders we are spawning and shipping per second, note that our variables are in milliseconds
-  const spawnsPerSecond = 1000 / spawnRateMs;
-  const shipsPerSecond = 1000 / shipRateMs;
-  // console.log(`GenerateOrders - SpawnsPerSecond: ${spawnsPerSecond}, ShipsPerSecond: ${shipsPerSecond}`);
-
-  let orders_to_generate = Math.max(0, Math.floor(elapsed_time / spawnRateMs)) * player.order_spawn_count;
-
+  let orders_to_generate = (elapsed_time / spawnRateMs) * player.order_spawn_count;
   if( await isAdvertisingCampaignActive(player) ) {
     orders_to_generate *= 2;
+  } 
+  let orders_shippable = (elapsed_time / shipRateMs) * player.orders_per_ship;
+  let ordersShipped = 0;
+  // We can only ship as many orders as we have in the queue
+  orders_shippable = Math.min(orders_shippable, orders_to_generate + orders.length);
+  let orders_to_ship = Math.min(orders_shippable, orders_to_generate);
+  console.log('orders_to_generate:', orders_to_generate, 'orders_shippable', orders_shippable, 'orders_to_ship:', orders_to_ship);
+  ordersShipped = await _synthesizeShippedOrders(player, orders_to_ship, product, inventory, orders);
+
+  orders_shippable -= ordersShipped;
+  let available_stock = inventory[0].on_hand - ordersShipped;
+  const existing_orders_to_mark_shipped = Math.floor(Math.min(Math.min(orders.length, orders_shippable),available_stock));
+  
+  // log orders_shippable, ordersShipped, existing_orders_to_mark_shipped
+  console.log('GenerateOrders: orders_shippable, ordersShipped, existing_orders_to_mark_shipped', 
+    orders_shippable, ordersShipped, existing_orders_to_mark_shipped);
+
+  for (let i = 0; i < existing_orders_to_mark_shipped; i++) {
+    let orders_completed = await OrderCompleted(orders[i].id, player);
+    available_stock -= orders_completed * player.products_per_order;
+    orders_shippable -= orders_completed;
+    ordersShipped += orders_completed;
   }
 
-  // using elapsed_time, orders, and player.shipping_speed (milliseconds), calculate how many orders were shipped in this time period
-  let new_orders_to_ship = Math.floor(elapsed_time / shipRateMs) * player.orders_per_ship;
-  
-  let ordersShipped = 0;
-
-  // console.log('GenerateOrders - orders_to_generate:', orders_to_generate, 'new_orders_to_ship:', new_orders_to_ship, 'orders.length:', orders.length);
-  ordersShipped = await _synthesizeShippedOrders(player, new_orders_to_ship, product, inventory, orders);
-
-  // only generate orders we didn't already ship within this game tick, up to MAXIMUM_ORDER_QUEUE_SIZE
-  orders_to_generate = Math.max(0, orders_to_generate - new_orders_to_ship);
+  orders_to_generate = Math.max(0, orders_to_generate - ordersShipped);
   orders_to_generate = Math.min(orders_to_generate, MAXIMUM_ORDER_QUEUE_SIZE - orders.length);
-
   if(orders_to_generate > 0) {
     for (let i = 0; i < orders_to_generate; i++) {
-      const order = await _GenerateOrder(player.id);
+      await _GenerateOrder(player.id);
     }
   }
 
-  // if( orders_to_generate > 0 || new_orders_to_ship > 0) {
-  //   console.log(`GenerateOrders - OrdersShippable: ${new_orders_to_ship}, Generated: ${orders_to_generate}, Existing: ${orders.length}`);
-  // }
+  // log for debugging, including elapsed_time, orders_to_generate, orders_shippable, ordersShipped
+  console.log('GenerateOrders: elapsed_time, orders_to_generate, orders_shippable, ordersShipped', 
+    elapsed_time, orders_to_generate, orders_shippable, ordersShipped);
+
   return ordersShipped;
 }
 
-const _synthesizeShippedOrders = async (player, new_orders_to_ship, product, inventory, orders) => {
-  if(new_orders_to_ship <= 0) {
-    return 0;
-  }
+const _synthesizeShippedOrders = async (player, orders_to_ship, product, inventory, orders) => {
+
   const hasHireWarehouseWorker = await playerHasTechnology(player.id, 'hire_warehouse_worker');
-  if (!hasHireWarehouseWorker) {
+  if (!hasHireWarehouseWorker || orders_to_ship <= 0) {
     return 0;
-  }
+  }  
   
   let totalRevenue = 0;
   let totalOrdersShipped = 0;
   let available_stock = inventory[0].on_hand;
   let total_stock_to_deduct = 0;
-  let existing_orders_shipped = 0;
 
-  // OrderCompleted handles money and stock, but we need to track here...
-  available_stock -= existing_orders_shipped * player.products_per_order;
-  new_orders_to_ship -= existing_orders_shipped;
-
-  // console.log(`_synthesizeShippedOrders - ExistingOrdersShipped: ${existing_orders_shipped}, NewOrdersToShip: ${new_orders_to_ship}`);
+  // log orders.length, orders_to_ship, available_stock
+  console.log('SynthesizeOrders 1: orders.length, orders_to_ship, available_stock', 
+    orders.length, orders_to_ship, available_stock);
 
   const hasBundleTech = await playerHasTechnology(player.id, 'bundles');
+  const shippingCostPerMile = await getShippingCostPerMile(player);
+  const distance = await calculateDistance(player.id);
+  const sales_price = product.sales_price * (hasBundleTech ? hasBundleTech : 1);
+  const revenue = (sales_price - product.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
 
-  // loop through new_orders_to_ship and synthesize the orders
-  for (let i = 0; i < new_orders_to_ship; i++) {
+  for (let i = 0; i < orders_to_ship; i++) {
     if(available_stock >= player.products_per_order) {
       available_stock -= player.products_per_order;
       total_stock_to_deduct += player.products_per_order;
-      totalOrdersShipped += player.products_per_order;
-      const shippingCostPerMile = await getShippingCostPerMile(player);
-      const distance = await calculateDistance(player.id);
-
-      const sales_price = product.sales_price * (hasBundleTech ? hasBundleTech : 1);
-      const revenue = (sales_price - product.cost_to_build - (distance * shippingCostPerMile) * player.products_per_order);
-      // if(i == 0) {
-      //   console.log(`_synthesizeShippedOrders - Distance: ${distance}, Revenue: ${revenue}, SalesPrice: ${product.sales_price}`);
-      // }
+      totalOrdersShipped += 1;
       totalRevenue += revenue;
     } else {
       break;
     }
   }
+  orders_to_ship -= totalOrdersShipped;
+
+  // console log the variables above in one line
+  console.log('SynthesizeOrders 3: totalRevenue, totalOrdersShipped, total_stock_to_deduct, orders_to_ship, available_stock', 
+    totalRevenue, totalOrdersShipped, total_stock_to_deduct, orders_to_ship, available_stock);
+
   totalRevenue = Math.round(totalRevenue);
-  // console.log(`totalRevenue: ${totalRevenue}, totalOrdersShipped: ${totalOrdersShipped}, total_stock_to_deduct: ${total_stock_to_deduct}`);
   if(totalOrdersShipped > 0) {
-    // update player orders_shipped and total_money_earned and money 
-    const playerRow = await dbRun(
+    await dbRun(
       `UPDATE player 
         SET 
-          orders_shipped = orders_shipped + $1, 
-          total_money_earned = total_money_earned + $2, 
-          money = money + $2 
+          orders_shipped = LEAST(orders_shipped + $1, 2147483647-1), 
+          total_money_earned = LEAST(total_money_earned + $2, 2147483647-1),
+          money = LEAST(money + $2, 2147483647-1)
         WHERE id = $3
         RETURNING orders_shipped, total_money_earned, money`,
       [totalOrdersShipped, totalRevenue, player.id],
-      'Failed to update player orders_shipped, total_money_earned, and money'
+      `Failed to update player orders_shipped, total_money_earned, and money for playerId: ${player.id}`
     );
 
-    // update inventory counts
-    const invRow = await dbRun(
+    await dbRun(
       'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 RETURNING on_hand',
       [total_stock_to_deduct, player.id],
       'Failed to update inventory on_hand'
     );
   }
 
-  new_orders_to_ship -= totalOrdersShipped;
-  const existing_orders_to_mark_shipped = Math.min(Math.min(orders.length, new_orders_to_ship),available_stock);
-  
-  for (let i = 0; i < existing_orders_to_mark_shipped; i++) {
-    let orders_completed = await OrderCompleted(orders[i].id, player);
-    existing_orders_shipped += orders_completed / player.orders_per_ship;
-    totalOrdersShipped += orders_completed;
-    // money and stock for this order are handled in OrderCompleted. 
-  }
-
-  // console.log(`_synthesizeShippedOrders - OrdersToShip: ${new_orders_to_ship}, TotalRevenue: ${totalRevenue}, TotalStockToDeduct: ${total_stock_to_deduct}, OrdersShipped: ${totalOrdersShipped}`);
   return totalOrdersShipped;
 }
 
 const calculateDistance = async (playerId) => {
   const hasMultiWarehouseTech = await playerHasTechnology(playerId, 'multi_warehouse');
-  // let shippingDistance = Math.round(Math.random() * (GAME_MAX_SHIPPING_DISTANCE - GAME_MIN_SHIPPING_DISTANCE) + GAME_MIN_SHIPPING_DISTANCE);
   let shippingDistance = 300;
   if (hasMultiWarehouseTech) {
-    // Probably halves it...
-    // console.log('calculateDistance - Player has multi_warehouse tech, halving shipping distance');
-    // console.log('shippingDistance:', shippingDistance);
     shippingDistance = shippingDistance / 2;
   }
   return shippingDistance;
@@ -275,16 +237,10 @@ const calculateDistance = async (playerId) => {
 
 const _GenerateOrder = async (playerId) => {
   const player = await getPlayerInfo(playerId);
-
-  // TODO: maybe shouldn't be random? 
   const distance = await calculateDistance(playerId);
-
   const due_by_time_seconds = BASE_ORDER_DUE_SECONDS;
 
-  // log eerything important in one line
-  // console.log(`_GenerateOrder - PlayerId: ${playerId}, Distance: ${distance}, DueByTimeSeconds: ${due_by_time_seconds}, State: ${state}`);
-
-  const order = await dbGet(
+  await dbGet(
     `INSERT INTO orders (player_id, due_by_time, state, distance, product_quantity) 
       VALUES 
       ($1, NOW() + INTERVAL '1 second' * $2, $3, $4, $5)
@@ -295,16 +251,11 @@ const _GenerateOrder = async (playerId) => {
   return 1;
 };
 
-// The player has requested to ship an order
 const shipOrder = async (player) => {
-  
   let activeOrder = await getActiveOrder(player.id);
   const shippedOrders = await CheckOrderState(activeOrder, player);
-  // console.log('shipOrder - activeOrder:', activeOrder, 'shippedOrders:', shippedOrders);
   if (activeOrder && shippedOrders === 0) {
-    // An order is already being shipped AND has not finished. 
     return { error: 'You are busy shipping.' };
-
   } else {
     const hasOrderGridFilters = await playerHasTechnology(player.id, 'order_grid_filters');
     if (hasOrderGridFilters) {
@@ -326,25 +277,15 @@ const shipOrder = async (player) => {
 
   const inventory = await getInventoryInfo(player.id);
 
-  // If the player has inventory management tech, prevent overselling / bad effetcts. 
   let hasEnoughInventory = inventory[0].on_hand >= player.products_per_order;
   if (!hasEnoughInventory) {
-    // const hasInventoryManagementTech = await playerHasTechnology(playerId, 'inventory_management');
-    // if (!hasInventoryManagementTech) {
-      
-    // }
-    console.log('ShipOrder - Player does not have enough inventory to fulfill this order');
     return { error: 'Not enough inventory!' };
   }
 
-  // const { shipping_steps, total_duration } = await getShippingSteps(player);
   const total_duration = Math.round(player.shipping_duration);
   const shippingData = await calculateShippingAndBuyLabel(player, activeOrder.distance);
-
   const total_products_shipped = Math.min(inventory[0].on_hand, player.products_per_order * player.orders_per_ship);
   const total_shipping_cost = Math.round(shippingData.shipping_cost * total_products_shipped);
-
-  // console.log('ShipOrder - total_products_shipped:', total_products_shipped, 'total_shipping_cost:', total_shipping_cost);
 
   await dbRun(
     `UPDATE orders 
@@ -357,9 +298,8 @@ const shipOrder = async (player) => {
 
   activeOrder = await getActiveOrder(player.id);
 
-  // console.log('ShipOrder: deducting money from player');
   await dbRun(
-    'UPDATE player SET money = money - $1, progress = 0 WHERE id = $2',
+    'UPDATE player SET money = GREATEST(money - $1, -2147483647), progress = 0 WHERE id = $2',
     [total_shipping_cost, player.id],
     'Failed to update shipping status'
   );
@@ -388,14 +328,8 @@ const getOrder = async (whereClause, params) => {
     return null;
   }
 
-  // if (order) {
-  //   const { shipping_steps, total_duration } = await getShippingSteps(params[0]);
-  //   order.shipping_steps = shipping_steps;
-  //   order.total_duration = total_duration;
-  // }
   order.progress = Math.min((order.elapsed_time / order.duration) * 100, 100);
   order.is_shipping = order.progress < 100 ? true : false;
-
   return order;
 };
 
@@ -413,7 +347,6 @@ const getOrderList = async (whereClause, params) => {
 
   for (let order of orders) {
     const { shipping_steps, total_duration } = await getShippingSteps(params[0]);
-    //order.shipping_steps = shipping_steps;
     order.total_duration = total_duration;
   }
 
@@ -433,7 +366,6 @@ const getShippingCostPerMile = async (player) => {
   if (hasShipstationTech) {
     shipping_cost *= 0.5;
   }
-  //exclusive_logistics_penalty_applied
   if (player.exclusive_logistics_penalty_applied) {
     shipping_cost *= 1.5;
   }
@@ -441,7 +373,6 @@ const getShippingCostPerMile = async (player) => {
 }
 
 const calculateShippingAndBuyLabel = async (player, distance) => {
-
   const playerId = player.id;
   const product = await dbGet(
     'SELECT p.weight, p.cost_to_build, p.sales_price FROM products p JOIN player_products pp ON p.id = pp.product_id WHERE pp.player_id = $1',
@@ -451,14 +382,11 @@ const calculateShippingAndBuyLabel = async (player, distance) => {
 
   const shipping_cost_per_mile = await getShippingCostPerMile(player);
   let shipping_cost = distance * shipping_cost_per_mile;
-
   const total_cost = Math.round(shipping_cost + product.cost_to_build);
-
   const data = { shipping_cost, total_cost };
   return data;
 };
 
-// get order by orderId
 const getOrderById = async (orderId) => {
   return await dbGet(
     'SELECT * FROM orders WHERE id = $1',
@@ -470,9 +398,6 @@ const getOrderById = async (orderId) => {
 const getShippingSteps = async (playerId) => {
   let shipping_steps = DEFAULT_SHIPPING_STEPS;
 
-  // const shipping_speed_seconds = player.shipping_speed / 1000;
-
-  // if user has the smartFill technology then eliminate the input_weights_dimensions step
   const hasPresetTech = await playerHasTechnology(playerId, 'smartfill');
   if (hasPresetTech) {
     shipping_steps = shipping_steps.filter(step => step.step_code !== 'input_weights_dimensions');
@@ -483,9 +408,7 @@ const getShippingSteps = async (playerId) => {
     shipping_steps = shipping_steps.filter(step => step.step_code !== 'rate_shopping');
   }
 
-  // shipping_steps = shipping_steps.map(step => ({ ...step, duration: shipping_speed_seconds }));
-
-  return shipping_steps; // Ensure return statement is always executed
+  return shipping_steps;
 };
 
 const OrderCompleted = async (orderId, player) => {
@@ -495,30 +418,20 @@ const OrderCompleted = async (orderId, player) => {
   const inventory = await getInventoryInfo(playerId);
 
   if(!product || !order || !inventory || inventory.length === 0) {
-    console.error('OrderCompleted - Missing product, order, or inventory');
-    console.log('Product:', product, 'Order:', order, 'Inventory:', inventory);
     return 0;
   }
   
-  // log some useful info about this order in one line
-  // console.log(`OrderCompleted - OrderId: ${orderId}, ProductId: ${product.id}, ProductQuantity: ${order.product_quantity}`);
-
   let orders_shipped = player.orders_per_ship;
   let revenue = Math.round(product.sales_price * order.product_quantity);
   let order_state = OrderStates.Shipped;
   const productQuantity = order.product_quantity;
 
   if (inventory[0].on_hand < (productQuantity)) {
-    // player did not have inventory to fulfill this order! PUNISH THEM!
-    // console.log('OrderCompleted - Player did not have enough inventory to fulfill this order. OrderId:', orderId);
     revenue = 0;
     orders_shipped = 0;
     order_state = OrderStates.Lost;
     orders_shipped = 0;
   } else {
-    // console.log('OrderCompleted - Deducting stock. Quantity:', order.product_quantity);
-
-    // Deduct stock from inventory
     await dbRun(
       'UPDATE inventory SET on_hand = on_hand - $1 WHERE player_id = $2 AND product_id = $3',
       [productQuantity, playerId, product.id],
@@ -526,27 +439,26 @@ const OrderCompleted = async (orderId, player) => {
     );
   }
 
-  // Player earns revenue for this order and orders_shipped increases
   await dbRun(
-    'UPDATE player SET money = money + $1, orders_shipped = orders_shipped + $2, total_money_earned = total_money_earned + $3 WHERE id = $4',
+    `UPDATE player SET 
+      money = LEAST(money + $1, 2147483647), 
+      orders_shipped = LEAST(orders_shipped + $2, 2147483647), 
+      total_money_earned = LEAST(total_money_earned + $3, 2147483647)
+      WHERE id = $4`,
     [revenue, orders_shipped, revenue, playerId],
     'Failed to update money'
   );
 
-  // Update order state to shipped and deactivate it
   await dbRun(
     'UPDATE orders SET state = $1, active = false WHERE id = $2',
     [order_state, orderId],
     'Failed to update order status'
   );
 
-  // log revenue, orders_shipped, and order_state
-  // console.log(`OrderCompleted - Revenue: ${revenue}, OrdersShipped: ${orders_shipped}, OrderState: ${order_state}`);
   return orders_shipped;
 };
 
 const OrderCanceled = async (orderId) => {
-  // console.log(`Order ${orderId} for player ${playerId} has been canceled.`);
   await dbRun(
     'UPDATE orders SET active=false, state = $1 WHERE id = $2',
     [OrderStates.Canceled, orderId],

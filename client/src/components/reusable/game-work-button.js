@@ -23,7 +23,7 @@ const GameWorkButton = ({ autoShip, onClick, isWorkBeingDone, titleDefault, titl
       onClick={onClick}
       disabled={isWorkBeingDone}
     >
-      {autoShip ? 'Auto: ON' : isWorkBeingDone ? (isMobileMode ? '⏳' : titleWhenWorking) : titleDefault} 
+      {autoShip ? 'Auto' : isWorkBeingDone ? (isMobileMode ? '⏳' : titleWhenWorking) : titleDefault} 
     </button>
   );
 };

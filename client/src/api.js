@@ -96,12 +96,6 @@ export const upgradeSkill = (skill) => {
   });
 };
 
-export const toggleBuildingAutomation = () => {
-  return apiCall(`${baseUrl}/toggle-building-automation`, {
-    method: 'POST',
-  });
-};
-
 export const generateEndGameText = (acquiredTechnologies) => {
   return apiCall(`${baseUrl}/generate-end-game-text`, {
     method: 'POST',

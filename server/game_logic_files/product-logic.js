@@ -109,14 +109,14 @@ const _synthesizeBuiltProducts = async (player, product, inventory, products_to_
   if (totalProducts > 0) {  
     // update the player's money
     updated_money = await dbRun(
-      'UPDATE player SET money = money - $1 WHERE id = $2 RETURNING money',
+      'UPDATE player SET money = GREATEST(money - $1,-2147483647) WHERE id = $2 RETURNING money',
       [totalCost, player.id],
       'Failed to update player money'
     );
 
     // update inventory
     updated_on_hand = await dbRun(
-      'UPDATE inventory SET on_hand = on_hand + $1 WHERE player_id = $2 RETURNING on_hand',
+      'UPDATE inventory SET on_hand = LEAST(on_hand + $1, 2147483647) WHERE player_id = $2 RETURNING on_hand',
       [totalProducts, player.id],
       'Failed to update inventory'
     );

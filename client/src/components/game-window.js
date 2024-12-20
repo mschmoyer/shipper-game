@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import './game-window.css';
-
-import TechnologyView from './technology-view';
 import TechnologyTree from './technology-tree';
-
 import ShipOrderView from './ship-order-view';
 import BuildProductView from './build-product-view';
-import SkillsView from './skills-view'; // Import the new SkillsView component
-import NetworkView from './network-view'; // Import the new NetworkView component
+import PrepareOrderView from './prepare-order-view';
+import SkillsView from './skills-view';
+import NetworkView from './network-view';
 
 const GameWindow = ({ gameInfo }) => {
   const [isTechViewVisible, setIsTechViewVisible] = useState(false);
-  const [isSkillsViewVisible, setIsSkillsViewVisible] = useState(false); // Add state for skills view
-  const [isNetworkViewVisible, setIsNetworkViewVisible] = useState(false); // Add state for network view
+  const [isSkillsViewVisible, setIsSkillsViewVisible] = useState(false);
+  const [isNetworkViewVisible, setIsNetworkViewVisible] = useState(false);
   const [affordableTechCount, setAffordableTechCount] = useState(0);
 
   const isMobileMode = window.innerWidth <= 600;
@@ -27,11 +25,11 @@ const GameWindow = ({ gameInfo }) => {
   };
 
   const openSkillsView = () => {
-    setIsSkillsViewVisible(true); // Function to open skills view
+    setIsSkillsViewVisible(true);
   };
 
   const openNetworkView = () => {
-    setIsNetworkViewVisible(true); // Function to open network view
+    setIsNetworkViewVisible(true);
   };
 
   return (
@@ -39,6 +37,10 @@ const GameWindow = ({ gameInfo }) => {
 
       <BuildProductView gameInfo={gameInfo} />
 
+      {/* TODO: Disabled for now. */}
+      {false && 
+        <PrepareOrderView gameInfo={gameInfo} /> 
+      }
       <ShipOrderView gameInfo={gameInfo} />
 
       <div className="thing-button-container">
@@ -49,7 +51,7 @@ const GameWindow = ({ gameInfo }) => {
             <div className="points-badge visible">{affordableTechCount}</div>
           )}
         </button>
-        <button className="tech-button" onClick={openSkillsView}> {/* Update onClick to openSkillsView */}
+        <button className="tech-button" onClick={openSkillsView}>
           🎓
           <div className="tech-label">Skills</div>
           {gameInfo.player.available_points > 0 && (
@@ -61,13 +63,14 @@ const GameWindow = ({ gameInfo }) => {
           <div className="tech-label">Network</div>
         </button>
       </div>
+
       <TechnologyTree
         gameInfo={gameInfo}
         isOpen={isTechViewVisible}
         onClose={() => setIsTechViewVisible(false)}
       />
       <SkillsView
-        player={gameInfo.player} // Pass player data to SkillsView
+        player={gameInfo.player}
         isOpen={isSkillsViewVisible}
         onClose={() => setIsSkillsViewVisible(false)}
       />

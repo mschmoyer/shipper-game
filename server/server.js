@@ -6,12 +6,12 @@ const { client, pgSessionStore } = require('./database');
 const authRoutes = require('./auth');
 const { generateEndGameTextWithOpenAI } = require('./open-ai');
 
-const { gameTick, handleTruckToWarehouseGameCompletion, handleFindTheProductHaystackGameCompletion } = require('./game_logic_files/game-logic');
-const { getAllTechnologyWithState, getAvailableTechnologies, getAcquiredTechnologies, purchaseTechnology } = require('./game_logic_files/technology-logic');
-const { getActiveProduct, getInventoryInfo, startProductBuild } = require('./game_logic_files/product-logic');
-const { shipOrder, getActiveOrder } = require('./game_logic_files/shipping-logic');
-const { getPlayerInfo, expirePlayer, upgradeSkill, toggleBuildingAutomation, getNetworkData } = require('./game_logic_files/player-logic'); // Import the upgradeSkill and toggleBuildingAutomation functions
-const { getLeaderboardData } = require('./game_logic_files/leaderboard-logic');
+const gameLogic = require('./game_logic_files/game-logic');
+const technologyLogic = require('./game_logic_files/technology-logic');
+const productLogic = require('./game_logic_files/product-logic');
+const shippingLogic = require('./game_logic_files/shipping-logic');
+const playerLogic = require('./game_logic_files/player-logic');
+const leaderboardLogic = require('./game_logic_files/leaderboard-logic');
 
 const app = express();
 const port = process.env.PORT || 5005;
@@ -33,221 +33,141 @@ app.use(session({
 
 app.use('/api', authRoutes);
 
-app.get('/api/game-info', async (req, res) => {
+const withPlayerSession = (handler) => async (req, res) => {
   try {
     if (!req.session.playerId) {
       return res.status(401).json({ error: 'No player session' });
     }
-
-    let player = await getPlayerInfo(req.session.playerId);
-    if(!player) {
-      req.session.destroy();
-      return res.status(401).json({ error: 'No player found' });
-    }
-
-    const available_technologies = await getAvailableTechnologies(req.session.playerId);
-    const acquired_technologies = await getAcquiredTechnologies(req.session.playerId);
-    const technology = await getAllTechnologyWithState(req.session.playerId);
-    const active_order = await getActiveOrder(req.session.playerId);
-    const product = await getActiveProduct(player);
-    const inventory = await getInventoryInfo(req.session.playerId);
-
-    const gData = await gameTick(player, product, inventory, active_order);
-    if(player.active && gData.game_status !== 'active') {
-      player.expiration_reason=gData.game_status;
-    }
-
-    res.json({
-      active_order,
-      game_active: player && player.active,
-      game_status: gData.game_status,
-      minigames_enabled: true,
-      player,
-      product,
-      inventory,
-      orders: gData.orders,
-      secondsUntilNextOrder: gData.secondsUntilNextOrder,
-      timeRemaining: Math.round(gData.timeRemainingSeconds),
-      productsBuilt: gData.productsBuilt,
-      ordersShipped: gData.ordersShipped,
-      available_technologies,
-      acquired_technologies,
-      technology
-    });
+    await handler(req, res);
   } catch (error) {
-    console.error('Error fetching game info:', error.message);
+    console.error('Error:', error.message);
     res.status(500).json({ error: error.message });
   }
-});
+};
 
-app.post('/api/ship-order', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-    const player = await getPlayerInfo(req.session.playerId);
-    const result = await shipOrder(player);
-    if (result.error) {
-      return res.status(200).json({ error: result.error });
-    }
-
-    res.json(result);
-  } catch (error) {
-    console.error('Error shipping order:', error.message);
-    res.status(500).json({ error: error.message });
+app.get('/api/game-info', withPlayerSession(async (req, res) => {
+  let player = await playerLogic.getPlayerInfo(req.session.playerId);
+  if(!player) {
+    req.session.destroy();
+    return res.status(401).json({ error: 'No player found' });
   }
-});
 
-app.post('/api/build-product', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
+  const available_technologies = await technologyLogic.getAvailableTechnologies(req.session.playerId);
+  const acquired_technologies = await technologyLogic.getAcquiredTechnologies(req.session.playerId);
+  const technology = await technologyLogic.getAllTechnologyWithState(req.session.playerId);
+  const active_order = await shippingLogic.getActiveOrder(req.session.playerId);
+  const product = await productLogic.getActiveProduct(player);
+  const inventory = await productLogic.getInventoryInfo(req.session.playerId);
 
-    const result = await startProductBuild(req.session.playerId);
-    if (result.error) {
-      return res.status(200).json({ error: result.error });
-    }
-    res.json(result);
-  } catch (error) {
-    console.error('Error building product:', error.message);
-    res.status(500).json({ error: error.message });
+  const gData = await gameLogic.gameTick(player, product, inventory, active_order);
+  if(player.active && gData.game_status !== 'active') {
+    player.expiration_reason=gData.game_status;
   }
-});
 
-app.post('/api/purchase-technology', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-    const { techId } = req.body;
+  // now get an updated player object after everything above is done. 
+  player = await playerLogic.getPlayerInfo(req.session.playerId);
 
-    const result = await purchaseTechnology(req.session.playerId, techId);
-    if (!result.success) {
-      return res.json(result);
-    }
-    res.json(result);
-  } catch (error) {
-    console.error('Error purchasing technology:', error.message);
-    res.status(500).json({ error: error.message });
+  res.json({
+    active_order,
+    game_active: player && player.active,
+    game_status: gData.game_status,
+    minigames_enabled: true,
+    player,
+    product,
+    inventory,
+    orders: gData.orders,
+    secondsUntilNextOrder: gData.secondsUntilNextOrder,
+    timeRemaining: Math.round(gData.timeRemainingSeconds),
+    productsBuilt: gData.productsBuilt,
+    ordersShipped: gData.ordersShipped,
+    available_technologies,
+    acquired_technologies,
+    technology
+  });
+}));
+
+app.post('/api/ship-order', withPlayerSession(async (req, res) => {
+  const player = await playerLogic.getPlayerInfo(req.session.playerId);
+  const result = await shippingLogic.shipOrder(player);
+  if (result.error) {
+    return res.status(200).json({ error: result.error });
   }
-});
 
-app.post('/api/reset-player', async (req, res) => {
-  try {
-    const playerId = req.session.playerId || req.headers['x-player-id'];
+  res.json(result);
+}));
 
-    if (!playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-
-    req.session.destroy(err => {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to reset player session' });
-      }
-      res.json({ success: true });
-    });
-  } catch (error) {
-    console.error('Error resetting player:', error.message);
-    res.status(500).json({ error: error.message });
+app.post('/api/build-product', withPlayerSession(async (req, res) => {
+  const result = await productLogic.startProductBuild(req.session.playerId);
+  if (result.error) {
+    return res.status(200).json({ error: result.error });
   }
-});
+  res.json(result);
+}));
 
-app.post('/api/end-game', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
+app.post('/api/purchase-technology', withPlayerSession(async (req, res) => {
+  const { techId } = req.body;
 
-    const player = await getPlayerInfo(req.session.playerId);
-    if (!player) {
-      return res.status(401).json({ error: 'No player found' });
-    }
-
-    await expirePlayer(player, 'walked_away');
-  } catch (error) {
-    console.error('Error ending game:', error.message);
-    res.status(500).json({ error: error.message });
+  const result = await technologyLogic.purchaseTechnology(req.session.playerId, techId);
+  if (!result.success) {
+    return res.json(result);
   }
-});
+  res.json(result);
+}));
 
-app.post('/api/complete-truck-to-warehouse-game', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
+app.post('/api/reset-player', withPlayerSession(async (req, res) => {
+  const playerId = req.session.playerId || req.headers['x-player-id'];
+
+  if (!playerId) {
+    return res.status(401).json({ error: 'No player session' });
+  }
+
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to reset player session' });
     }
-    const { succeeded } = req.body;
-    await handleTruckToWarehouseGameCompletion(req.session.playerId, succeeded);
     res.json({ success: true });
-  } catch (error) {
-    console.error('Error completing truck to warehouse game:', error.message);
-    res.status(500).json({ error: error.message });
+  });
+}));
+
+app.post('/api/end-game', withPlayerSession(async (req, res) => {
+  const player = await playerLogic.getPlayerInfo(req.session.playerId);
+  if (!player) {
+    return res.status(401).json({ error: 'No player found' });
   }
-});
 
-app.post('/api/complete-find-the-product-haystack-game', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-    const { succeeded } = req.body;
-    await handleFindTheProductHaystackGameCompletion(req.session.playerId, succeeded);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error completing find the product haystack game:', error.message);
-    res.status(500).json({ error: error.message });
+  await playerLogic.expirePlayer(player, 'walked_away');
+}));
+
+app.post('/api/complete-truck-to-warehouse-game', withPlayerSession(async (req, res) => {
+  const { succeeded } = req.body;
+  await gameLogic.handleTruckToWarehouseGameCompletion(req.session.playerId, succeeded);
+  res.json({ success: true });
+}));
+
+app.post('/api/complete-find-the-product-haystack-game', withPlayerSession(async (req, res) => {
+  const { succeeded } = req.body;
+  await gameLogic.handleFindTheProductHaystackGameCompletion(req.session.playerId, succeeded);
+  res.json({ success: true });
+}));
+
+app.post('/api/upgrade-skill', withPlayerSession(async (req, res) => {
+  const { skill } = req.body;
+
+  const result = await playerLogic.upgradeSkill(req.session.playerId, skill);
+  if (!result.success) {
+    return res.json(result);
   }
-});
+  res.json(result);
+}));
 
-app.post('/api/upgrade-skill', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-    const { skill } = req.body;
-
-    const result = await upgradeSkill(req.session.playerId, skill);
-    if (!result.success) {
-      return res.json(result);
-    }
-    res.json(result);
-  } catch (error) {
-    console.error('Error upgrading skill:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/toggle-building-automation', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-
-    const result = await toggleBuildingAutomation(req.session.playerId);
-    res.json({ new_value: result });
-  } catch (error) {
-    console.error('Error toggling building automation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/generate-end-game-text', async (req, res) => {
-  try {
-    if (!req.session.playerId) {
-      return res.status(401).json({ error: 'No player session' });
-    }
-
-    const endGameText = await generateEndGameTextWithOpenAI(req.session.playerId);
-    res.json({ endGameText });
-  } catch (error) {
-    console.error('Error generating end game text:', error.message);
-    res.status(500).json({ error: 'Failed to generate end-game text' });
-  }
-});
+app.post('/api/generate-end-game-text', withPlayerSession(async (req, res) => {
+  const endGameText = await generateEndGameTextWithOpenAI(req.session.playerId);
+  res.json({ endGameText });
+}));
 
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    const leaderboardData = await getLeaderboardData();
+    const leaderboardData = await leaderboardLogic.getLeaderboardData();
     res.json(leaderboardData);
   } catch (error) {
     console.error('Error retrieving leaderboard data:', error.message);
@@ -257,7 +177,7 @@ app.get('/api/leaderboard', async (req, res) => {
 
 app.get('/api/network-data', async (req, res) => {
   try {
-    const networkData = await getNetworkData();
+    const networkData = await playerLogic.getNetworkData();
     res.json(networkData);
   } catch (error) {
     console.error('Error retrieving network data:', error.message);

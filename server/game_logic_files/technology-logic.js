@@ -1,6 +1,32 @@
 const { dbRun, dbGet, dbAll } = require('../database');
 
+let techCache = {};
+const CACHE_EXPIRATION_TIME = 2000; // 2 seconds
+
+const TechnologyTick = async (player) => {
+  let money_to_deduct = 0;
+  if( await playerHasTechnology(player.id, 'hire_warehouse_worker') ) {
+    money_to_deduct += 20;
+  }
+  if( await playerHasTechnology(player.id, 'hire_fabricator') ) {
+    money_to_deduct += 20;
+  }
+  // update the player's money
+  await dbRun(
+    'UPDATE player SET money = money - $1 WHERE id = $2',
+    [money_to_deduct, player.id],
+    'Failed to update player money'
+  );
+};
+
 const playerHasTechnology = async (playerId, techCode) => {
+  const cacheKey = `${playerId}-${techCode}`;
+  const currentTime = Date.now();
+
+  if (techCache[cacheKey] && (currentTime - techCache[cacheKey].timestamp < CACHE_EXPIRATION_TIME)) {
+    return techCache[cacheKey].modifier_value;
+  }
+
   const technology = await dbGet(
     `SELECT t.modifier_value 
     FROM acquired_technologies at 
@@ -9,7 +35,13 @@ const playerHasTechnology = async (playerId, techCode) => {
     [playerId, techCode],
     'Failed to check player technology'
   );
-  return technology ? technology.modifier_value : null;
+
+  techCache[cacheKey] = {
+    modifier_value: technology ? technology.modifier_value : null,
+    timestamp: currentTime
+  };
+
+  return techCache[cacheKey].modifier_value;
 };
 
 const makeNewTechnologyAvailable = async (playerId) => {
@@ -188,7 +220,7 @@ const hostileTakeoverAction = async (playerId) => {
 
   // add to our player's orders shipped the target player's orders shipped
   await dbRun(
-    'UPDATE player SET orders_shipped = orders_shipped + $1, money = money - $3 WHERE id = $2',
+    'UPDATE player SET orders_shipped = LEAST(orders_shipped + $1, 2147483647), money = LEAST(money - $3, 2147483647) WHERE id = $2',
     [targetPlayer.orders_shipped, playerId, targetPlayer.money],
     'Failed to update player orders shipped'
   );
@@ -208,6 +240,7 @@ const initializeTechTree = async (playerId, techLevel) => {
 };
 
 module.exports = {
+  TechnologyTick,
   playerHasTechnology,
   makeNewTechnologyAvailable,
   performOneTimeTechnologyEffect,

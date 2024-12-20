@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import './build-product-view.css';
-import { startProductBuild, toggleBuildingAutomation } from '../api';
-import ProgressBar from './reusable/progress-bar';
-import GameWorkButton from './reusable/game-work-button';
+import { startProductBuild } from '../api';
+import GameWorkView from './reusable/game-work-view';
 import TruckToWarehouseGame from './minigames/truck-to-warehouse-game';
 
 const BuildProductView = ({ 
@@ -36,43 +35,30 @@ const BuildProductView = ({
     gameInfo.product.progress = 0;
     setBuildError('');
     setIsActive(true);
-
     setIsRetrying(false);
-    const result = await startProductBuild()
+
+    await startProductBuild()
       .then(data => {
         if (data.message === 'Product build started successfully.') {
-          console.log('🛠️ Building commenced! Your products are being crafted with love and code!');
           if (Math.random() < MINIGAME_SPAWN_CHANCE && gameInfo.minigames_enabled && !hasPurchaseOrderTech) { // 2% chance to show the minigame
             setShowMinigame(true);
           }
         } else {
-          console.error('❌ Failed to start product build:', data);
           setBuildError(data.error);
           gameInfo.product.is_building = false;
-          if (isAutoBuildEnabled) {
-            setIsRetrying(true);
-            //setTimeout(handleBuildProduct, 10000); // Add a one-second delay before retrying
-          }
+          setIsRetrying(isAutoBuildEnabled);
         }
       })
       .catch(error => {
-        console.error('❌ Failed to start product build:', error);
-        console.log('💥 Oops! Something went wrong. Maybe the designer of this game should consider a career in gardening.');
+        setBuildError(error.message);
+        setIsRetrying(isAutoBuildEnabled);
       });
   }, [isRetrying, gameInfo, isAutoBuildEnabled]);
 
   const handleGameWorkButtonClick = useCallback(async () => {
-    if (isAutoBuildEnabled) {
-      const result = await toggleBuildingAutomation();
-      if (result.success) {
-        // TODO: this won't work
-        gameInfo.product.is_building = true;
-        setIsAutoBuildEnabled(result.building_automation_enabled);
-      }
-      setIsActive(true);
-      return;
-    }
-    handleBuildProduct();
+    if (!isAutoBuildEnabled) {
+      handleBuildProduct();
+    }    
   }, [isRetrying, isAutoBuildEnabled, handleBuildProduct]);
 
   const handleCheckInventory = () => {
@@ -153,82 +139,32 @@ const BuildProductView = ({
     (product.is_building ? `${player.building_steps[current_step].name}` 
     : `Build some products!`);
 
+  const infoItems = [
+    { key: 'Built Qty', value: gameInfo.player.products_per_build, emoji: '🔢' },
+    { key: 'Build Cost', value: `$${product.cost_to_build}`, emoji: '💰' },
+    { key: 'On Hand', value: gameInfo.inventory[0].on_hand, emoji: '📦' }
+  ];
+
   return (
-    <div className="build-product-container">        
+    <div className="build-product-container">
       <div className="build-product-info">
         <h3 onClick={toggleModal}>
           <span className="build-product-emoji">{product.emoji}</span> {product.name}
         </h3>
-
-        {isModalOpen && (
-          <div className="modal">
-            <div className="modal-content">
-              <span className="close" onClick={toggleModal}>&times;</span>
-              <h3>{product.emoji} {product.name}</h3>
-              <p>📝 Description: {product.description}</p>
-              <p>⚖️ Weight: {product.weight} kg</p>
-              <p>💵 Cost: ${product.cost_to_build}</p>
-              <p>💲 Price: ${product.sales_price}</p>
-            </div>
-          </div>
-        )}
-        <div className="build-info">
-          <p>🔢 Built Qty: {gameInfo.player.products_per_build}</p>
-          <p>💰 Build Cost: ${product.cost_to_build}</p>
-          {hasInventoryTech ? (
-            <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
-          ) : (
-            showOnHandCount ? (
-              <p className={!hasInventoryTech ? "blurred-value" : ""}>📦 {gameInfo.inventory[0].on_hand} on hand</p>
-            ) : (
-              inventoryProgress > 0 && inventoryProgress < 100 ? (
-                <p>Auditing...</p>
-              ) : (
-                <button onClick={handleCheckInventory}>Check Inventory</button>
-              )
-            )
-          )}
-        </div>
       </div>
-      <div className="build-main-bar">
-        <GameWorkButton
-          autoShip={isAutoBuildEnabled}
-          onClick={handleGameWorkButtonClick}
-          isWorkBeingDone={isActive}
-          titleDefault="Build"
-          titleWhenWorking="Building..."
-          hotkey="B"
-        />
-        <ProgressBar
-          isError={!!buildError}
-          isActive={isActive}
-          labelText={labelText}
-          progress={progress}
-          speed={player.building_duration}
-          autoMode={isAutoBuildEnabled}
-        />
-      </div>
-      {isCheckInventoryModalOpen && (
-        <div className="check-inventory-modal">
-          <div className="modal-content">
-            <span className="close" onClick={closeCheckInventoryModal}>&times;</span>
-            <p>Knowing how much inventory you have available is important to prevent taking orders you cannot fulfill.  </p>
-            {inventoryProgress < 100 ? (
-              <ProgressBar 
-                isActive={true} 
-                progress={inventoryProgress} 
-                labelText={inventoryAuditProgressBarLabelText}
-              />
-            ) : (
-              <p>📦 {gameInfo.inventory[0].on_hand} on hand</p>
-            )}
-            <p>Buy the 🛠️<b>Inventory Tracking</b> technology to see inventory information instantly without having to wait for this!</p>
-          </div>
-        </div>
-      )}
-      {showMinigame && (
-        <TruckToWarehouseGame onClose={() => setShowMinigame(false)} />
-      )}    
+      <GameWorkView
+        infoItems={infoItems}
+        isEnabled={!buildError}
+        isClickable={!isActive}
+        isAutomated={isAutoBuildEnabled}
+        onClick={handleGameWorkButtonClick}
+        buttonTitle="Build"
+        buttonTitleBusy="Building..."
+        hotkey="B"
+        progress={progress}
+        speed={player.building_duration}
+        progressBarLabelText={labelText}
+      />
     </div>
   );
 };

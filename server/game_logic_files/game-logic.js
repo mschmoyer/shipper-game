@@ -5,6 +5,7 @@ const { OrderTick } = require('./shipping-logic');
 const { expirePlayer, updateLastGameUpdate } = require('./player-logic');
 
 const { GAME_TIME_LIMIT_SECONDS, GAME_DEBT_LIMIT } = require('../constants');
+const { TechnologyTick } = require('./technology-logic');
 
 // This is the main game loop. Called once per second on each client. 
 const gameTick = async (player, product, inventory, active_order) => {
@@ -35,6 +36,8 @@ const gameTick = async (player, product, inventory, active_order) => {
 
     // Do order completions and new orders
     const oData = await OrderTick(player, product, inventory, timeSinceLastUpdate, active_order);
+
+    await TechnologyTick(player);
     
     return { game_status: 'active', 
              orders: oData.orders, 
