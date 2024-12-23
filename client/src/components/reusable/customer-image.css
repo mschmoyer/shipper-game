@@ -1,0 +1,7 @@
+
+.customer-image {
+  width: 128px;
+  height: 128px;
+  background-image: url('/src/images/customers.png');
+  background-size: 640px 640px;
+}
