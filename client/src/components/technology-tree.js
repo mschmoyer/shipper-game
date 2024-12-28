@@ -7,7 +7,7 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
   const [selectedTech, setSelectedTech] = useState(null);
   const [newsMessage, setNewsMessage] = useState('');
   const technologies = gameInfo?.technology || [];
-  const playerFunds = gameInfo?.player.money || 0;
+  const businessFunds = gameInfo?.business.money || 0;
 
   let availableTechnologies = technologies.filter(tech => tech.acquired_id === null);
 
@@ -47,7 +47,7 @@ const TechnologyTree = ({ gameInfo, isOpen, onClose }) => {
       <h2>Available Technologies</h2>
       <div className="technology-tree-container">        
         {availableTechnologies.map(tech => {
-          const isUnaffordable = tech.cost > playerFunds;
+          const isUnaffordable = tech.cost > businessFunds;
           return (
             <div key={tech.id} className={`tech-tree-card ${isUnaffordable ? 'unaffordable' : ''}`}>
               <div className="tech-tree-card-header">

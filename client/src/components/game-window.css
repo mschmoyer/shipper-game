@@ -132,6 +132,18 @@
   border-radius: 10px 10px 0 0;
 }
 
+.initial-state-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 64px;
+  background-color: #f0f0f0;
+  color: #888;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
 @media (max-width: 600px) {
   .game-window {
     margin-top: 0;

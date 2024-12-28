@@ -9,7 +9,7 @@ const InitialView = ({ onAccountCreated }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
-  const [productInfo, setProductInfo] = useState({});
+  const [productInfo, setProductInfo] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,15 +18,15 @@ const InitialView = ({ onAccountCreated }) => {
       .then(data => {
         setLoading(false);
         if (data.success) {
-          setProductInfo({
-            playerId: data.player_id,
+          setProductInfo(data.products.map(product => ({
+            businessId: data.business_id,
             businessName: data.business_name || '',
             businessDescription: data.business_description || '',
-            productName: data.product_name || '',
-            productDescription: data.product_description || '',
-            productCategory: data.product_category || 'General',
-            emoji: data.product_emoji || '📦'
-          });
+            productName: product.name || '',
+            productDescription: product.description || '',
+            productCategory: product.category || 'General',
+            emoji: product.emoji || '📦'
+          })));
           setAccountCreated(true); // Set account created to true
         } else {
           setErrorMessage(data.error);
@@ -40,7 +40,7 @@ const InitialView = ({ onAccountCreated }) => {
   };
 
   const handleReady = () => {
-    document.cookie = `playerId=${productInfo.playerId}; path=/`;
+    document.cookie = `businessId=${productInfo[0].businessId}; path=/`;
     onAccountCreated();
   };
 
@@ -50,7 +50,7 @@ const InitialView = ({ onAccountCreated }) => {
     setErrorMessage('');
     setLoading(false);
     setAccountCreated(false);
-    setProductInfo({});
+    setProductInfo([]);
   };
 
   return (
@@ -58,14 +58,20 @@ const InitialView = ({ onAccountCreated }) => {
       <div className="login-box">
         {accountCreated ? (
           <div className="account-info">
-            <img src={gameTitleImage} alt="Game Title" className="initial-view-title-image" />
             <p>Your new business name is:</p>
-            <h3>{productInfo.businessName}</h3>
-            <p className="descriptive-block">{productInfo.businessDescription}</p>
+            <h3>{productInfo[0].businessName}</h3>
+            <p className="descriptive-block">{productInfo[0].businessDescription}</p>
             <p className="account-info-you-sell-text">You sell:</p>
-            <h3>{productInfo.emoji} {productInfo.productName}s</h3>
-            <p>Category: {productInfo.productCategory}</p>
-            <p className="descriptive-block">{productInfo.productDescription}</p>
+            {productInfo.map((product, index) => (
+              <div className="product-definition" key={index}>
+                <div className="large-emoji-icon">{product.emoji}</div> {/* Large centered emoji icon */}
+                <div className="product-details">
+                  <h3>{product.productName}</h3>
+                  <p>Category: {product.productCategory}</p>
+                  <p className="descriptive-block">{product.productDescription}</p>
+                </div>
+              </div>
+            ))}
             <div className="account-info-button-container">
               <button onClick={handleReady} className="ready-button">Ready!</button>
               <button onClick={handleStartOver} className="start-over-button">Start Over</button>
@@ -89,7 +95,7 @@ const InitialView = ({ onAccountCreated }) => {
                   required />
               </div>
               <div className="form-group">
-                <label>Choose a word that describes your business:</label>
+                <label>Type a few words to describe your business:</label>
                 <input 
                   type="text" 
                   value={businessName} 

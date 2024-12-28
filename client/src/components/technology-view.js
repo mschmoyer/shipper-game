@@ -23,14 +23,14 @@ const TechnologyView = ({ gameInfo, isOpen, onClose }) => {
     }
   };
 
-  const player = gameInfo.player;
+  const business = gameInfo.business;
   const availableTechnologies = gameInfo.available_technologies;
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title="Available Technologies" className="technology-drawer-container">
       <div className="tech-level">
-        <span>🛠️ Tech Level: {player ? player.tech_level : 0}</span>
-        <span style={{ marginLeft: '20px' }}>💰 Money: ${player ? player.money : 0}</span>
+        <span>🛠️ Tech Level: {business ? business.tech_level : 0}</span>
+        <span style={{ marginLeft: '20px' }}>💰 Money: ${business ? business.money : 0}</span>
       </div>
       <div className="tech-cards-container">
         {availableTechnologies.map(tech => (

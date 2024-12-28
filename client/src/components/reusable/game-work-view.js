@@ -1,38 +1,41 @@
 import React from 'react';
 import './game-work-view.css';
-import GameWorkButton from './game-work-button';
+import GameWorkLeftData from './game-work-left-data';
 import ProgressBar from './progress-bar';
 
 const GameWorkView = ({ 
+    name, 
+    emoji, 
+    quantity,
     infoItems, 
     isEnabled, 
     isClickable, 
     isAutomated, 
-    onClick, 
-    buttonTitle, 
-    buttonTitleBusy, 
-    hotkey, 
     progress, 
     speed, 
-    progressBarLabelText 
+    progressBarLabelText,
+    progressBarMouseUp 
 }) => {
   return (
     <div className="game-work-container">
-      <div className="info-section">
-        {infoItems.map((item, index) => (
-          <p key={index}>
-            {item.emoji} {item.key}: {item.value}
-          </p>
-        ))}
+      <div className="build-product-info">
+        <h3>
+          <span className="build-product-emoji">{emoji}</span> {name}
+        </h3>
       </div>
+      {infoItems.length > 0 && 
+        <div className="info-section">
+          {infoItems.map((item, index) => (
+            <p key={index}>
+              {item.emoji} {item.key}: {item.value}
+            </p>
+          ))}
+        </div>
+      }
       <div className="main-bar">
-        <GameWorkButton
-          autoShip={isAutomated}
-          onClick={onClick}
-          isWorkBeingDone={!isClickable}
-          titleDefault={buttonTitle}
-          titleWhenWorking={buttonTitleBusy}
-          hotkey={hotkey}
+        <GameWorkLeftData
+          emoji={emoji}
+          quantity={quantity}
         />
         <ProgressBar
           isError={!isEnabled}
@@ -41,6 +44,7 @@ const GameWorkView = ({
           progress={progress}
           speed={speed}
           autoMode={isAutomated}
+          onMouseUp={progressBarMouseUp}
         />
       </div>
     </div>

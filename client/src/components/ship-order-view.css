@@ -127,19 +127,6 @@
   margin-left: 5px;
 }
 
-.initial-state-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 128px;
-  background-color: #f0f0f0;
-  color: #888;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 5px;
-  padding: 10px;
-}
-
 @media (max-width: 600px) {
   .ship-order-container {
     width: calc(100vw - 40px);

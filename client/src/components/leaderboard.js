@@ -48,12 +48,12 @@ const Leaderboard = ({ isOpen, onClose }) => {
               </tr>
             </thead>
             <tbody>
-              {leaderboardData.ordersShipped.map((player, index) => (
+              {leaderboardData.ordersShipped.map((business, index) => (
                 <tr key={index}>
-                  <td>{player.name}</td>
-                  <td>{player.business_name}</td>
-                  <td>{player.orders_shipped}</td>
-                  <td>{player.emoji} {player.product_name}</td>
+                  <td>{business.name}</td>
+                  <td>{business.business_name}</td>
+                  <td>{business.orders_shipped}</td>
+                  <td>{business.emoji} {business.product_name}</td>
                 </tr>
               ))}
             </tbody>
@@ -70,11 +70,11 @@ const Leaderboard = ({ isOpen, onClose }) => {
               </tr>
             </thead>
             <tbody>
-              {leaderboardData.moneyEarned.map((player, index) => (
+              {leaderboardData.moneyEarned.map((business, index) => (
                 <tr key={index}>
-                  <td>{player.name}</td>
-                  <td>{player.business_name}</td>
-                  <td>{formatCurrency(player.total_money_earned || 0)}</td>
+                  <td>{business.name}</td>
+                  <td>{business.business_name}</td>
+                  <td>{formatCurrency(business.total_money_earned || 0)}</td>
                 </tr>
               ))}
             </tbody>
@@ -91,11 +91,11 @@ const Leaderboard = ({ isOpen, onClose }) => {
               </tr>
             </thead>
             <tbody>
-              {leaderboardData.techLevel.map((player, index) => (
+              {leaderboardData.techLevel.map((business, index) => (
                 <tr key={index}>
-                  <td>{player.name}</td>
-                  <td>{player.business_name}</td>
-                  <td>{player.tech_level}</td>
+                  <td>{business.name}</td>
+                  <td>{business.business_name}</td>
+                  <td>{business.tech_level}</td>
                 </tr>
               ))}
             </tbody>

@@ -148,6 +148,33 @@
   font-style:italic;
 }
 
+.product-definition {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid black;
+}
+
+.product-details {
+  margin-left: 20px; /* Space between the icon and the details */
+}
+
+.large-emoji-icon {
+  font-size: 3em; /* Make the emoji very large */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px; /* Fixed width */
+  height: 48px; /* Fixed height */
+  flex-shrink: 0; /* Prevent shrinking */
+  flex-grow: 0; /* Prevent growing */
+  border-radius: 10px; /* Rounded corners */
+  background-color: #f0f0f0; /* Light grey background */
+  margin: 0 auto 20px auto; /* Center the icon and add bottom margin */
+  padding: 4px;
+  border: 1px solid grey;
+}
+
 @keyframes sway {
   0% {
     transform: rotate(0deg);

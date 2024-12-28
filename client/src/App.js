@@ -6,7 +6,7 @@ import InitialView from './components/initial-view';
 import Leaderboard from './components/leaderboard';
 import HowToPlay from './components/how-to-play';
 import EndGameView from './components/end-game-view';
-import { checkSession, fetchGameInfo, resetPlayer, endGame } from './api';
+import { checkSession, fetchGameInfo, resetBusiness, endGame } from './api';
 import OrderView from './components/order-view';
 import TitleBar from './components/title-bar';
 import RightWindow from './components/right-window';
@@ -23,7 +23,7 @@ const App = () => {
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isGameActive, setIsGameActive] = useState(false);
 
-  // Check if the player is logged in
+  // Check if the business is logged in
   useEffect(() => {
     checkSession()
       .then(data => {
@@ -40,7 +40,7 @@ const App = () => {
       const fetchGameInfoInterval = () => {
         fetchGameInfo()
           .then(data => {
-            if (data.error === 'No player found') {
+            if (data.error === 'No business found') {
               setIsLoggedIn(false);
               setGameInfo(null);
             } else {
@@ -79,19 +79,19 @@ const App = () => {
       .catch(error => console.error('Failed to check session:', error));
   };
 
-  const handleResetPlayer = () => {
-    resetPlayer()
+  const handleresetBusiness = () => {
+    resetBusiness()
       .then(data => {
         if (data.success) {
           setIsLoggedIn(false);
           setGameInfo(null);
         }
       })
-      .catch(error => console.error('Failed to reset player:', error));
+      .catch(error => console.error('Failed to reset business:', error));
   };
 
   const handleNewGame = () => {
-    handleResetPlayer();
+    handleresetBusiness();
   };
 
   const handleSettings = () => {

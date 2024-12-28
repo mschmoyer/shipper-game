@@ -39,15 +39,15 @@ const ShipOrderView = ({
       return;
     }
 
-    const did_shipping_duration_elapse = Date.now() - lastShipTimestamp > gameInfo.player.shipping_duration;
+    const did_shipping_duration_elapse = Date.now() - lastShipTimestamp > gameInfo.business.shipping_duration;
 
-    if((gameInfo.inventory[0].on_hand >= gameInfo.player.products_per_order 
+    if((gameInfo.inventory >= gameInfo.business.products_per_order 
         && !gameInfo.active_order 
         && gameInfo.orders.length > 0) 
         || (!shippingError && did_shipping_duration_elapse)) 
     {
       setIsActive(true);
-      setTimeout(reEnableButton, gameInfo.player.shipping_duration);
+      setTimeout(reEnableButton, gameInfo.business.shipping_duration);
       await startShipping()
       .then(data => {
         if (data.message === 'Shipping started successfully.') {
@@ -72,7 +72,7 @@ const ShipOrderView = ({
     if (gameInfo) {
       const hasAutoShipTech = gameInfo.acquired_technologies && 
         gameInfo.acquired_technologies.some(tech => tech.tech_code === 'hire_warehouse_worker');
-      if(gameInfo.inventory[0].on_hand <= gameInfo.player.products_per_order) {
+      if(gameInfo.inventory <= gameInfo.business.products_per_order) {
         setShippingError('Out of products to ship.'); 
       } else {
         setShippingError('');
@@ -80,7 +80,7 @@ const ShipOrderView = ({
 
       const showActive = (gameInfo.active_order && gameInfo.active_order.is_shipping)
         || (gameInfo.ordersShipped && gameInfo.ordersShipped > 0 && hasAutoShipTech)
-        && gameInfo.inventory[0].on_hand >= gameInfo.player.products_per_order
+        && gameInfo.inventory >= gameInfo.business.products_per_order
         ** gameInfo.orders.length > 0;
 
       setIsAutoShipEnabled(hasAutoShipTech);
@@ -89,13 +89,13 @@ const ShipOrderView = ({
   }, [gameInfo]);
 
   const getShippingStepName = () => {
-    if (gameInfo.active_order && gameInfo.active_order.is_shipping && gameInfo.player.shipping_steps) {
-      return gameInfo.player.shipping_steps[Math.floor(gameInfo.active_order.progress / (100 / gameInfo.player.shipping_steps.length))].name;
+    if (gameInfo.active_order && gameInfo.active_order.is_shipping && gameInfo.business.shipping_steps) {
+      return gameInfo.business.shipping_steps[Math.floor(gameInfo.active_order.progress / (100 / gameInfo.business.shipping_steps.length))].name;
     }
     if(isAutoShipEnabled) {
       return 'Waiting for orders...';
     } else {
-      return 'Ship some orders!';
+      return `Ship ${gameInfo.business.orders_per_ship}x order${gameInfo.business.orders_per_ship > 1 ? 's' : ''}`;
     }
   };
 
@@ -106,32 +106,34 @@ const ShipOrderView = ({
     return getShippingStepName();
   };
 
-  const player = gameInfo.player;
+  const business = gameInfo.business;
   const product = gameInfo.product;
   
-  const total_shipping_cost = player.shipping_cost_per_mile * player.shipping_distance;
+  const total_shipping_cost = business.shipping_cost_per_mile * business.shipping_distance;
 
-  const totalProfit = Math.round((product.sales_price * player.products_per_order) 
-        - (product.cost_to_build * player.products_per_order) 
+  const totalProfit = Math.round((product.sales_price * business.products_per_order) 
+        - (product.cost_to_build * business.products_per_order) 
         - total_shipping_cost);
 
   const isHighShippingCost = total_shipping_cost >= 0.4 * totalProfit;
 
-  const progPercent = (player.shipping_duration / 1000) * 100;
+  const progPercent = (business.shipping_duration / 1000) * 100;
   const progress = progPercent || 0;
 
   const infoItems = [
-    { key: 'Batch Size', value: player.orders_per_ship, emoji: '📊' },
-    { key: 'Order Items', value: player.products_per_order, emoji: '📦' },
+    { key: 'Batch Size', value: business.orders_per_ship, emoji: '📊' },
+    { key: 'Order Items', value: business.products_per_order, emoji: '📦' },
     { key: 'Sale Price', value: `$${product.sales_price}`, emoji: '💰' },
     { key: 'Profit', value: `$${totalProfit}`, emoji: '💵' },
   ];
 
+  const quantity = gameInfo && gameInfo.orders ? gameInfo.orders.length : 0;
+
   return (
     <div className="ship-order-container">
-      {player.products_built < 6 ? (
+      {business.products_built < 6 ? (
         <div className="initial-state-box">
-          Build 6 {gameInfo && gameInfo.product ? gameInfo.product.name : ''} to begin shipping...
+          Build 6 {gameInfo && gameInfo.product ? gameInfo.product.name : ''} to unlock...
         </div>
       ) : (
         <>
@@ -139,17 +141,17 @@ const ShipOrderView = ({
             <FindTheProductHaystackGame onClose={() => setShowShipOrderProblemMinigame(false)} />
           } 
           <GameWorkView
+            name="Shipping"
+            emoji="🚚"
+            quantity={quantity}
             infoItems={infoItems}
             isEnabled={!shippingError}
             isClickable={!isActive}
             isAutomated={isAutoShipEnabled}
-            onClick={handleShipOrder}
-            buttonTitle="Ship"
-            buttonTitleBusy="Shipping..."
-            hotkey="S"
             progress={progress}
-            speed={player.shipping_duration}
+            speed={business.shipping_duration}
             progressBarLabelText={getLabelText()}
+            progressBarMouseUp={handleShipOrder}
           />
         </>
       )}

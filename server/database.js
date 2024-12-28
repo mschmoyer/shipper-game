@@ -7,9 +7,8 @@ const pgSession = require('connect-pg-simple')(session);
 const isHeroku = process.env.DYNO !== undefined;
 
 const schemaPath = path.join(__dirname, 'database', 'schema_postgres.sql');
-const productsPath = path.join(__dirname, 'game_data_files', 'products.json');
 const technologiesPath = path.join(__dirname, 'game_data_files', 'technologies.json');
-const defaultPlayerPath = path.join(__dirname, 'game_data_files', 'default-player.json');
+const defaultBusinessPath = path.join(__dirname, 'game_data_files', 'default-business.json');
 
 const clientConfig = {
   connectionString: process.env.DATABASE_URL,
@@ -139,24 +138,18 @@ const initDatabase = () => {
         console.log('Database schema initialized.');
 
         try {
-          const products = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
           const technologies = JSON.parse(fs.readFileSync(technologiesPath, 'utf8'));
-          const defaultPlayer = JSON.parse(fs.readFileSync(defaultPlayerPath, 'utf8'));
+          const defaultBusiness = JSON.parse(fs.readFileSync(defaultBusinessPath, 'utf8'));
 
-          const isProductsEmpty = await checkTableEmpty('products');
           const isTechnologiesEmpty = await checkTableEmpty('technologies');
-          const isPlayersEmpty = await checkTableEmpty('player');
-
-          if (isProductsEmpty) {
-            await insertData('products', products);
-          }
+          const isBusinesssEmpty = await checkTableEmpty('business');
 
           if (isTechnologiesEmpty) {
             await insertData('technologies', technologies);
           }
 
-          if(isPlayersEmpty){
-            await insertData('player', defaultPlayer);
+          if(isBusinesssEmpty){
+            await insertData('business', defaultBusiness);
           }
 
           console.log('Products and technologies data inserted if tables were empty.');

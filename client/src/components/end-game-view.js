@@ -36,9 +36,9 @@ const EndGameView = ({ gameInfo, onNewGame }) => {
     }
   }, [gameInfo.acquired_technologies, hasFetched]);
 
-  const player = gameInfo.player;
-  const message = messages[player.expiration_reason] || messages.time_expired;
-  const namePrefix = player.expiration_reason === 'hostile_takeover_by_another_player' ? player.hostile_takeover_player_name : '';
+  const business = gameInfo.business;
+  const message = messages[business.expiration_reason] || messages.time_expired;
+  const namePrefix = business.expiration_reason === 'hostile_takeover_by_another_business' ? business.hostile_takeover_business_name : '';
 
   return (
     <div className="end-game-view">

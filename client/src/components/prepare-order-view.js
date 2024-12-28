@@ -17,7 +17,7 @@ const PrepareOrderView = ({ gameInfo }) => {
     // Simulate order preparation logic
     setTimeout(() => {
       setIsActive(false);
-    }, gameInfo.player.preparation_duration);
+    }, gameInfo.business.preparation_duration);
   }, [isActive, gameInfo]);
 
   useEffect(() => {
@@ -35,17 +35,17 @@ const PrepareOrderView = ({ gameInfo }) => {
     return isAutoPrepareEnabled ? 'Preparing orders automatically...' : 'Prepare some orders!';
   };
 
-  const player = gameInfo.player;
-  const total_shipping_cost = player.shipping_cost_per_mile * player.shipping_distance;
+  const business = gameInfo.business;
+  const total_shipping_cost = business.shipping_cost_per_mile * business.shipping_distance;
 
   const infoItems = [
-    { key: 'Batch Qty', value: player.orders_per_ship, emoji: '📊' },
-    { key: 'Order Items', value: player.products_per_order, emoji: '📦' },
+    { key: 'Batch Qty', value: business.orders_per_ship, emoji: '📊' },
+    { key: 'Order Items', value: business.products_per_order, emoji: '📦' },
     { key: 'Shipping Cost', value: `$${total_shipping_cost}`, emoji: '🚚' },
-    { key: 'Distance', value: `${player.shipping_distance} miles`, emoji: '📫' },
+    { key: 'Distance', value: `${business.shipping_distance} miles`, emoji: '📫' },
   ];
 
-  const progress = (player.preparation_duration / 1000) * 100;
+  const progress = (business.preparation_duration / 1000) * 100;
 
   return (
     <div className="prepare-order-container">
@@ -59,7 +59,7 @@ const PrepareOrderView = ({ gameInfo }) => {
         buttonTitleBusy="Preparing..."
         hotkey="P"
         progress={progress}
-        speed={player.preparation_duration}
+        speed={business.preparation_duration}
         progressBarLabelText={getLabelText()}
       />
     </div>

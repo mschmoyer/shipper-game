@@ -3,24 +3,24 @@ const { dbRun, dbGet, dbAll } = require('../database');
 let techCache = {};
 const CACHE_EXPIRATION_TIME = 2000; // 2 seconds
 
-const TechnologyTick = async (player) => {
+const TechnologyTick = async (business) => {
   let money_to_deduct = 0;
-  if( await playerHasTechnology(player.id, 'hire_warehouse_worker') ) {
+  if( await businessHasTechnology(business.id, 'hire_warehouse_worker') ) {
     money_to_deduct += 20;
   }
-  if( await playerHasTechnology(player.id, 'hire_fabricator') ) {
+  if( await businessHasTechnology(business.id, 'hire_fabricator') ) {
     money_to_deduct += 20;
   }
-  // update the player's money
+  // update the business's money
   await dbRun(
-    'UPDATE player SET money = money - $1 WHERE id = $2',
-    [money_to_deduct, player.id],
-    'Failed to update player money'
+    'UPDATE business SET money = money - $1 WHERE id = $2',
+    [money_to_deduct, business.id],
+    'Failed to update business money'
   );
 };
 
-const playerHasTechnology = async (playerId, techCode) => {
-  const cacheKey = `${playerId}-${techCode}`;
+const businessHasTechnology = async (businessId, techCode) => {
+  const cacheKey = `${businessId}-${techCode}`;
   const currentTime = Date.now();
 
   if (techCache[cacheKey] && (currentTime - techCache[cacheKey].timestamp < CACHE_EXPIRATION_TIME)) {
@@ -31,9 +31,9 @@ const playerHasTechnology = async (playerId, techCode) => {
     `SELECT t.modifier_value 
     FROM acquired_technologies at 
     JOIN technologies t ON at.tech_id = t.id 
-    WHERE at.player_id = $1 AND t.tech_code = $2`,
-    [playerId, techCode],
-    'Failed to check player technology'
+    WHERE at.business_id = $1 AND t.tech_code = $2`,
+    [businessId, techCode],
+    'Failed to check business technology'
   );
 
   techCache[cacheKey] = {
@@ -44,15 +44,15 @@ const playerHasTechnology = async (playerId, techCode) => {
   return techCache[cacheKey].modifier_value;
 };
 
-const makeNewTechnologyAvailable = async (playerId) => {
+const makeNewTechnologyAvailable = async (businessId) => {
   const availableTechCodes = await dbAll(
-    'SELECT t.tech_code FROM available_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.player_id = $1',
-    [playerId],
+    'SELECT t.tech_code FROM available_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.business_id = $1',
+    [businessId],
     'Failed to retrieve available technologies'
   );
   const acquiredTechCodes = await dbAll(
-    'SELECT t.tech_code FROM acquired_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.player_id = $1',
-    [playerId],
+    'SELECT t.tech_code FROM acquired_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.business_id = $1',
+    [businessId],
     'Failed to retrieve acquired technologies'
   );
 
@@ -72,48 +72,48 @@ const makeNewTechnologyAvailable = async (playerId) => {
 
   if (newTech) {
     await dbRun(
-      'INSERT INTO available_technologies (player_id, tech_id) VALUES ($1, $2)',
-      [playerId, newTech.id],
+      'INSERT INTO available_technologies (business_id, tech_id) VALUES ($1, $2)',
+      [businessId, newTech.id],
       'Failed to insert new available technology'
     );
     return true;
   } else {
-    console.log('No new technology available for playerId', playerId);
+    console.log('No new technology available for businessId', businessId);
     return false;
   }
 };
 
-const getAvailableTechnologies = async (playerId) => {
+const getAvailableTechnologies = async (businessId) => {
   return await dbAll(
-    'SELECT * FROM available_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.player_id = $1',
-    [playerId],
+    'SELECT * FROM available_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.business_id = $1',
+    [businessId],
     'Failed to retrieve available technologies'
   );
 };
 
-const getAcquiredTechnologies = async (playerId) => {
+const getAcquiredTechnologies = async (businessId) => {
   return await dbAll(
-    'SELECT * FROM acquired_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.player_id = $1',
-    [playerId],
+    'SELECT * FROM acquired_technologies at JOIN technologies t ON at.tech_id = t.id WHERE at.business_id = $1',
+    [businessId],
     'Failed to retrieve acquired technologies'
   );
 };
 
-const getAllTechnologyWithState = async (playerId) => {
-  // Get all technologies and add a field for whether they are purchased by the player or not using acquired_technologies table
+const getAllTechnologyWithState = async (businessId) => {
+  // Get all technologies and add a field for whether they are purchased by the business or not using acquired_technologies table
   return await dbAll(
     `SELECT t.*, at.id AS acquired_id FROM technologies t
-    LEFT JOIN acquired_technologies at ON t.id = at.tech_id AND at.player_id = $1`,
-    [playerId],
+    LEFT JOIN acquired_technologies at ON t.id = at.tech_id AND at.business_id = $1`,
+    [businessId],
     'Failed to retrieve all technologies with state'
   );
 };
 
-const purchaseTechnology = async (playerId, techId) => {
-  const player = await dbGet(
-    'SELECT money FROM player WHERE id = $1',
-    [playerId],
-    'Failed to retrieve player money'
+const purchaseTechnology = async (businessId, techId) => {
+  const business = await dbGet(
+    'SELECT money FROM business WHERE id = $1',
+    [businessId],
+    'Failed to retrieve business money'
   );
   const technology = await dbGet(
     'SELECT tech_code, cost, acquirable FROM technologies WHERE id = $1',
@@ -121,39 +121,39 @@ const purchaseTechnology = async (playerId, techId) => {
     'Failed to retrieve technology info'
   );
 
-  if (player.money < technology.cost) {
+  if (business.money < technology.cost) {
     return { success: false, message: 'Not enough money to purchase technology.' };
   }
 
-  const actionSuccessful = await performOneTimeTechnologyEffect(playerId, technology.tech_code);
+  const actionSuccessful = await performOneTimeTechnologyEffect(businessId, technology.tech_code);
   if (!actionSuccessful) {
     return { success: false, message: 'Failed to perform technology effect.' };
   }
 
   await dbRun(
     `INSERT INTO acquired_technologies 
-      (player_id, tech_id, acquired_date, acquired_cost) 
+      (business_id, tech_id, acquired_date, acquired_cost) 
       VALUES 
       ($1, $2, NOW(), $3)`, // Corrected parameter index
-    [playerId, techId, technology.cost], // Corrected parameter list
+    [businessId, techId, technology.cost], // Corrected parameter list
     'Failed to purchase technology'
   );
   
   await dbRun(
-    'UPDATE player SET money = money - $1, tech_level = tech_level + 1 WHERE id = $2',
-    [technology.cost, playerId],
-    'Failed to update player money and tech level'
+    'UPDATE business SET money = money - $1, tech_level = tech_level + 1 WHERE id = $2',
+    [technology.cost, businessId],
+    'Failed to update business money and tech level'
   );
   await dbRun(
-    'DELETE FROM available_technologies WHERE player_id = $1 AND tech_id = $2',
-    [playerId, techId],
+    'DELETE FROM available_technologies WHERE business_id = $1 AND tech_id = $2',
+    [businessId, techId],
     'Failed to remove technology from available technologies'
   );
-  const newTechAdded = await makeNewTechnologyAvailable(playerId);
+  const newTechAdded = await makeNewTechnologyAvailable(businessId);
   return { success: true, message: 'Technology purchased successfully.', newTechAdded };
 };
 
-const performOneTimeTechnologyEffect = async (playerId, techCode) => {
+const performOneTimeTechnologyEffect = async (businessId, techCode) => {
   // fetch the technology information
   const technology = await dbGet(
     'SELECT * FROM technologies WHERE tech_code = $1',
@@ -164,89 +164,113 @@ const performOneTimeTechnologyEffect = async (playerId, techCode) => {
 
   switch (techCode) {
     case 'exclusive_logistics':
-      // apply the exclusive_logistics_penalty_applied to all other active players
+      // apply the exclusive_logistics_penalty_applied to all other active businesss
       await dbRun(
-        `UPDATE player SET exclusive_logistics_penalty_applied = $1 WHERE id != $2 and active=true`,
-        [true, playerId],
+        `UPDATE business SET exclusive_logistics_penalty_applied = $1 WHERE id != $2 and active=true`,
+        [true, businessId],
         'Failed to apply exclusive logistics penalty'
       );
       return true;
     case 'advertising_campaign':
       // set the advertising_campaign_start_time
       await dbRun(
-        'UPDATE player SET advertising_campaign_start_time = NOW() WHERE id = $1',
-        [playerId],
+        'UPDATE business SET advertising_campaign_start_time = NOW() WHERE id = $1',
+        [businessId],
         'Failed to set advertising campaign start time'
       );
       return true;
     case 'hostile_takeover':
-      return hostileTakeoverAction(playerId);
+      return hostileTakeoverAction(businessId);
     default:
       console.log(`No effect defined for technology: ${techCode}`);
       return true;
   }
 };
 
-const hostileTakeoverAction = async (playerId) => {
+const hostileTakeoverAction = async (businessId) => {
 
-  // select up to 100 active players
-  const players = await dbAll(
-    'SELECT id FROM player WHERE id != $1 AND active=true LIMIT 100',
-    [playerId],
-    'Failed to retrieve active players'
+  // select up to 100 active businesss
+  const businesss = await dbAll(
+    'SELECT id FROM business WHERE id != $1 AND active=true LIMIT 100',
+    [businessId],
+    'Failed to retrieve active businesss'
   );
   // choose one at random
-  const targetPlayerId = players[Math.floor(Math.random() * players.length)].id;
+  const targetBusinessId = businesss[Math.floor(Math.random() * businesss.length)].id;
 
-  if(!targetPlayerId || targetPlayerId === 1) {
-    console.log('No target player found for hostile takeover.');
+  if(!targetBusinessId || targetBusinessId === 1) {
+    console.log('No target business found for hostile takeover.');
     return false;
   }
-  console.log(`Player ${playerId} is taking over player ${targetPlayerId}`);
+  console.log(`business ${businessId} is taking over business ${targetBusinessId}`);
 
-  const { getPlayerInfo } = require('./player-logic');
-  const targetPlayer = await getPlayerInfo(targetPlayerId);
-  const sourcePlayer = await getPlayerInfo(playerId);
-  // expire that player with reason hostile_takeover_by_another_player
-  const { expirePlayer } = require('./player-logic');
-  await expirePlayer(targetPlayer, 'hostile_takeover_by_another_player');
+  const { getBusinessInfo } = require('./business-logic');
+  const targetBusiness = await getBusinessInfo(targetBusinessId);
+  const sourceBusiness = await getBusinessInfo(businessId);
+  // expire that business with reason hostile_takeover_by_another_business
+  const { expireBusiness } = require('./business-logic');
+  await expireBusiness(targetBusiness, 'hostile_takeover_by_another_business');
 
-  // update the target player hostile_takeover_by_player_id
+  // update the target business hostile_takeover_by_business_id
   await dbRun(
-    'UPDATE player SET hostile_takeover_player_name = $1, orders_shipped=0 WHERE id = $2',
-    [sourcePlayer.name, targetPlayer.id],
-    'Failed to update player hostile takeover by player id'
+    'UPDATE business SET hostile_takeover_business_name = $1, orders_shipped=0 WHERE id = $2',
+    [sourceBusiness.name, targetBusiness.id],
+    'Failed to update business hostile takeover by business id'
   );
 
-  // add to our player's orders shipped the target player's orders shipped
+  // add to our business's orders shipped the target business's orders shipped
   await dbRun(
-    'UPDATE player SET orders_shipped = LEAST(orders_shipped + $1, 2147483647), money = LEAST(money - $3, 2147483647) WHERE id = $2',
-    [targetPlayer.orders_shipped, playerId, targetPlayer.money],
-    'Failed to update player orders shipped'
+    'UPDATE business SET orders_shipped = LEAST(orders_shipped + $1, 2147483647), money = LEAST(money - $3, 2147483647) WHERE id = $2',
+    [targetBusiness.orders_shipped, businessId, targetBusiness.money],
+    'Failed to update business orders shipped'
   );
 
   // make a big bold console log 3 lines deep that lets us know someone did this huge action
   console.log(` `);
-  console.log(`!!!  Player ${playerId} has taken over player ${targetPlayer.id}  !!!`);
+  console.log(`!!!  business ${businessId} has taken over business ${targetBusiness.id}  !!!`);
   console.log(` `);
   return true;
 }
 
-const initializeTechTree = async (playerId, techLevel) => {
+const initializeTechTree = async (businessId, techLevel) => {
   for (let i = 0; i < 3; i++) {
-    await makeNewTechnologyAvailable(playerId);
+    await makeNewTechnologyAvailable(businessId);
   }
-  console.log('Initialized tech tree for playerId', playerId);
+  console.log('Initialized tech tree for businessId', businessId);
 };
+
+const isAdvertisingCampaignActive = async (business) => {
+  const hasAdvertisingTech = await businessHasTechnology(business.id, 'advertising_campaign');
+  if (hasAdvertisingTech && business.advertising_campaign_start_time) {
+    const hasExpired = new Date() - business.advertising_campaign_start_time > 120000;
+    if(hasExpired) {
+      await dbRun(
+        'UPDATE business SET advertising_campaign_start_time = NULL WHERE id = $1',
+        [business.id],
+        'Failed to cancel advertising campaign'
+      );
+      await dbRun(
+        'DELETE FROM acquired_technologies WHERE business_id = $1 AND tech_code = $2',
+        [business.id, 'advertising_campaign'],
+        'Failed to remove advertising campaign from acquired technologies'
+      );
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 
 module.exports = {
   TechnologyTick,
-  playerHasTechnology,
+  businessHasTechnology,
   makeNewTechnologyAvailable,
   performOneTimeTechnologyEffect,
   initializeTechTree,
   getAvailableTechnologies,
   getAcquiredTechnologies,
   purchaseTechnology,
-  getAllTechnologyWithState
+  getAllTechnologyWithState,
+  isAdvertisingCampaignActive
 };

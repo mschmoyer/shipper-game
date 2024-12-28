@@ -23,6 +23,8 @@ const formatCurrency = (amount) => {
 };
 
 const formatDataValue = (orders) => {
+  // return 0 if orders is null or not a number
+  if (orders === null || isNaN(orders)) return 0;
   if (orders >= 1e6) return `${(orders / 1e6).toFixed(1)}M`;
   if (orders >= 1e3) return `${(orders / 1e3).toFixed(1)}k`;
   return orders;
@@ -36,23 +38,23 @@ const isMobileMode = window.innerWidth <= 600;
 console.log('isMobileMode:', isMobileMode);
 
 const InfoPanel = ({ gameInfo }) => {
-  const defaultPlayer = {
+  const defaultBusiness = {
     business_name: 'N/A',
     money: 0,
     orders_shipped: 0,
     reputation: 0,
   };
 
-  const [player, setPlayer] = useState(gameInfo ? gameInfo.player : defaultPlayer);
+  const [business, setBusiness] = useState(gameInfo ? gameInfo.business : defaultBusiness);
   const [deltas, setDeltas] = useState({});
 
   useEffect(() => {
     if (gameInfo) {
-      setPlayer(gameInfo.player);
+      setBusiness(gameInfo.business);
       setDeltas({
-        money: gameInfo.player.money - player.money,
-        orders_shipped: gameInfo.player.orders_shipped - player.orders_shipped,
-        reputation: gameInfo.player.reputation.score - player.reputation.score,
+        money: gameInfo ? gameInfo.business.money - business.money : 0,
+        orders_shipped: gameInfo ? gameInfo.business.orders_shipped - business.orders_shipped : 0,
+        reputation: gameInfo ? gameInfo.business.reputation.score - business.reputation.score : 0,
       });
     }
   }, [gameInfo]);
@@ -65,14 +67,14 @@ const InfoPanel = ({ gameInfo }) => {
   };
 
   const renderDelta = (delta) => {
-    if (delta === 0) return null;
+    if (delta === 0 || isNaN(delta)) return null;
     let smallDelta = formatDataValue(Math.abs(delta));
     return <span className={`delta-label ${getDeltaClass(delta)}`}>{delta > 0 ? `+${formatDataValue(smallDelta)}` : formatDataValue(smallDelta)}</span>;
   };
 
-  const orders_shipped_value = player.orders_shipped ? player.orders_shipped : 0;
-  const money_value = player.money ? player.money : 1000;
-  const reputation_value = player.reputation ? player.reputation.score : 100;
+  const orders_shipped_value = business.orders_shipped ? business.orders_shipped : 0;
+  const money_value = business.money ? business.money : 1000;
+  const reputation_value = business.reputation ? business.reputation.score : 100;
 
   return (
     <div className="info-panel">
@@ -80,14 +82,6 @@ const InfoPanel = ({ gameInfo }) => {
         <div className={money_value < 0 ? 'negative-money' : ''}>
           <p className="info-values-emoji">💰</p>
           <p>{!isMobileMode ? 'Funds: ' : ''}${formatCurrency(money_value)}{renderDelta(deltas.money)}</p>
-        </div>
-        <div>
-          <p className="info-values-emoji">🛒</p>
-          <p>{!isMobileMode ? 'Orders: ' : ''}{formatDataValue(gameInfo && gameInfo.orders ? gameInfo.orders.length : 0)}</p>
-        </div>
-        <div>
-          <p className="info-values-emoji">📦</p>
-          <p>{!isMobileMode ? 'Inventory: ' : ''}{formatDataValue(gameInfo && gameInfo.inventory && gameInfo.inventory[0] ? gameInfo.inventory[0].on_hand : 0)}</p>
         </div>
         <div>
           <p className="info-values-emoji">🚚</p>

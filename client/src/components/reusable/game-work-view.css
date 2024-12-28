@@ -23,3 +23,8 @@
   justify-content: space-between;
   width: 100%;
 }
+
+.build-product-emoji {
+  font-size: 34px;
+  margin-right: 10px;
+}

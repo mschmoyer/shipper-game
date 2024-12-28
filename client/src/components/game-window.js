@@ -16,7 +16,7 @@ const GameWindow = ({ gameInfo }) => {
   const isMobileMode = window.innerWidth <= 600;
 
   useEffect(() => {
-    const affordableCount = gameInfo.technology.filter(tech => tech.cost <= gameInfo.player.money && tech.acquired_id === null).length;
+    const affordableCount = gameInfo.technology.filter(tech => tech.cost <= gameInfo.business.money && tech.acquired_id === null).length;
     setAffordableTechCount(affordableCount);
   }, [gameInfo]);
 
@@ -35,7 +35,9 @@ const GameWindow = ({ gameInfo }) => {
   return (
     <div className="game-window">
 
-      <BuildProductView gameInfo={gameInfo} />
+      <BuildProductView gameInfo={gameInfo} product={gameInfo.allProducts[0]} />
+      <BuildProductView gameInfo={gameInfo} product={gameInfo.allProducts[1]} />
+      <BuildProductView gameInfo={gameInfo} product={gameInfo.allProducts[2]} />
 
       {/* TODO: Disabled for now. */}
       {false && 
@@ -54,8 +56,8 @@ const GameWindow = ({ gameInfo }) => {
         <button className="tech-button" onClick={openSkillsView}>
           🎓
           <div className="tech-label">Skills</div>
-          {gameInfo.player.available_points > 0 && (
-            <div className="points-badge visible">{gameInfo.player.available_points}</div>
+          {gameInfo.business.available_points > 0 && (
+            <div className="points-badge visible">{gameInfo.business.available_points}</div>
           )}
         </button>
         <button className="tech-button" onClick={openNetworkView}>
@@ -70,7 +72,7 @@ const GameWindow = ({ gameInfo }) => {
         onClose={() => setIsTechViewVisible(false)}
       />
       <SkillsView
-        player={gameInfo.player}
+        business={gameInfo.business}
         isOpen={isSkillsViewVisible}
         onClose={() => setIsSkillsViewVisible(false)}
       />

@@ -47,6 +47,3 @@ Login to Postgres
 Clean up
 ```docker container prune```
 ```docker image prune```
-
-
-```update player set shipping_speed=1000, building_speed=1000, order_spawn_milliseconds=12000, xp=50 where id=1;```

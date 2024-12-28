@@ -1,6 +1,6 @@
 import React from 'react';
 import './order-card.css';
-import CustomerImage from './reusable/customer-image';
+import CustomerImage from './customer-image';
 
 const OrderCard = ({ order, timeDelta, isActive, isMobileMode, isEmpty, secondsUntilNextOrder }) => {
   if (isEmpty) {
@@ -27,9 +27,17 @@ const OrderCard = ({ order, timeDelta, isActive, isMobileMode, isEmpty, secondsU
   return (
     <div className={`order-card ${isActive ? 'active' : ''} ${timeDelta.isUrgent ? 'urgent' : ''} ${timeDelta.isVeryUrgent ? 'very-urgent' : ''}`}>
       <CustomerImage customerFaceId={customerFaceId} width={48} height={48} />
-      <p>Order: {timeDelta.isVeryUrgent ? '🔥' : timeDelta.isUrgent && '⚠️'}</p>
-      <p> {!isMobileMode ? '' : ''} #{order.id} {isActive && '🚚'}</p>
-      <p>⏳ {isMobileMode ? timeDelta.text : `${timeDelta.text}`}</p>
+      <div className="order-status">
+        {timeDelta.isVeryUrgent ? '🔥' : timeDelta.isUrgent && '⚠️'} 
+      </div>
+      <p>
+        {isMobileMode ? timeDelta.text : `${timeDelta.text}`}
+        <span className="product-emojis">
+          {order.required_products && order.required_products.map((product, index) => (
+            <span key={index}>{product.emoji}</span>
+          ))}
+        </span>
+      </p>
     </div>
   );
 };

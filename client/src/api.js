@@ -1,11 +1,11 @@
 const apiCall = (url, options = {}) => {
-  const playerId = localStorage.getItem('playerId'); // Assuming playerId is stored in localStorage
+  const businessId = localStorage.getItem('businessId'); // Assuming businessId is stored in localStorage
   return fetch(url, {
     ...options,
     credentials: 'include', // Ensure the session cookie is sent
     headers: {
       'Content-Type': 'application/json',
-      'x-player-id': playerId,
+      'x-business-id': businessId,
       ...options.headers,
     },
   }).then(response => {
@@ -33,7 +33,7 @@ export const createAccount = (accountData) => {
     body: JSON.stringify(accountData),
   }).then(response => {
     if (response.success) {
-      localStorage.setItem('playerId', response.playerId);
+      localStorage.setItem('businessId', response.businessId);
     }
     return response;
   });
@@ -58,20 +58,21 @@ export const fetchLeaderboard = () => {
   return apiCall(`${baseUrl}/leaderboard`);
 };
 
-export const resetPlayer = () => {
-  return apiCall(`${baseUrl}/reset-player`, {
+export const resetBusiness = () => {
+  return apiCall(`${baseUrl}/reset-business`, {
     method: 'POST',
   }).then(response => {
     if (response.success) {
-      localStorage.removeItem('playerId');
+      localStorage.removeItem('businessId');
     }
     return response;
   });
 };
 
-export const startProductBuild = () => {
+export const startProductBuild = (productId) => {
   return apiCall(`${baseUrl}/build-product`, {
     method: 'POST',
+    body: JSON.stringify({ productId }),
   });
 };
 
@@ -108,7 +109,7 @@ export const endGame = () => {
     method: 'POST',
   }).then(response => {
     if (response.success) {
-      localStorage.removeItem('playerId');
+      localStorage.removeItem('businessId');
     }
     return response;
   });

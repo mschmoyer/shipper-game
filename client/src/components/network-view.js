@@ -4,11 +4,11 @@ import { fetchNetworkData } from '../api'; // Import the API call
 import Drawer from './reusable/drawer'; // Import the Drawer component
 
 const NetworkView = ({ isOpen, onClose }) => {
-  const [players, setPlayers] = useState([]);
+  const [businesss, setBusinesss] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
-      fetchNetworkData().then(data => setPlayers(data));
+      fetchNetworkData().then(data => setBusinesss(data));
     }
   }, [isOpen]);
 
@@ -24,17 +24,17 @@ const NetworkView = ({ isOpen, onClose }) => {
           </tr>
         </thead>
         <tbody>
-          {players.map(player => (
-            <tr key={player.id}>
+          {businesss.map(business => (
+            <tr key={business.id}>
               <td>
-                <div className="business-name">{player.business_name}</div>
-                <div>Owner: {player.name}</div>
-                <div>{player.product_emoji} {player.product_name}s</div>
-                <div><i>{player.product_category}</i></div>
+                <div className="business-name">{business.business_name}</div>
+                <div>Owner: {business.name}</div>
+                <div>{business.product_emoji} {business.product_name}s</div>
+                <div><i>{business.product_category}</i></div>
               </td>
-              <td>{player.inventory_on_hand}</td>
-              <td>{player.orders_shipped}</td>
-              <td>{player.technology_emojis ? player.technology_emojis : 'None'}</td>
+              <td>{business.inventory_on_hand}</td>
+              <td>{business.orders_shipped}</td>
+              <td>{business.technology_emojis ? business.technology_emojis : 'None'}</td>
             </tr>
           ))}
         </tbody>

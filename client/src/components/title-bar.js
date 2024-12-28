@@ -36,9 +36,9 @@ const TitleBar = ({ onEndGame, isGameActive, gameInfo }) => {
         <img src={gameTitleImage} alt="Game Title" className="game-title-image" />
       </div>
       {gameInfo && (
-        <div className="title-player-info">    
-          <p>{gameInfo.player.business_name}</p>
-          <p>Owner: {gameInfo.player.name}</p>
+        <div className="title-business-info">    
+          <p>{gameInfo.business.business_name}</p>
+          <p>Owner: {gameInfo.business.name}</p>
         </div>
       )}
       <div className="button-group">

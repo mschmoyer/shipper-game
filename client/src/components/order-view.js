@@ -1,6 +1,6 @@
 import React from 'react';
 import './order-view.css';
-import OrderCard from './order-card';
+import OrderCard from './reusable/order-card';
 
 const OrderView = ({ gameInfo }) => {
   const { orders, active_order, secondsUntilNextOrder } = gameInfo;
@@ -41,7 +41,7 @@ const OrderView = ({ gameInfo }) => {
         <OrderCard
           key={`empty-${index}`}
           isEmpty={true}
-          secondsUntilNextOrder={secondsUntilNextOrder}
+          secondsUntilNextOrder={index === 0 ? secondsUntilNextOrder : 0}
           isMobileMode={isMobileMode}
         />
       ))}

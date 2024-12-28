@@ -4,7 +4,7 @@ This is the backend for the Shipping Game, built with Node.js and Express. It us
 
 ## Game Description
 
-The Shipping Game is a simulation game where players manage a shipping business. Players can start shipping orders, track progress, and complete shipments to earn money and upgrade their technologies. The goal is to efficiently manage resources and grow the business by leveraging various technologies.
+The Shipping Game is a simulation game where businesss manage a shipping business. Businesss can start shipping orders, track progress, and complete shipments to earn money and upgrade their technologies. The goal is to efficiently manage resources and grow the business by leveraging various technologies.
 
 ## Prerequisites
 
@@ -41,9 +41,9 @@ The Shipping Game is a simulation game where players manage a shipping business.
 ## API Endpoints
 
 - **POST /api/start-shipping**: Initiates the shipping process.
-- **GET /api/check-session**: Checks if a player session exists.
-- **GET /api/game-info**: Retrieves game information for the logged-in player.
-- **POST /api/create-account**: Creates a new player account.
+- **GET /api/check-session**: Checks if a business session exists.
+- **GET /api/game-info**: Retrieves game information for the logged-in business.
+- **POST /api/create-account**: Creates a new business account.
 
 ## Folder Structure
 

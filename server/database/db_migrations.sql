@@ -5,8 +5,8 @@ WHERE NOT EXISTS (
     SELECT 1 FROM technologies WHERE tech_code = 'advertising_campaign'
 );
 
--- alter player add new columns
-ALTER TABLE player ADD COLUMN IF NOT EXISTS advertising_campaign_start_time TIMESTAMP;
+-- alter business add new columns
+ALTER TABLE business ADD COLUMN IF NOT EXISTS advertising_campaign_start_time TIMESTAMP;
 
 
 update technologies set cost=cost*1.25 where cost < 50000;
